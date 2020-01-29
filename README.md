@@ -61,4 +61,5 @@ WORK IN PROGRESS
 - provide support for caliban (I still have to study the project)
 - add relations (one to one, one to many, many to many)
 - more examples
+- fix spacing inside queries (not necessary but nice to have)
 - add a logo if I get 10 stars

@@ -6,7 +6,6 @@ import com.github.reddone.caseql.sql.util.FragmentUtils
 import com.github.reddone.caseql.sql.tokens.{Update => UpdateToken, _}
 import doobie._
 import Fragment._
-import shapeless.{HList, LabelledGeneric, ops}
 
 trait TableQuery[T, K] { table: Table[T, K] =>
 
@@ -19,8 +18,7 @@ trait TableQuery[T, K] { table: Table[T, K] =>
       val left  = tableFilter.keys().map(_.name).map(syntax.column)
       val right = tableFilter.values(filter)
       val zipped = left.zip(right).map {
-        case (col, optionFilter) =>
-          optionFilter.flatMap(_.toOptionFragment(col))
+        case (col, optionFilter) => optionFilter.flatMap(_.toOptionFragment(col))
       }
       FragmentUtils.optionalAndOpt(zipped: _*)
     }
@@ -48,7 +46,7 @@ trait TableQuery[T, K] { table: Table[T, K] =>
       implicit tableFilter: TableFilter[T, U]
   ): Fragment = {
     val whereFragment  = filterFragment(filter, syntax).map(const(Where) ++ _).getOrElse(empty)
-    val selectFragment = const(s"$Select ${syntax.columns.intercalate(", ")} $From ${syntax.name}")
+    val selectFragment = const(s"$Select ${syntax.columns.mkString(", ")} $From ${syntax.name}")
 
     selectFragment ++ whereFragment
   }
@@ -72,7 +70,7 @@ trait TableQuery[T, K] { table: Table[T, K] =>
     val valueFragment = Fragments.parentheses(zipped.map(_._2).intercalate(const(",")))
     val insertFragment = const(
       s"$InsertInto ${table.defaultSyntax.name} " +
-        s"(${zipped.map(_._1).intercalate(", ")}) $Values"
+        s"(${zipped.map(_._1).mkString(", ")}) $Values"
     )
 
     insertFragment ++ valueFragment
