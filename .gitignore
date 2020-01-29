@@ -1,0 +1,46 @@
+*.class
+*.log
+
+# sbt specific
+.cache/
+.history/
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+project/hydra.sbt
+
+# Scala-IDE specific
+.scala_dependencies
+.cache
+.classpath
+.project
+.worksheet/
+.settings/
+
+# OS X
+.DS_Store
+
+# Ctags
+.tags
+
+# Ensime
+.ensime
+.ensime_cache/
+
+# IntelliJ
+.idea/
+
+# Mill
+out/
+
+# Bloop/Metals
+.bloop
+.metals
+
+# Application
+bin/
+.env

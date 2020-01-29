@@ -1,0 +1,68 @@
+package com.github.reddone.caseql.sql
+
+import java.sql.Timestamp
+
+import com.github.reddone.caseql.sql.util.FragmentUtils
+import com.github.reddone.caseql.sql.filter.FilterWrapper
+import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
+import com.github.reddone.caseql.sql.modifier.models._
+import doobie._
+import doobie.implicits._
+import Fragment._
+import javasql._
+import javatime._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+
+class Playground extends AnyFlatSpec with Matchers {
+
+  // test model
+  case class Test(
+      field1: Int,
+      field2: Option[String],
+      field3: Long,
+      field4: Option[Timestamp]
+  )
+  // test key
+  case class TestKey(
+      field1: Int,
+      field3: Long
+  )
+  // test filter
+  case class TestFilter(
+      field1: Option[IntFilter],
+      field2: Option[StringFilterOption],
+      field3: Option[LongFilter],
+      field4: Option[TimestampFilterOption],
+      AND: Option[Seq[TestFilter]],
+      OR: Option[Seq[TestFilter]],
+      NOT: Option[TestFilter]
+  ) extends FilterWrapper[TestFilter]
+  // test modifier
+  case class TestModifier(
+      field1: Option[IntModifier],
+      field2: Option[StringModifierOption],
+      field3: Option[LongModifier],
+      field4: Option[TimestampModifierOption]
+  )
+
+  val table: Table[Test, TestKey]                               = Table.derive[Test, TestKey]()
+  val syntax: table.Syntax                                      = table.syntax("t")
+  implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
+  implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
+
+  "Playground" should "aaa" in {
+    val filter1 = TestFilter(
+      Some(IntFilter.empty.copy(EQ = Some(1))),
+      None,
+      None,
+      None,
+      None,
+      None,
+      None
+    )
+
+    table.selectQuery(filter1, syntax)
+  }
+}
