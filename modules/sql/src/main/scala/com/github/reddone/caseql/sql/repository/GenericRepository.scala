@@ -101,35 +101,31 @@ object GenericRepository {
 
     // SCHEMA
 
-    override def createSchema(checkExistence: Boolean = true): ConnectionIO[Int] = {
+    override def createSchema(checkExistence: Boolean): ConnectionIO[Int] = {
       create_schema_ddl(schema, checkExistence).update.run
     }
 
-    override def dropSchema(checkExistence: Boolean = true): ConnectionIO[Int] = {
+    override def dropSchema(checkExistence: Boolean): ConnectionIO[Int] = {
       drop_schema_ddl(schema, checkExistence).update.run
     }
 
     // TABLE
 
-    override def createTable(table: String, definition: String, checkExistence: Boolean = true): ConnectionIO[Int] = {
+    override def createTable(table: String, definition: String, checkExistence: Boolean): ConnectionIO[Int] = {
       create_table_ddl(table, Some(schema), definition, checkExistence).update.run
     }
 
-    override def dropTable(table: String, checkExistence: Boolean = true): ConnectionIO[Int] = {
+    override def dropTable(table: String, checkExistence: Boolean): ConnectionIO[Int] = {
       drop_table_ddl(table, Some(schema), checkExistence).update.run
     }
 
     // SEQUENCE
 
-    override def createSequence(
-        sequence: String,
-        definition: String,
-        checkExistence: Boolean = true
-    ): ConnectionIO[Int] = {
+    override def createSequence(sequence: String, definition: String, checkExistence: Boolean): ConnectionIO[Int] = {
       create_sequence_ddl(sequence, Some(schema), definition, checkExistence).update.run
     }
 
-    override def dropSequence(sequence: String, checkExistence: Boolean = true): ConnectionIO[Int] = {
+    override def dropSequence(sequence: String, checkExistence: Boolean): ConnectionIO[Int] = {
       drop_sequence_ddl(sequence, Some(schema), checkExistence).update.run
     }
 
@@ -149,15 +145,16 @@ object GenericRepository {
         .to[List](whereParameters)
     }
 
-    override def selectStar[W: Write, R: Read](
+    override def selectStream[W: Write, R: Read](
         table: String,
+        columns: List[String],
         whereStatement: String,
         whereParameters: W
-    ): ConnectionIO[List[R]] = {
-      val selectFragment = select_query(table, Some(schema), Star :: Nil, whereStatement)
+    ): Stream[ConnectionIO, R] = {
+      val selectFragment = select_query(table, Some(schema), columns, whereStatement)
       FragmentUtils
         .wrapInQuery[W, R](selectFragment)
-        .to[List](whereParameters)
+        .stream(whereParameters)
     }
 
     // INSERT
@@ -348,21 +345,21 @@ trait GenericRepository {
 
   // SCHEMA
 
-  def createSchema(checkExistence: Boolean): ConnectionIO[Int]
+  def createSchema(checkExistence: Boolean = true): ConnectionIO[Int]
 
-  def dropSchema(checkExistence: Boolean): ConnectionIO[Int]
+  def dropSchema(checkExistence: Boolean = true): ConnectionIO[Int]
 
   // TABLE
 
-  def createTable(table: String, definition: String, checkExistence: Boolean): ConnectionIO[Int]
+  def createTable(table: String, definition: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
-  def dropTable(table: String, checkExistence: Boolean): ConnectionIO[Int]
+  def dropTable(table: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
   // SEQUENCE
 
-  def createSequence(sequence: String, definition: String, checkExistence: Boolean): ConnectionIO[Int]
+  def createSequence(sequence: String, definition: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
-  def dropSequence(sequence: String, checkExistence: Boolean): ConnectionIO[Int]
+  def dropSequence(sequence: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
   // ########## DML ##########
 
@@ -375,7 +372,12 @@ trait GenericRepository {
       whereParameters: W
   ): ConnectionIO[List[R]]
 
-  def selectStar[W: Write, R: Read](table: String, whereStatement: String, whereParameters: W): ConnectionIO[List[R]]
+  def selectStream[W: Write, R: Read](
+      table: String,
+      columns: List[String],
+      whereStatement: String,
+      whereParameters: W
+  ): Stream[ConnectionIO, R]
 
   // INSERT
 

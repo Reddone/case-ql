@@ -50,6 +50,7 @@ object Raw {
       )
     }
     val parameterIndicesAndTypes = (n to parameterCount).map(n => (n, metadata.getParameterType(n))).toList
+    println(parameterIndicesAndTypes)
     a.valuesIterator.toList
       .zip(parameterIndicesAndTypes)
       .foreach({
