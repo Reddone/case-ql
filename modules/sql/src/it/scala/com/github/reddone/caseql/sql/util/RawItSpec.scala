@@ -1,13 +1,11 @@
 package com.github.reddone.caseql.sql.util
 
 import cats.effect.IO
-import doobie._
 import doobie.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
 import com.github.reddone.caseql.sql.TestData._
 import com.github.reddone.caseql.sql.repository.GenericRepository
 import com.github.reddone.caseql.sql.util.Raw._
-import fs2.Stream
 
 class RawItSpec extends PgAnyWordSpec {
 
@@ -15,7 +13,7 @@ class RawItSpec extends PgAnyWordSpec {
 
   "Raw" when {
 
-    "used for Read" should {
+    "providing an implicit Read[Row]" should {
 
       "execute a Query with ConnectionIO" in {
         val result1: IO[List[Row]] = testRepository
@@ -46,7 +44,7 @@ class RawItSpec extends PgAnyWordSpec {
       }
     }
 
-    "used for Write" should {
+    "providing an implicit Write[Row]" should {
       "b1" in {}
       "b2" in {}
     }

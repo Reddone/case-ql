@@ -4,12 +4,16 @@ import java.sql.{PreparedStatement, ResultSet}
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.util.Raw.Row
-import doobie.{ConnectionIO, FC, FPS, FRS, PreparedStatementIO}
-import doobie.util.stream.repeatEvalChunks
+import doobie._
+import doobie.implicits._
 import fs2.Stream
 import fs2.Stream.{bracket, eval}
 import resultset._
 
+// Taken from doobie examples, because using Read[Row] with stream results in many metadata calls. It is not
+// a problem on medium sized tables, so you can use Row provided in this project with the normal doobie api.
+// This implementation calls getMetadata just one time instead of always calling it on unsafeGet:
+// https://github.com/tpolecat/doobie/blob/master/modules/example/src/main/scala/example/GenericStream.scala
 object connection {
 
   def liftStreamRaw(
@@ -25,7 +29,7 @@ object connection {
       }
 
     def unrolled(rs: ResultSet): Stream[ConnectionIO, Row] =
-      repeatEvalChunks(FC.embed(rs, getNextChunkRaw(chunkSize)))
+      util.stream.repeatEvalChunks(FC.embed(rs, getNextChunkRaw(chunkSize)))
 
     val preparedStatement: Stream[ConnectionIO, PreparedStatement] =
       bracket(create)(FC.embed(_, FPS.close)).flatMap(prepared)

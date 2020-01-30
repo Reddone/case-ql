@@ -2,6 +2,8 @@ package com.github.reddone.caseql.sql.hi
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.util.Raw.Row
+import doobie._
+import doobie.implicits._
 import doobie.hi.{FRS, ResultSetIO}
 
 import scala.collection.mutable
@@ -20,7 +22,7 @@ object resultset {
       var n = chunkSize
       val b = Vector.newBuilder[Row]
       while (n > 0 && rs.next) {
-        val builder = mutable.LinkedHashMap.newBuilder[String, Any]
+        val mb = mutable.LinkedHashMap.newBuilder[String, Any]
         lns.foreach({
           case (label, nullability) =>
             val rsObject = rs.getObject(label)
@@ -35,8 +37,9 @@ object resultset {
             } else { // columnNullableUnknown
               throw new IllegalArgumentException(s"Cannot infer nullability for column with label $label")
             }
-            builder += (label -> anyValue)
+            mb += (label -> anyValue)
         })
+        b += mb.result()
         n -= 1
       }
       b.result()
