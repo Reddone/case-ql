@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.util
 
-import java.sql.{PreparedStatement, ResultSet}
+import java.sql.{ParameterMetaData, PreparedStatement, ResultSet, ResultSetMetaData}
 
 import doobie._
 
@@ -14,8 +14,56 @@ object Raw {
 
   implicit val rowWrite: Write[Row] = new Write[Row](Nil, _.values.toList, unsafeSet, unsafeUpdate)
 
+  private case class ColMetadata(
+      className: String,
+      label: String,
+      name: String,
+      tpe: Int,
+      tpeName: String,
+      precision: Int,
+      scale: Int,
+      isNullable: Int
+  )
+
+  private object ColMetadata {
+    def of(rsm: ResultSetMetaData, index: Int): ColMetadata = {
+      ColMetadata(
+        rsm.getColumnClassName(index),
+        rsm.getColumnLabel(index),
+        rsm.getColumnName(index),
+        rsm.getColumnType(index),
+        rsm.getColumnTypeName(index),
+        rsm.getPrecision(index),
+        rsm.getScale(index),
+        rsm.isNullable(index)
+      )
+    }
+  }
+
+  private case class ParamMetadata(
+      className: String,
+      tpe: Int,
+      tpeName: String,
+      precision: Int,
+      scale: Int,
+      isNullable: Int
+  )
+
+  private object ParamMetadata {
+    def of(pm: ParameterMetaData, index: Int): ParamMetadata = {
+      ParamMetadata(
+        pm.getParameterClassName(index),
+        pm.getParameterType(index),
+        pm.getParameterTypeName(index),
+        pm.getPrecision(index),
+        pm.getScale(index),
+        pm.isNullable(index)
+      )
+    }
+  }
+
   private def unsafeGet(rs: ResultSet, n: Int): Row = {
-    assert(n > 0, "UnsafeGet column index must be greater than 0")
+    assert(n > 0, "unsafeGet column index must be greater than 0")
     val metadata = rs.getMetaData
     val columnLabelsAndNullabilities = (n to metadata.getColumnCount)
       .map(i => (metadata.getColumnLabel(i), metadata.isNullable(i)))
@@ -49,22 +97,25 @@ object Raw {
         s"You are trying to set ${parameterCount - n + 1} parameters using ${a.size} values"
       )
     }
-    val parameterIndicesAndTypes = (n to parameterCount).map(n => (n, metadata.getParameterType(n))).toList
-    println(parameterIndicesAndTypes)
+    val parameterIndicesAndTypes = (n to parameterCount)
+      .map(n => (n, metadata.getParameterType(n)))
+      .toList
+    println((n to parameterCount).map(ParamMetadata.of(metadata, _)))
     a.valuesIterator.toList
       .zip(parameterIndicesAndTypes)
       .foreach({
         case (anyValue, (index, sqlType)) =>
           anyValue match {
             case _: None.type => ps.setNull(index, sqlType)
-            case v: Some[_]   => ps.setObject(index, v.get)
-            case v            => ps.setObject(index, v)
+            case v: Some[_]   => ps.setObject(index, v.get, sqlType)
+            case v            => ps.setObject(index, v, sqlType)
           }
       })
   }
 
+  // TODO: insert nullability check using metadata
   private def unsafeUpdate(rs: ResultSet, n: Int, a: Row): Unit = {
-    assert(n > 0, "UnsafeUpdate column index must be greater than 0")
+    assert(n > 0, "unsafeUpdate column index must be greater than 0")
     val metadata = rs.getMetaData
     val columnLabels = (n to metadata.getColumnCount)
       .map(i => metadata.getColumnLabel(i))

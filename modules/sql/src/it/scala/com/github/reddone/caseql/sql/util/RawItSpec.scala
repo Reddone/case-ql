@@ -7,6 +7,8 @@ import com.github.reddone.caseql.sql.TestData._
 import com.github.reddone.caseql.sql.repository.GenericRepository
 import com.github.reddone.caseql.sql.util.Raw._
 
+import scala.collection.mutable
+
 class RawItSpec extends PgAnyWordSpec {
 
   val testRepository: GenericRepository = GenericRepository.forSchema(testSchema)
@@ -15,7 +17,7 @@ class RawItSpec extends PgAnyWordSpec {
 
     "providing an implicit Read[Row]" should {
 
-      "execute a Query with ConnectionIO" in {
+      "succeed to execute a query returning ConnectionIO" in {
         val result1: IO[List[Row]] = testRepository
           .select[Unit, Row](developerTableName, List("*"), "", ())
           .transact(xa)
@@ -27,7 +29,7 @@ class RawItSpec extends PgAnyWordSpec {
         result2.unsafeRunSync().foreach(println)
       }
 
-      "execute a Query with Stream" in {
+      "succeed to execute a query returning Stream" in {
         val result1: IO[List[Row]] = testRepository
           .selectStream[Unit, Row](developerTableName, List("*"), "", ())
           .compile
@@ -45,8 +47,24 @@ class RawItSpec extends PgAnyWordSpec {
     }
 
     "providing an implicit Write[Row]" should {
-      "b1" in {}
-      "b2" in {}
+
+      "succeed to execute an update when parameters are correct" in {
+        val builder =  mutable.LinkedHashMap.newBuilder[String, Any]
+        builder += ("full_name" -> "tasty the tester")
+        builder += ("age" -> 42)
+        val parameters: Row = builder.result()
+
+        val result1 = testRepository
+          .insert(developerTableName, developerColsNoId, parameters)
+          .transact(xa)
+          .unsafeRunSync()
+
+        println(result1)
+      }
+
+      "fail to execute an update when parameters are wrong" in {
+        val parameters = null
+      }
     }
   }
 }

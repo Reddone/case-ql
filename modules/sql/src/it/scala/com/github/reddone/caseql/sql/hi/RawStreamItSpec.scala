@@ -17,7 +17,7 @@ class RawStreamItSpec extends PgAnyWordSpec {
 
     "used to read raw data" should {
 
-      "execute a Query with Stream" in {
+      "succeed to execute a query" in {
         val result1: IO[List[Row]] = RawStream
           .processRaw(s"SELECT * FROM $testSchema.$developerTableName")
           .compile
