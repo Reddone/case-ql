@@ -18,6 +18,7 @@ object Dependencies {
     lazy val core      = namespace %% "circe-core" % circeVersion
     lazy val parser    = namespace %% "circe-parser" % circeVersion
     lazy val generic   = namespace %% "circe-generic" % circeVersion
+    lazy val optics    = namespace %% "circe-optics" % circeOpticsVersion
   }
 
   object cats {
@@ -136,6 +137,7 @@ object Dependencies {
       circe.core             % "compile",
       circe.parser           % "compile",
       circe.generic          % "compile",
+      circe.optics           % "compile",
       doobie.core            % "compile",
       doobie.hikari          % "compile",
       doobie.postgres        % "compile",

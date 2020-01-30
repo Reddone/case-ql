@@ -48,7 +48,10 @@ lazy val example = project
   .settings(
     name := "case-ql-example",
     libraryDependencies ++= Dependencies.Jars.`example`,
-    noPublishSettings
+    noPublishSettings,
+    javaOptions in Compile += "-Dlog4j.configurationFile=src/main/resources/log4j2.yml",
+    javaOptions in Test += "-Dlog4j.configurationFile=src/test/resources/log4j2-test.yml",
+    javaOptions in IntegrationTest += "-Dlog4j.configurationFile=src/it/resources/log4j2-it.yml"
   )
 
 lazy val settings = commonSettings ++ scalafmtSettings ++ updateSettings
