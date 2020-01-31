@@ -2,12 +2,15 @@ package com.github.reddone.caseql.sql.hi
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.util.Raw.Row
-import doobie._
 import doobie.implicits._
 import doobie.hi.{FRS, ResultSetIO}
 
 import scala.collection.mutable
 
+// Taken from doobie examples, because using Read[Row] with stream results in many metadata calls. It is not
+// a problem on medium sized tables, so you can use Row provided in this project with the normal doobie api.
+// This implementation calls getMetadata just one time instead of always calling it on unsafeGet:
+// https://github.com/tpolecat/doobie/blob/master/modules/example/src/main/scala/example/GenericStream.scala
 object resultset {
 
   def getNextChunkRaw(chunkSize: Int): ResultSetIO[Seq[Row]] =
@@ -15,18 +18,16 @@ object resultset {
 
   def getNextChunkRawV(chunkSize: Int): ResultSetIO[Vector[Row]] =
     FRS.raw { rs =>
-      val md = rs.getMetaData
-      val lns = (1 to md.getColumnCount)
-        .map(i => (md.getColumnLabel(i), md.isNullable(i)))
-        .toList
-      var n = chunkSize
-      val b = Vector.newBuilder[Row]
+      val rsMeta     = rs.getMetaData
+      val colMetaSeq = (1 to rsMeta.getColumnCount).map(i => (rsMeta.getColumnLabel(i), rsMeta.isNullable(i)))
+      var n          = chunkSize
+      val builder    = Vector.newBuilder[Row]
       while (n > 0 && rs.next) {
-        val mb = mutable.LinkedHashMap.newBuilder[String, Any]
-        lns.foreach({
+        val mutableBuilder = mutable.LinkedHashMap.newBuilder[String, Any]
+        colMetaSeq.foreach({
           case (label, nullability) =>
             val rsObject = rs.getObject(label)
-            val anyValue = if (nullability == 0) { // columnNoNulls
+            val value = if (nullability == 0) { // columnNoNulls
               rsObject
             } else if (nullability == 1) { // columnNullable
               if (rs.wasNull) {
@@ -35,13 +36,13 @@ object resultset {
                 Some(rsObject)
               }
             } else { // columnNullableUnknown
-              throw new IllegalArgumentException(s"Cannot infer nullability for column with label $label")
+              throw new IllegalArgumentException(s"Cannot infer nullability for column $label")
             }
-            mb += (label -> anyValue)
+            mutableBuilder += (label -> value)
         })
-        b += mb.result()
+        builder += mutableBuilder.result()
         n -= 1
       }
-      b.result()
+      builder.result()
     }
 }
