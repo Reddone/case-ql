@@ -36,12 +36,50 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
       "succeed to delete a sequence" in {}
     }
 
-    "using select DML" should {}
+    "using select DML" should {
 
-    "using insert DML" should {}
+      "succeed to execute a query returning ConnectionIO" in {}
 
-    "using update DML" should {}
+      "succeed to execute an update returning Stream" in {}
+    }
 
-    "using delete DML" should {}
+    "using insert DML" should {
+
+      "succeed to execute an update returning ConnectionIO of affected rows" in {}
+
+      "succeed to execute an update returning Stream of unique keys" in {}
+
+      "succeed to execute an update returning Stream of keys" in {}
+
+      "succeed to execute a batch update returning ConnectionIO of affected rows" in {}
+
+      "succeed to execute a batch update returning Stream of keys" in {}
+    }
+
+    "using update DML" should {
+
+      "succeed to execute an update returning ConnectionIO of affected rows" in {}
+
+      "succeed to execute an update returning Stream of unique keys" in {}
+
+      "succeed to execute an update returning Stream of keys" in {}
+
+      "succeed to execute a batch update returning ConnectionIO of affected rows" in {}
+
+      "succeed to execute a batch update returning Stream of keys" in {}
+    }
+
+    "using delete DML" should {
+
+      "succeed to execute an update returning ConnectionIO of affected rows" in {}
+
+      "succeed to execute an update returning Stream of unique keys" in {}
+
+      "succeed to execute an update returning Stream of keys" in {}
+
+      "succeed to execute a batch update returning ConnectionIO of affected rows" in {}
+
+      "succeed to execute a batch update returning Stream of keys" in {}
+    }
   }
 }

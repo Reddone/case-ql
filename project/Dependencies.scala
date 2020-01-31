@@ -100,7 +100,6 @@ object Dependencies {
 
   object Jars {
     lazy val `shared`: Seq[ModuleID] = Seq(
-      //slf4j.api                % "compile",
       scalatest.core           % "it, test",
       testcontainers.postgres  % "it",
       testcontainersScala.core % "it"
