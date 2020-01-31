@@ -18,6 +18,7 @@ object Dependencies {
     lazy val core      = namespace %% "circe-core" % circeVersion
     lazy val parser    = namespace %% "circe-parser" % circeVersion
     lazy val generic   = namespace %% "circe-generic" % circeVersion
+    lazy val optics    = namespace %% "circe-optics" % circeOpticsVersion
   }
 
   object cats {
@@ -99,7 +100,7 @@ object Dependencies {
 
   object Jars {
     lazy val `shared`: Seq[ModuleID] = Seq(
-      slf4j.api                % "compile",
+      //slf4j.api                % "compile",
       scalatest.core           % "it, test",
       testcontainers.postgres  % "it",
       testcontainersScala.core % "it"
@@ -116,7 +117,8 @@ object Dependencies {
       cats.effect      % "compile",
       fs2.core         % "compile",
       doobie.core      % "compile",
-      doobie.scalatest % "it, test"
+      doobie.scalatest % "it",
+      doobie.postgres  % "it"
     ) ++ `shared`
 
     lazy val `gql`: Seq[ModuleID] = Seq(
@@ -136,6 +138,7 @@ object Dependencies {
       circe.core             % "compile",
       circe.parser           % "compile",
       circe.generic          % "compile",
+      circe.optics           % "compile",
       doobie.core            % "compile",
       doobie.hikari          % "compile",
       doobie.postgres        % "compile",

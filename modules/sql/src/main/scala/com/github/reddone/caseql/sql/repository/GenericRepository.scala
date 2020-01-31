@@ -26,13 +26,13 @@ private[repository] object GenericDDL {
       tableDefinition: String,
       checkExistence: Boolean
   ): Fragment = {
-    val sqlString = s"$Create $Table ${if (checkExistence) " " + IfNotExists else ""} " +
+    val sqlString = s"$Create $Table${if (checkExistence) " " + IfNotExists else ""} " +
       s"${StringUtils.addPrefix(tableName, schemaName)}"
-    const(sqlString) ++ Fragments.parentheses(const(tableDefinition))
+    const(sqlString) ++ Fragments.parentheses(const(s"\n$tableDefinition"))
   }
 
   def drop_table_ddl(tableName: String, schemaName: Option[String], checkExistence: Boolean): Fragment = {
-    val sqlString = s"$Drop $Table ${if (checkExistence) " " + IfExists else ""} " +
+    val sqlString = s"$Drop $Table${if (checkExistence) " " + IfExists else ""} " +
       s"${StringUtils.addPrefix(tableName, schemaName)}"
     const(sqlString)
   }
@@ -43,13 +43,13 @@ private[repository] object GenericDDL {
       sequenceDefinition: String,
       checkExistence: Boolean
   ): Fragment = {
-    val sqlString = s"$Create $Sequence ${if (checkExistence) " " + IfNotExists else ""} " +
+    val sqlString = s"$Create $Sequence${if (checkExistence) " " + IfNotExists else ""} " +
       s"${StringUtils.addPrefix(sequenceName, schemaName)}"
-    const(sqlString) ++ Fragments.parentheses(const(sequenceDefinition))
+    const(sqlString) ++ const(sequenceDefinition)
   }
 
   def drop_sequence_ddl(sequenceName: String, schemaName: Option[String], checkExistence: Boolean): Fragment = {
-    val sqlString = s"$Drop $Sequence ${if (checkExistence) " " + IfExists else ""} " +
+    val sqlString = s"$Drop $Sequence${if (checkExistence) " " + IfExists else ""} " +
       s"${StringUtils.addPrefix(sequenceName, schemaName)}"
     const(sqlString)
   }
@@ -101,32 +101,32 @@ object GenericRepository {
 
     // SCHEMA
 
-    override def createSchema(): ConnectionIO[Int] = {
-      create_schema_ddl(schema, checkExistence = true).update.run
+    override def createSchema(checkExistence: Boolean): ConnectionIO[Int] = {
+      create_schema_ddl(schema, checkExistence).update.run
     }
 
-    override def dropSchema(): ConnectionIO[Int] = {
-      drop_schema_ddl(schema, checkExistence = true).update.run
+    override def dropSchema(checkExistence: Boolean): ConnectionIO[Int] = {
+      drop_schema_ddl(schema, checkExistence).update.run
     }
 
     // TABLE
 
-    override def createTable(table: String, definition: String): ConnectionIO[Int] = {
-      create_table_ddl(table, Some(schema), definition, checkExistence = true).update.run
+    override def createTable(table: String, definition: String, checkExistence: Boolean): ConnectionIO[Int] = {
+      create_table_ddl(table, Some(schema), definition, checkExistence).update.run
     }
 
-    override def dropTable(table: String): ConnectionIO[Int] = {
-      drop_table_ddl(table, Some(schema), checkExistence = true).update.run
+    override def dropTable(table: String, checkExistence: Boolean): ConnectionIO[Int] = {
+      drop_table_ddl(table, Some(schema), checkExistence).update.run
     }
 
     // SEQUENCE
 
-    override def createSequence(sequence: String, definition: String): ConnectionIO[Int] = {
-      create_sequence_ddl(sequence, Some(schema), definition, checkExistence = true).update.run
+    override def createSequence(sequence: String, definition: String, checkExistence: Boolean): ConnectionIO[Int] = {
+      create_sequence_ddl(sequence, Some(schema), definition, checkExistence).update.run
     }
 
-    override def dropSequence(sequence: String): ConnectionIO[Int] = {
-      drop_sequence_ddl(sequence, Some(schema), checkExistence = true).update.run
+    override def dropSequence(sequence: String, checkExistence: Boolean): ConnectionIO[Int] = {
+      drop_sequence_ddl(sequence, Some(schema), checkExistence).update.run
     }
 
     // ########## DML ##########
@@ -145,15 +145,16 @@ object GenericRepository {
         .to[List](whereParameters)
     }
 
-    override def selectStar[W: Write, R: Read](
+    override def selectStream[W: Write, R: Read](
         table: String,
+        columns: List[String],
         whereStatement: String,
         whereParameters: W
-    ): ConnectionIO[List[R]] = {
-      val selectFragment = select_query(table, Some(schema), Star :: Nil, whereStatement)
+    ): Stream[ConnectionIO, R] = {
+      val selectFragment = select_query(table, Some(schema), columns, whereStatement)
       FragmentUtils
         .wrapInQuery[W, R](selectFragment)
-        .to[List](whereParameters)
+        .stream(whereParameters)
     }
 
     // INSERT
@@ -344,21 +345,21 @@ trait GenericRepository {
 
   // SCHEMA
 
-  def createSchema(): ConnectionIO[Int]
+  def createSchema(checkExistence: Boolean = true): ConnectionIO[Int]
 
-  def dropSchema(): ConnectionIO[Int]
+  def dropSchema(checkExistence: Boolean = true): ConnectionIO[Int]
 
   // TABLE
 
-  def createTable(table: String, definition: String): ConnectionIO[Int]
+  def createTable(table: String, definition: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
-  def dropTable(table: String): ConnectionIO[Int]
+  def dropTable(table: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
   // SEQUENCE
 
-  def createSequence(sequence: String, definition: String): ConnectionIO[Int]
+  def createSequence(sequence: String, definition: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
-  def dropSequence(sequence: String): ConnectionIO[Int]
+  def dropSequence(sequence: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
   // ########## DML ##########
 
@@ -371,7 +372,12 @@ trait GenericRepository {
       whereParameters: W
   ): ConnectionIO[List[R]]
 
-  def selectStar[W: Write, R: Read](table: String, whereStatement: String, whereParameters: W): ConnectionIO[List[R]]
+  def selectStream[W: Write, R: Read](
+      table: String,
+      columns: List[String],
+      whereStatement: String,
+      whereParameters: W
+  ): Stream[ConnectionIO, R]
 
   // INSERT
 

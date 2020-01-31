@@ -124,10 +124,12 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     )
 
     tableModifier1.keys() shouldBe List('field1, 'field2, 'field3, 'field4)
-    tableModifier1.values(modifier1) shouldBe List(modifier1.field1,
-                                                   modifier1.field2,
-                                                   modifier1.field3,
-                                                   modifier1.field4)
+    tableModifier1.values(modifier1) shouldBe List(
+      modifier1.field1,
+      modifier1.field2,
+      modifier1.field3,
+      modifier1.field4
+    )
 
     val tableModifier2: TableModifier[Test, TestModifierUnordered] =
       TableModifier.derive[Test, TestModifierUnordered]()
@@ -139,10 +141,12 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     )
 
     tableModifier2.keys() shouldBe List('field4, 'field2, 'field3, 'field1)
-    tableModifier2.values(modifier2) shouldBe List(modifier2.field4,
-                                                   modifier2.field2,
-                                                   modifier2.field3,
-                                                   modifier2.field1)
+    tableModifier2.values(modifier2) shouldBe List(
+      modifier2.field4,
+      modifier2.field2,
+      modifier2.field3,
+      modifier2.field1
+    )
 
     val tableModifier3: TableModifier[Test, TestModifierOther] =
       TableModifier.derive[Test, TestModifierOther]()
@@ -156,10 +160,12 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     )
 
     tableModifier3.keys() shouldBe List('field1, 'field2, 'field3, 'field4)
-    tableModifier3.values(modifier3) shouldBe List(modifier3.field1,
-                                                   modifier3.field2,
-                                                   modifier3.field3,
-                                                   modifier3.field4)
+    tableModifier3.values(modifier3) shouldBe List(
+      modifier3.field1,
+      modifier3.field2,
+      modifier3.field3,
+      modifier3.field4
+    )
 
     val tableModifier4: TableModifier[Test, TestModifierOtherUnordered] =
       TableModifier.derive[Test, TestModifierOtherUnordered]()
@@ -173,9 +179,11 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     )
 
     tableModifier4.keys() shouldBe List('field4, 'field2, 'field3, 'field1)
-    tableModifier4.values(modifier4) shouldBe List(modifier4.field4,
-                                                   modifier4.field2,
-                                                   modifier4.field3,
-                                                   modifier4.field1)
+    tableModifier4.values(modifier4) shouldBe List(
+      modifier4.field4,
+      modifier4.field2,
+      modifier4.field3,
+      modifier4.field1
+    )
   }
 }

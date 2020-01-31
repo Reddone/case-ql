@@ -9,6 +9,7 @@ object Versions {
   lazy val fs2Version                    = "2.1.0"
   lazy val doobieVersion                 = "0.8.8"
   lazy val circeVersion                  = "0.12.3"
+  lazy val circeOpticsVersion            = "0.12.0"
   lazy val sangriaCirceVersion           = "1.3.0"
   lazy val sangriaVersion                = "1.4.2"
   lazy val scalatestVersion              = "3.1.0"
