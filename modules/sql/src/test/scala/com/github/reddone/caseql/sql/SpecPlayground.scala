@@ -2,7 +2,6 @@ package com.github.reddone.caseql.sql
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.util.FragmentUtils
 import com.github.reddone.caseql.sql.filter.FilterWrapper
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
@@ -15,7 +14,7 @@ import javatime._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class Playground extends AnyFlatSpec with Matchers {
+class SpecPlayground extends AnyFlatSpec with Matchers {
 
   // test model
   case class Test(
@@ -52,17 +51,5 @@ class Playground extends AnyFlatSpec with Matchers {
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 
-  "Playground" should "aaa" in {
-    val filter1 = TestFilter(
-      Some(IntFilter.empty.copy(EQ = Some(1))),
-      None,
-      None,
-      None,
-      None,
-      None,
-      None
-    )
-
-    table.selectQuery(filter1, syntax)
-  }
+  "SpecPlayground" should "do anything" in {}
 }
