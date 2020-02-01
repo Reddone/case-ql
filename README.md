@@ -30,7 +30,7 @@ A Table[T, K] is a wrapper for a type T having a key K. Both T and K are case cl
 SQL columns using a camel case to snake case converter; if you want to override the mapping, you can a custom mapper
 in the form of a Map[String, String], where each entry is in the form (scala field -> sql column).
 
-<!-- [here](./docs/table.md) -->
+[Table documentation](./docs/table.md)
 
 ## Filter
 
@@ -41,7 +41,7 @@ You can create filters on case classes using the FilterWrapper trait and assigni
 you can create a TableFilter[T, U] on the target type T, meaning that U can be used to generate a "WHERE" on the
 table represented by T.
 
-<!-- [here](./docs/filter.md) -->
+<!-- [Filter documentation](./docs/filter.md) -->
 
 ## Modifier
 
@@ -52,7 +52,7 @@ You can create modifiers on case classes assigning to each field a Modifier[_]. 
 TableModifier[T, U] on the target type T, meaning that U can be used to generate "INSERT" and "UPDATE" on the table
 represented by T.
 
-<!-- [here](./docs/modifier.md) -->
+<!-- [Modifier documentation](./docs/modifier.md) -->
 
 ## Query
 
@@ -62,7 +62,7 @@ Once you have a Table[T, K], you can execute elementary SQL queries. At the mome
 - "UPDATE" using a custom TableModifier and TableFilter.
 - "DELETE" using a custom TableFilter.
 
-<!-- [here](./docs/modifier.md) -->
+<!-- [Query documentation](./docs/modifier.md) -->
 
 ## Util
 
@@ -81,7 +81,7 @@ For example, you can transform the raw result according to a Sangria Projector a
 result to a case class before the final mapping step with the GraphQL object.
 - SQL tokens and functions used inside the project to avoid repetitions. Maybe you can use them too.
 
-<!-- [here](./docs/util.md) -->
+<!-- [Util documentation](./docs/util.md) -->
 
 ## TODO
 
@@ -93,3 +93,8 @@ result to a case class before the final mapping step with the GraphQL object.
 - more examples
 - fix spacing inside queries (not necessary but nice to have)
 - add a logo if I get 10 stars
+
+## License
+
+All code is available to you under the MIT license, available at http://opensource.org/licenses/mit-license.php 
+and also in the LICENSE file. <!-- Inspiration for this project was taken from Prisma and Scarm -->
