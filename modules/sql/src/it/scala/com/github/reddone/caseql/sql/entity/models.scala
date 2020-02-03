@@ -26,8 +26,7 @@ object models {
 
   object Developer {
     implicit val decoder: Decoder[Developer] = deriveDecoder[Developer]
-    implicit val table: Table[Developer, DeveloperKey] =
-      Table.derive[Developer, DeveloperKey]()
+    implicit val table: Table[Developer] = Table.derive[Developer, DeveloperKey]()
   }
 
   final case class DeveloperKey(id: Long)
@@ -75,8 +74,7 @@ object models {
 
   object Project {
     implicit val decoder: Decoder[Project] = deriveDecoder[Project]
-    implicit val table: Table[Project, ProjectKey] =
-      Table.derive[Project, ProjectKey]()
+    implicit val table: Table[Project] = Table.derive[Project, ProjectKey]()
   }
 
   final case class ProjectKey(id: Long)
@@ -125,8 +123,7 @@ object models {
 
   object DeveloperProjectLink {
     implicit val decoder: Decoder[DeveloperProjectLink] = deriveDecoder[DeveloperProjectLink]
-    implicit val table: Table[DeveloperProjectLink, DeveloperProjectLinkKey] =
-      Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
+    implicit val table: Table[DeveloperProjectLink] = Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
   }
 
   final case class DeveloperProjectLinkKey(developerId: Long, projectId: Long)

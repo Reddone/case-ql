@@ -7,7 +7,8 @@ import shapeless.{HList, LabelledGeneric, Lazy, ops}
 import scala.language.dynamics
 import scala.reflect.runtime.universe.{Symbol => _, _}
 
-trait Table[T, K] extends TableQuery[T, K] { self =>
+trait Table[T] extends TableQuery[T] { self =>
+  type Key
 
   def name: String
 
@@ -25,9 +26,9 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
   implicit def write: Write[T]
 
-  implicit def keyRead: Read[K]
+  implicit def keyRead: Read[Key]
 
-  implicit def keyWrite: Write[K]
+  implicit def keyWrite: Write[Key]
 
   final def syntax(alias: String): Syntax = Syntax(alias, self)
 
@@ -57,7 +58,9 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
 object Table {
 
-  def apply[T, K](implicit ev: Table[T, K]): Table[T, K] = ev
+  type Aux[T, Key0] = Table[T] { type Key = Key0 }
+
+  def apply[T](implicit ev: Table[T]): Aux[T, ev.Key] = ev
 
   object derive {
 
@@ -84,7 +87,8 @@ object Table {
           keysR: ops.record.Keys.Aux[R, RKeys],
           toListR: Lazy[ops.hlist.ToList[RKeys, Symbol]],
           extractorLR: ops.record.Extractor[L, R]
-      ): Table[T, K] = new Table[T, K] {
+      ): Aux[T, K] = new Table[T] { table =>
+        override type Key = K
 
         override val name: String = aName.getOrElse(StringUtils.camelToSnake(typeOf[T](tag).typeSymbol.name.toString))
 
@@ -102,9 +106,9 @@ object Table {
 
         override implicit val write: Write[T] = writeT
 
-        override implicit val keyRead: Read[K] = readK
+        override implicit val keyRead: Read[table.Key] = readK
 
-        override implicit val keyWrite: Write[K] = writeK
+        override implicit val keyWrite: Write[table.Key] = writeK
       }
     }
   }

@@ -61,8 +61,8 @@ class TableSpec extends AnyFlatSpec with Matchers {
   }
 
   "Table typeclass" should "work correctly" in {
-    val table1: Table[Test, TestKey] = Table.derive[Test, TestKey]()
-    val syntax1: table1.Syntax       = table1.defaultSyntax
+    val table1: Table[Test]    = Table.derive[Test, TestKey]()
+    val syntax1: table1.Syntax = table1.defaultSyntax
 
     table1.name shouldBe "test"
     table1.schema shouldBe None
@@ -76,7 +76,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
     syntax1.column("field1") shouldBe "field1"
     syntax1.field1 shouldBe "field1"
 
-    val table2: Table[Test, TestKey] = Table.derive[Test, TestKey](
+    val table2: Table[Test] = Table.derive[Test, TestKey](
       Some("test_name"),
       Some("test_schema"),
       Map("field1" -> "field_1", "field2" -> "field_2"),

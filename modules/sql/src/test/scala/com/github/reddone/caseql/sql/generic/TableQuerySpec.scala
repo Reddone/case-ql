@@ -45,7 +45,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampModifierOption]
   )
 
-  val table: Table[Test, TestKey]                               = Table.derive[Test, TestKey]()
+  val table: Table[Test]                                        = Table.derive[Test, TestKey]()
   val syntax: table.Syntax                                      = table.syntax("t")
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()

@@ -14,9 +14,9 @@ trait FilterWrapper[T <: FilterWrapper[T]] { self: T with Product =>
 
 object FilterWrapper {
 
-  def filterFragment[T, U <: FilterWrapper[U], K](filter: U)(
+  def filterFragment[T, U <: FilterWrapper[U]](filter: U)(
       implicit
-      table: Table[T, K],
+      table: Table[T],
       tableFilter: TableFilter[T, U]
   ): Option[Fragment] = {
     def make(filter: U): Option[Fragment] = {

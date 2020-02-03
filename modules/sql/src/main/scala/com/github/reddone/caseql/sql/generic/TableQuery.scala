@@ -7,7 +7,7 @@ import com.github.reddone.caseql.sql.tokens.{Update => UpdateToken, _}
 import doobie._
 import Fragment._
 
-trait TableQuery[T, K] { table: Table[T, K] =>
+trait TableQuery[T] { table: Table[T] =>
 
   // WHERE
 
@@ -78,8 +78,8 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   def insertQuery[U](modifier: U)(
       implicit tableModifier: TableModifier[T, U]
-  ): ConnectionIO[K] = {
-    insertFragment(modifier).update.withUniqueGeneratedKeys[K](table.defaultSyntax.keyColumns: _*)
+  ): ConnectionIO[table.Key] = {
+    insertFragment(modifier).update.withUniqueGeneratedKeys[table.Key](table.defaultSyntax.keyColumns: _*)
   }
 
   // UPDATE
@@ -106,8 +106,8 @@ trait TableQuery[T, K] { table: Table[T, K] =>
       implicit
       tableModifier: TableModifier[T, U],
       tableFilter: TableFilter[T, V]
-  ): ConnectionIO[K] = {
-    updateFragment(modifier, filter).update.withUniqueGeneratedKeys[K](table.defaultSyntax.keyColumns: _*)
+  ): ConnectionIO[table.Key] = {
+    updateFragment(modifier, filter).update.withUniqueGeneratedKeys[table.Key](table.defaultSyntax.keyColumns: _*)
   }
 
   // DELETE
@@ -123,7 +123,7 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   def deleteQuery[U <: FilterWrapper[U]](filter: U)(
       implicit tableFilter: TableFilter[T, U]
-  ): ConnectionIO[K] = {
-    deleteFragment(filter).update.withUniqueGeneratedKeys[K](table.defaultSyntax.keyColumns: _*)
+  ): ConnectionIO[table.Key] = {
+    deleteFragment(filter).update.withUniqueGeneratedKeys[table.Key](table.defaultSyntax.keyColumns: _*)
   }
 }
