@@ -15,7 +15,7 @@ object TableFunction {
   object extractModifier extends extract[Option[Modifier[_]]]
 
   trait extract[T] extends skip {
-    implicit def atType[K, V <: T](
+    implicit def atType[K <: Symbol, V <: T](
         implicit wt: Witness.Aux[K]
     ): Case.Aux[FieldType[K, V], FieldType[K, V] :: HNil] =
       at[FieldType[K, V]](_ :: HNil)
@@ -28,7 +28,7 @@ object TableFunction {
   // filter to option fragment
 
   object filterToOptionFragment extends Poly1 {
-    implicit def atOptionFilter[K, V <: Option[Filter[_]]](
+    implicit def atOptionFilter[K <: Symbol, V <: Option[Filter[_]]](
         implicit wt: Witness.Aux[K]
     ): Case.Aux[FieldType[K, V], FieldType[K, String => Option[Fragment]]] =
       at[FieldType[K, V]] { ft =>
@@ -39,7 +39,7 @@ object TableFunction {
   // modify to fragment
 
   object modifyToFragment extends Poly1 {
-    implicit def atOptionModifier[K, V <: Option[Modifier[_]]](
+    implicit def atOptionModifier[K <: Symbol, V <: Option[Modifier[_]]](
         implicit wt: Witness.Aux[K]
     ): Case.Aux[FieldType[K, V], FieldType[K, Option[Fragment]]] =
       at[FieldType[K, V]] { ft =>

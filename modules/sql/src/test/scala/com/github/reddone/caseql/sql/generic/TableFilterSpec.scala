@@ -2,6 +2,7 @@ package com.github.reddone.caseql.sql.generic
 
 import java.sql.Timestamp
 
+import com.github.reddone.caseql.sql.filter.FilterWrapper
 import com.github.reddone.caseql.sql.filter.models._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -22,14 +23,22 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
       field4: Option[TimestampFilterOption]
-  )
+  ) extends FilterWrapper[TestFilter] {
+    override def AND: Option[Seq[TestFilter]] = None
+    override def OR: Option[Seq[TestFilter]]  = None
+    override def NOT: Option[TestFilter]      = None
+  }
   // simple case but unordered, should compile
   case class TestFilterUnordered(
       field4: Option[TimestampFilterOption],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
       field1: Option[IntFilter]
-  )
+  ) extends FilterWrapper[TestFilterUnordered] {
+    override def AND: Option[Seq[TestFilterUnordered]] = None
+    override def OR: Option[Seq[TestFilterUnordered]]  = None
+    override def NOT: Option[TestFilterUnordered]      = None
+  }
   // with other fields, should compile
   case class TestFilterOther(
       field1: Option[IntFilter],
@@ -38,7 +47,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampFilterOption],
       otherField1: String,
       otherField2: Seq[Int]
-  )
+  ) extends FilterWrapper[TestFilterOther] {
+    override def AND: Option[Seq[TestFilterOther]] = None
+    override def OR: Option[Seq[TestFilterOther]]  = None
+    override def NOT: Option[TestFilterOther]      = None
+  }
   // with other fields and unordered, should compile
   case class TestFilterOtherUnordered(
       otherField2: Seq[Int],
@@ -47,7 +60,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field3: Option[LongFilter],
       otherField1: String,
       field1: Option[IntFilter]
-  )
+  ) extends FilterWrapper[TestFilterOtherUnordered] {
+    override def AND: Option[Seq[TestFilterOtherUnordered]] = None
+    override def OR: Option[Seq[TestFilterOtherUnordered]]  = None
+    override def NOT: Option[TestFilterOtherUnordered]      = None
+  }
   // one more field, should not compile
   case class TestFilterPlus(
       field1: Option[IntFilter],
@@ -55,7 +72,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field3: Option[LongFilter],
       field4: Option[TimestampFilterOption],
       field5: Option[StringFilter]
-  )
+  ) extends FilterWrapper[TestFilterPlus] {
+    override def AND: Option[Seq[TestFilterPlus]] = None
+    override def OR: Option[Seq[TestFilterPlus]]  = None
+    override def NOT: Option[TestFilterPlus]      = None
+  }
   // one more field and unordered, should not compile
   case class TestFilterPlusUnordered(
       field1: Option[IntFilter],
@@ -63,19 +84,31 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampFilterOption],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter]
-  )
+  ) extends FilterWrapper[TestFilterPlusUnordered] {
+    override def AND: Option[Seq[TestFilterPlusUnordered]] = None
+    override def OR: Option[Seq[TestFilterPlusUnordered]]  = None
+    override def NOT: Option[TestFilterPlusUnordered]      = None
+  }
   // one less field, should not compile
   case class TestFilterLess(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter]
-  )
+  ) extends FilterWrapper[TestFilterLess] {
+    override def AND: Option[Seq[TestFilterLess]] = None
+    override def OR: Option[Seq[TestFilterLess]]  = None
+    override def NOT: Option[TestFilterLess]      = None
+  }
   // one less field and unordered, should not compile
   case class TestFilterLessUnordered(
       field2: Option[StringFilterOption],
       field1: Option[IntFilter],
       field3: Option[LongFilter]
-  )
+  ) extends FilterWrapper[TestFilterLessUnordered] {
+    override def AND: Option[Seq[TestFilterLessUnordered]] = None
+    override def OR: Option[Seq[TestFilterLessUnordered]]  = None
+    override def NOT: Option[TestFilterLessUnordered]      = None
+  }
 
   "TableFilter derivation" should "compile in the simple case" in {
     """TableFilter.derive[Test, TestFilter]()""" should compile

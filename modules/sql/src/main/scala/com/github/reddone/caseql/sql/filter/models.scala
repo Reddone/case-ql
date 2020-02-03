@@ -16,11 +16,11 @@ import io.circe.generic.semiauto.deriveDecoder
 
 object models {
 
-  trait Filter[+T] {
+  trait Filter[T] {
     def toOptionFragment(column: String): Option[Fragment]
   }
 
-  type FilterOption[+T] = Filter[Option[T]]
+  type FilterOption[T] = Filter[Option[T]]
 
   // AbstractNumeric
 
