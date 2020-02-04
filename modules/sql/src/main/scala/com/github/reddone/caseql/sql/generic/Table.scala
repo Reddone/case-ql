@@ -62,6 +62,22 @@ object Table {
 
   def apply[T](implicit ev: Table[T]): Aux[T, ev.Key] = ev
 
+  implicit val unit: Table[Unit] = derive[Unit, Unit]()
+
+//  new Table[Unit] { table =>
+//    override type Key = Unit
+//    override def name: String = ???
+//    override def schema: Option[String] = ???
+//    override def fieldConverter: Map[String, String] = ???
+//    override def fieldMapper(field: String): String = ???
+//    override def fields: List[String] = ???
+//    override def keyFields: List[String] = ???
+//    override implicit def read: Read[Unit] = implicitly[Read[Unit]]
+//    override implicit def write: Write[Unit] = ???
+//    override implicit def keyRead: Read[table.Key] = ???
+//    override implicit def keyWrite: Write[table.Key] = ???
+//  }
+
   object derive {
 
     def apply[T, K] = new Partial[T, K]

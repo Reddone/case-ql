@@ -11,6 +11,7 @@ import com.github.reddone.caseql.sql.generic.TableFunction.extractFilter
 import com.github.reddone.caseql.sql.modifier.models.Modifier
 import doobie._
 import doobie.implicits._
+import io.circe.Decoder
 import shapeless.labelled.FieldType
 import shapeless.ops.hlist.Tupler
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Poly1, Witness, ops}
@@ -32,12 +33,17 @@ import shapeless.{::, HNil, Poly1, Witness}
 // relation filter
 // we can create either a single relation filter or a multi rel filter
 
-trait RelFilter[A, B, T <: FilterWrapper[T]]
+sealed trait RelFilter[A, B, T <: FilterWrapper[T]]
 
 final case class SingleRelFilter[A, B, T <: FilterWrapper[T]](
     ONE: Option[T],
     NONE: Option[T]
 ) extends RelFilter[A, B, T]
+
+object SingleRelFilter {
+  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[SingleRelFilter[A, B, T]] =
+    io.circe.generic.semiauto.deriveDecoder[SingleRelFilter[A, B, T]]
+}
 
 final case class MultiRelFilter[A, B, T <: FilterWrapper[T]](
     EVERY: Option[T],
@@ -45,66 +51,147 @@ final case class MultiRelFilter[A, B, T <: FilterWrapper[T]](
     NONE: Option[T]
 ) extends RelFilter[A, B, T]
 
+object MultiRelFilter {
+  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[MultiRelFilter[A, B, T]] =
+    io.circe.generic.semiauto.deriveDecoder[MultiRelFilter[A, B, T]]
+}
+
+// link
+
+sealed trait Link[A, B] {
+  type J
+
+  def tableA: Table[A]
+  def tableB: Table[B]
+  def tableC: Table[J]
+
+  def leftCondition: Seq[(String, String)]
+  def rightCondition: Seq[(String, String)]
+  def isJunction: Boolean
+}
+
+object Link {
+
+  type Aux[A, B, C] = Link[A, B] { type J = C }
+
+  def direct[A, B](condition: (Table[A], Table[B]) => Seq[(String, String)])(
+      implicit
+      tableAA: Table[A],
+      tableBB: Table[B],
+      tableCC: Table[Unit]
+  ): Aux[A, B, Unit] =
+    new Link[A, B] {
+      override type J = Unit
+      override def tableA: Table[A]                      = tableAA
+      override def tableB: Table[B]                      = tableBB
+      override def tableC: Table[Unit]                   = tableCC
+      override def isJunction: Boolean                   = false
+      override def leftCondition: Seq[(String, String)]  = condition(tableAA, tableBB)
+      override def rightCondition: Seq[(String, String)] = Seq.empty
+    }
+
+  def junction[A, B, C](
+      leftCond: (Table[A], Table[C]) => Seq[(String, String)],
+      rightCond: (Table[A], Table[C]) => Seq[(String, String)]
+  )(
+      implicit
+      tableAA: Table[A],
+      tableBB: Table[B],
+      tableCC: Table[C]
+  ): Aux[A, B, C] =
+    new Link[A, B] {
+      override type J = C
+      override def tableA: Table[A] = tableAA
+      override def tableB: Table[B] = tableBB
+      override def tableC: Table[C] = tableCC
+
+      override def leftCondition: Seq[(String, String)]  = leftCond(tableAA, tableCC)
+      override def rightCondition: Seq[(String, String)] = rightCond(tableAA, tableCC)
+      override def isJunction: Boolean                   = true
+    }
+}
+
+//final case class DirectLink[A, B](
+//    //condition: (Table[A], Table[B]) => Seq[(String, String)]
+//)(implicit tableAA: Table[A], tableBB: Table[B])
+//    extends Link[A, B] {
+//  type J = Unit
+//  override def tableA: Table[A]            = tableAA
+//  override def tableB: Table[B]            = tableBB
+//  override def tableC: Option[Table[Unit]] = None
+//}
+//
+//final case class JunctionLink[A, B](
+//    //leftCondition: (Table[A], Table[Link[A, B]#J]) => Seq[(String, String)],
+//    //rightCondition: (Table[B], Table[Link[A, B]#J]) => Seq[(String, String)]
+//)(implicit tableAA: Table[A], tableBB: Table[B], tableC: Table[Link[A, B]#J])
+//    extends Link[A, B] {
+//  type J = Unit
+//  override def tableA: Table[A]         = tableAA
+//  override def tableB: Table[B]         = tableBB
+//  override def tableC: Option[Table[J]] = Some(tableC)
+//}
+
 // relation
 
-sealed trait Relation[A, B] {
-  def toFragment: Fragment = Fragment.empty
-  def inverse: Relation[B, A]
-}
-
-object Relation {}
-
-trait SingleRelation[A, B] extends Relation[A, B]
-
-trait MultiRelation[A, B] extends Relation[A, B]
-
-case class OneToOneRel[A, B](condition: (Table[A], Table[B]) => NonEmptyList[(String, String)])(
-    implicit
-    tableA: Table[A],
-    tableB: Table[B]
-) extends SingleRelation[A, B] {
-  // JOIN scheam.tableB ON tableA._1 = tableB._1 AND tableA._2 = tableB._2
-  condition(tableA, tableB)
-    .map {
-      case (left, right) => s"${tableA.defaultSyntax.column(left)} = ${tableB.defaultSyntax.column(right)}"
-    }
-    .toList
-    .mkString(" AND ")
-
-  override def inverse: Relation[B, A] = OneToOneRel[B, A]((b, a) => condition(a, b).map(_.swap))
-}
-
-case class OneToOneOptRel[A, B](condition: (Table[A], Table[B]) => NonEmptyList[(String, String)])(
-    implicit
-    tableA: Table[A],
-    tableB: Table[B]
-) extends SingleRelation[A, B] {
-  // LEFT JOIN scheam.tableB ON tableA._1 = tableB._1 AND tableA._2 = tableB._2
-  condition(tableA, tableB)
-    .map {
-      case (left, right) => s"${tableA.defaultSyntax.column(left)} = ${tableB.defaultSyntax.column(right)}"
-    }
-    .toList
-    .mkString(" AND ")
-
-  override def inverse: Relation[B, A] = OneToOneOptRel[B, A]((b, a) => condition(a, b).map(_.swap))
-}
-
-case class ManyToOneRelation[A, B]() extends SingleRelation[A, B] {
-  override def inverse: Relation[B, A] = ???
-}
-
-case class ManyToOneOptRelation[A, B]() extends SingleRelation[A, B] {
-  override def inverse: Relation[B, A] = ???
-}
-
-case class OneToManyRelation[A, B]() extends MultiRelation[A, B] {
-  override def inverse: Relation[B, A] = ???
-}
-
-case class OneToManyOptRelation[A, B]() extends MultiRelation[A, B] {
-  override def inverse: Relation[B, A] = ???
-}
+//sealed trait Relation[A, B] {
+//  def toFragment: Fragment = Fragment.empty
+//  def inverse: Relation[B, A]
+//}
+//
+//object Relation {}
+//
+//trait SingleRelation[A, B] extends Relation[A, B]
+//
+//trait MultiRelation[A, B] extends Relation[A, B]
+//
+//case class OneToOneRel[A, B](condition: (Table[A], Table[B]) => NonEmptyList[(String, String)])(
+//    implicit
+//    tableA: Table[A],
+//    tableB: Table[B]
+//) extends SingleRelation[A, B] {
+//  // JOIN scheam.tableB ON tableA._1 = tableB._1 AND tableA._2 = tableB._2
+//  condition(tableA, tableB)
+//    .map {
+//      case (left, right) => s"${tableA.defaultSyntax.column(left)} = ${tableB.defaultSyntax.column(right)}"
+//    }
+//    .toList
+//    .mkString(" AND ")
+//
+//  override def inverse: Relation[B, A] = OneToOneRel[B, A]((b, a) => condition(a, b).map(_.swap))
+//}
+//
+//case class OneToOneOptRel[A, B](condition: (Table[A], Table[B]) => NonEmptyList[(String, String)])(
+//    implicit
+//    tableA: Table[A],
+//    tableB: Table[B]
+//) extends SingleRelation[A, B] {
+//  // LEFT JOIN scheam.tableB ON tableA._1 = tableB._1 AND tableA._2 = tableB._2
+//  condition(tableA, tableB)
+//    .map {
+//      case (left, right) => s"${tableA.defaultSyntax.column(left)} = ${tableB.defaultSyntax.column(right)}"
+//    }
+//    .toList
+//    .mkString(" AND ")
+//
+//  override def inverse: Relation[B, A] = OneToOneOptRel[B, A]((b, a) => condition(a, b).map(_.swap))
+//}
+//
+//case class ManyToOneRelation[A, B]() extends SingleRelation[A, B] {
+//  override def inverse: Relation[B, A] = ???
+//}
+//
+//case class ManyToOneOptRelation[A, B]() extends SingleRelation[A, B] {
+//  override def inverse: Relation[B, A] = ???
+//}
+//
+//case class OneToManyRelation[A, B]() extends MultiRelation[A, B] {
+//  override def inverse: Relation[B, A] = ???
+//}
+//
+//case class OneToManyOptRelation[A, B]() extends MultiRelation[A, B] {
+//  override def inverse: Relation[B, A] = ???
+//}
 
 // extract all relation filters
 
@@ -114,6 +201,64 @@ object extractRelationFilter extends TableFunction.extract[Option[RelFilter[_, _
 // if it's a multiple we have to act in a different way than a single
 
 object relationFilterToFragment extends Poly1 {
+  implicit def atOptionSingleRelationFilter[A, B, T <: FilterWrapper[T], K <: Symbol, V <: Option[
+    RelFilter[A, B, T]
+  ]](
+      implicit
+      wt: Witness.Aux[K],
+      link: Link[A, B], // accept only single rel
+      tableFilter: TableFilterRel[B, T]
+  ): Case.Aux[FieldType[K, V], FieldType[K, Option[Fragment]]] =
+    at[FieldType[K, V]] { ft =>
+      //implicit val table = relation.tableB
+      //field[K](ft.flatMap(f => FilterWrapper.filterFragment[B, T](f.filter)))
+      field[K](ft.flatMap({
+        case x: SingleRelFilter[A, B, T] =>
+          if (link.isJunction) {
+            // Single relation is implemented using a junction table
+            val nameLeft     = link.tableA.defaultSyntax.name
+            val nameJunction = link.tableC.defaultSyntax.name
+            val nameRight    = link.tableB.defaultSyntax.name
+            // ONE
+
+            // NONE
+
+            None
+          } else {
+            // Single relation is implemented using a direct table
+
+            // ONE
+
+            // NONE
+
+            None
+          }
+        case x: MultiRelFilter[A, B, T] =>
+          if (link.isJunction) {
+            // Multi relation is implemented using a junction table
+
+            // EVERY
+
+            // SOME
+
+            // NONE
+
+            None
+          } else {
+            // Multi relation is implemented using a direct table
+
+            // EVERY
+
+            // SOME
+
+            // NONE
+
+            None
+          }
+      }))
+    }
+
+  /*
   implicit def atOptionSingleRelationFilter[A, B, T <: FilterWrapper[T], K <: Symbol, V <: Option[
     SingleRelFilter[A, B, T]
   ]](
@@ -129,11 +274,11 @@ object relationFilterToFragment extends Poly1 {
       relation match {
         // EXISTS(SELECT ONE FROM rightTable WHERE leftTable.id = rightTable.id AND (filter))
         case rel: OneToOneRel[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-        // EXISTS(SELECT ONE FROM tableB WHERE leftID = rightID AND (filter))
+        // EXISTS(SELECT ONE FROM rightTable WHERE leftID = rightID AND (filter))
         case rel: OneToOneOptRel[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-        // EXISTS(SELECT ONE FROM tableB WHERE leftID = rightID AND (filter))
+        // EXISTS(SELECT ONE FROM rightTable WHERE leftID = rightID AND (filter))
         case rel: ManyToOneRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-        // EXISTS(SELECT ONE FROM tableB WHERE leftID = rightID AND (filter))
+        // EXISTS(SELECT ONE FROM rightTable WHERE leftID = rightID AND (filter))
         case rel: ManyToOneOptRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
       }
     }
@@ -143,14 +288,15 @@ object relationFilterToFragment extends Poly1 {
   ]](
       implicit
       wt: Witness.Aux[K],
-      relation: MultiRelation[A, B], // accept only multi relation
+      link: Link[A, B], // accept only multi relation
       tableB: Table[B],
       tableFilter: TableFilter[B, T]
   ): Case.Aux[FieldType[K, V], FieldType[K, Option[Fragment]]] =
     at[FieldType[K, V]] { ft =>
       //implicit val table = relation.tableB
       //field[K](ft.flatMap(f => FilterWrapper.filterFragment[B, T](f.filter)))
-      relation match {
+      link match {
+        case x => ???
         // USING JOIN TABLE - EVERY
         // NOT EXISTS(
         //   SELECT ONE
@@ -175,7 +321,9 @@ object relationFilterToFragment extends Poly1 {
         //   ON jointable.id = rightTable.id
         //   WHERE joinTable.id = leftTable.id
         // )
-        case rel: OneToManyRelation[A, B]    => field[K](ft.flatMap(f => None: Option[Fragment]))
+
+        //case rel: OneToManyRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
+
         // USING FIELD ON OTHER ENTITY - EVERY
         // EXISTS(
         //  SELECT ONE WHERE
@@ -196,9 +344,11 @@ object relationFilterToFragment extends Poly1 {
         //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
         //   WHERE rightTable.id = leftTable.id
         // )
-        case rel: OneToManyOptRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
+
+        //case rel: OneToManyOptRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
       }
     }
+ */
 }
 
 // test
@@ -213,9 +363,7 @@ object Test extends App {
   implicit val tableA: Aux[A, AKey] = Table.derive[A, AKey]()
   implicit val tableB: Aux[B, BKey] = Table.derive[B, BKey]()
 
-  implicit val relAB: MultiRelation[A, B] = new MultiRelation[A, B] {
-    override def inverse: Relation[B, A] = ???
-  }
+  implicit val relAB: Link[A, B] = Link.direct[A, B]((a, b) => Seq((a.defaultSyntax.field1, b.defaultSyntax.field2)))
 
   case class AFilter(
       field1: Option[StringFilter],
@@ -226,6 +374,9 @@ object Test extends App {
     override def OR: Option[Seq[AFilter]]  = None
     override def NOT: Option[AFilter]      = None
   }
+
+  implicit val decoder: Decoder[AFilter] = io.circe.generic.semiauto.deriveDecoder[AFilter]
+
   case class BFilter(
       field1: Option[LongFilter],
       field2: Option[StringFilter]
@@ -235,7 +386,9 @@ object Test extends App {
     override def NOT: Option[BFilter]      = None
   }
 
-  implicit val filter2: TableFilter[B, BFilter]   = TableFilter.derive[B, BFilter]()
+  implicit val decoder1: Decoder[BFilter] = io.circe.generic.semiauto.deriveDecoder[BFilter]
+
+  implicit val filter2: TableFilterRel[B, BFilter]   = TableFilterRel.derive[B, BFilter]()
   implicit val filter: TableFilterRel[A, AFilter] = TableFilterRel.derive[A, AFilter]()
 
   val bFilter = BFilter(
@@ -257,6 +410,8 @@ object Test extends App {
 
   val test = Derivator[AFilter]().make.relationValues(LabelledGeneric[AFilter].to(aFilter))
   println(test)
+
+  println(implicitly[Table[Unit]])
 }
 
 // alternative
@@ -282,12 +437,12 @@ object TableFilterRel {
           implicit
           lgenT: LabelledGeneric.Aux[T, L],
           lgenU: LabelledGeneric.Aux[U, R],
-          tableFilterLR: ReprTableFilterRel.Aux[L, R, RKeys, RValues],
+          tableFilterLR: Lazy[ReprTableFilterRel.Aux[L, R, RKeys, RValues]],
           keyToTraversableR: ops.hlist.ToTraversable.Aux[RKeys, List, Symbol],
           valueToTraversableR: ops.hlist.ToTraversable.Aux[RValues, List, Option[Filter[_]]]
       ): TableFilterRel[T, U] = new TableFilterRel[T, U] {
-        override def keys(): List[Symbol]                  = tableFilterLR.keys().toList
-        override def values(u: U): List[Option[Filter[_]]] = tableFilterLR.values(lgenU.to(u)).toList
+        override def keys(): List[Symbol]                  = tableFilterLR.value.keys().toList
+        override def values(u: U): List[Option[Filter[_]]] = tableFilterLR.value.values(lgenU.to(u)).toList
       }
     }
   }
