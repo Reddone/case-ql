@@ -33,82 +33,103 @@ import shapeless.{::, HNil, Poly1, Witness}
 // relation filter
 // we can create either a single relation filter or a multi rel filter
 
-sealed trait RelFilter[A, B, T <: FilterWrapper[T]]
+//sealed trait RelFilter[A, B, T <: FilterWrapper[T]]
+//
+//final case class SingleRelFilter[A, B, T <: FilterWrapper[T]](
+//    SOME: Option[T],
+//    NONE: Option[T]
+//) extends RelFilter[A, B, T]
+//
+//object SingleRelFilter {
+//  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[SingleRelFilter[A, B, T]] =
+//    io.circe.generic.semiauto.deriveDecoder[SingleRelFilter[A, B, T]]
+//}
+//
+//final case class MultiRelFilter[A, B, T <: FilterWrapper[T]](
+//    EVERY: Option[T],
+//    SOME: Option[T],
+//    NONE: Option[T]
+//) extends RelFilter[A, B, T]
+//
+//object MultiRelFilter {
+//  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[MultiRelFilter[A, B, T]] =
+//    io.circe.generic.semiauto.deriveDecoder[MultiRelFilter[A, B, T]]
+//}
 
-final case class SingleRelFilter[A, B, T <: FilterWrapper[T]](
-    ONE: Option[T],
-    NONE: Option[T]
-) extends RelFilter[A, B, T]
-
-object SingleRelFilter {
-  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[SingleRelFilter[A, B, T]] =
-    io.circe.generic.semiauto.deriveDecoder[SingleRelFilter[A, B, T]]
-}
-
-final case class MultiRelFilter[A, B, T <: FilterWrapper[T]](
+final case class RelFilter[A, B, T <: FilterWrapper[T]](
     EVERY: Option[T],
     SOME: Option[T],
     NONE: Option[T]
-) extends RelFilter[A, B, T]
+)
 
-object MultiRelFilter {
-  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[MultiRelFilter[A, B, T]] =
-    io.circe.generic.semiauto.deriveDecoder[MultiRelFilter[A, B, T]]
+object RelFilter {
+  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[RelFilter[A, B, T]] =
+    io.circe.generic.semiauto.deriveDecoder[RelFilter[A, B, T]]
 }
 
 // link
 
-sealed trait Link[A, B] {
-  type J
+trait Link[A, B] {
+  type C
 
   def tableA: Table[A]
   def tableB: Table[B]
-  def tableC: Table[J]
-
-  def leftCondition: Seq[(String, String)]
-  def rightCondition: Seq[(String, String)]
+  def tableC: Table[C]
+  def leftCondition: List[(String, String)]
+  def rightCondition: List[(String, String)]
   def isJunction: Boolean
 }
 
 object Link {
 
-  type Aux[A, B, C] = Link[A, B] { type J = C }
+  type Aux[A, B, C0] = Link[A, B] { type C = C0 }
 
-  def direct[A, B](condition: (Table[A], Table[B]) => Seq[(String, String)])(
-      implicit
-      tableAA: Table[A],
-      tableBB: Table[B],
-      tableCC: Table[Unit]
-  ): Aux[A, B, Unit] =
-    new Link[A, B] {
-      override type J = Unit
-      override def tableA: Table[A]                      = tableAA
-      override def tableB: Table[B]                      = tableBB
-      override def tableC: Table[Unit]                   = tableCC
-      override def isJunction: Boolean                   = false
-      override def leftCondition: Seq[(String, String)]  = condition(tableAA, tableBB)
-      override def rightCondition: Seq[(String, String)] = Seq.empty
-    }
-
-  def junction[A, B, C](
-      leftCond: (Table[A], Table[C]) => Seq[(String, String)],
-      rightCond: (Table[A], Table[C]) => Seq[(String, String)]
+  def direct[A, B](
+      condition: (Table[A], Table[B]) => NonEmptyList[(String, String)]
   )(
       implicit
       tableAA: Table[A],
       tableBB: Table[B],
-      tableCC: Table[C]
-  ): Aux[A, B, C] =
-    new Link[A, B] {
-      override type J = C
-      override def tableA: Table[A] = tableAA
-      override def tableB: Table[B] = tableBB
-      override def tableC: Table[C] = tableCC
+      tableCC: Table[Unit]
+  ): Aux[A, B, Unit] = new Link[A, B] {
+    override type C = Unit
+    override def tableA: Table[A]                       = tableAA
+    override def tableB: Table[B]                       = tableBB
+    override def tableC: Table[C]                       = tableCC
+    override def isJunction: Boolean                    = false
+    override def leftCondition: List[(String, String)]  = condition(tableAA, tableBB).toList
+    override def rightCondition: List[(String, String)] = List.empty
+  }
 
-      override def leftCondition: Seq[(String, String)]  = leftCond(tableAA, tableCC)
-      override def rightCondition: Seq[(String, String)] = rightCond(tableAA, tableCC)
-      override def isJunction: Boolean                   = true
-    }
+  def junction[A, B, C0](
+      leftCond: (Table[A], Table[C0]) => NonEmptyList[(String, String)],
+      rightCond: (Table[B], Table[C0]) => NonEmptyList[(String, String)]
+  )(
+      implicit
+      tableAA: Table[A],
+      tableBB: Table[B],
+      tableCC: Table[C0]
+  ): Aux[A, B, C0] = new Link[A, B] {
+    override type C = C0
+    override def tableA: Table[A]                       = tableAA
+    override def tableB: Table[B]                       = tableBB
+    override def tableC: Table[C]                       = tableCC
+    override def leftCondition: List[(String, String)]  = leftCond(tableAA, tableCC).toList
+    override def rightCondition: List[(String, String)] = rightCond(tableBB, tableCC).toList
+    override def isJunction: Boolean                    = true
+  }
+
+  implicit def inverse[A, B, C0](
+      implicit link: Link.Aux[A, B, C0]
+  ): Aux[B, A, C0] = new Link[B, A] {
+    override type C = C0
+    override def tableA: Table[B]                       = link.tableB
+    override def tableB: Table[A]                       = link.tableA
+    override def tableC: Table[C]                       = link.tableC
+    override def leftCondition: List[(String, String)]  = link.rightCondition
+    override def rightCondition: List[(String, String)] = link.leftCondition
+    override def isJunction: Boolean                    = link.isJunction
+  }
 }
 
 //final case class DirectLink[A, B](
@@ -213,7 +234,7 @@ object relationFilterToFragment extends Poly1 {
       //implicit val table = relation.tableB
       //field[K](ft.flatMap(f => FilterWrapper.filterFragment[B, T](f.filter)))
       field[K](ft.flatMap({
-        case x: SingleRelFilter[A, B, T] =>
+        case x: RelFilter[A, B, T] =>
           if (link.isJunction) {
             // Single relation is implemented using a junction table
             val nameLeft     = link.tableA.defaultSyntax.name
@@ -228,28 +249,6 @@ object relationFilterToFragment extends Poly1 {
             // Single relation is implemented using a direct table
 
             // ONE
-
-            // NONE
-
-            None
-          }
-        case x: MultiRelFilter[A, B, T] =>
-          if (link.isJunction) {
-            // Multi relation is implemented using a junction table
-
-            // EVERY
-
-            // SOME
-
-            // NONE
-
-            None
-          } else {
-            // Multi relation is implemented using a direct table
-
-            // EVERY
-
-            // SOME
 
             // NONE
 
@@ -363,12 +362,13 @@ object Test extends App {
   implicit val tableA: Aux[A, AKey] = Table.derive[A, AKey]()
   implicit val tableB: Aux[B, BKey] = Table.derive[B, BKey]()
 
-  implicit val relAB: Link[A, B] = Link.direct[A, B]((a, b) => Seq((a.defaultSyntax.field1, b.defaultSyntax.field2)))
+  implicit val relAB: Link[A, B] =
+    Link.direct[A, B]((a, b) => NonEmptyList.of((a.defaultSyntax.field1, b.defaultSyntax.field2)))
 
   case class AFilter(
       field1: Option[StringFilter],
       field2: Option[IntFilter],
-      b: Option[MultiRelFilter[A, B, BFilter]]
+      bRelation: Option[RelFilter[A, B, BFilter]]
   ) extends FilterWrapper[AFilter] {
     override def AND: Option[Seq[AFilter]] = None
     override def OR: Option[Seq[AFilter]]  = None
@@ -388,8 +388,8 @@ object Test extends App {
 
   implicit val decoder1: Decoder[BFilter] = io.circe.generic.semiauto.deriveDecoder[BFilter]
 
-  implicit val filter2: TableFilterRel[B, BFilter]   = TableFilterRel.derive[B, BFilter]()
-  implicit val filter: TableFilterRel[A, AFilter] = TableFilterRel.derive[A, AFilter]()
+  implicit val filter2: TableFilterRel[B, BFilter] = TableFilterRel.derive[B, BFilter]()
+  implicit val filter: TableFilterRel[A, AFilter]  = TableFilterRel.derive[A, AFilter]()
 
   val bFilter = BFilter(
     Some(LongFilter.empty.copy(EQ = Some(1L))),
@@ -398,7 +398,7 @@ object Test extends App {
   val aFilter = AFilter(
     None,
     None,
-    Some(MultiRelFilter[A, B, BFilter](Some(bFilter), None, None))
+    Some(RelFilter[A, B, BFilter](Some(bFilter), None, None))
   )
   println(
     LabelledGeneric[AFilter]
