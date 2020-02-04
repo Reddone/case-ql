@@ -6,7 +6,7 @@ import doobie._
 import doobie.implicits._
 import Fragment._
 
-trait FilterWrapper[T <: FilterWrapper[T]] { self: T with Product =>
+trait FilterWrapper[T <: FilterWrapper[T]] {
   def AND: Option[Seq[T]]
   def OR: Option[Seq[T]]
   def NOT: Option[T]
