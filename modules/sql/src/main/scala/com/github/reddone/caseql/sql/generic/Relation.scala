@@ -174,6 +174,11 @@ object relationFilterToFragment extends Poly1 {
             //   ON jointable.id = rightTable.id
             //   WHERE joinTable.id = leftTable.id AND IS NULL rightTable.id
             // )
+
+            val a = (a: Table[A]#Syntax) => 3
+
+            a(link.tableA.defaultSyntax)
+
             val leftCondSql = leftCond
               .map {
                 case (lf, rf) => s"${left.column(lf)} = ${middle.column(rf)}"
@@ -195,7 +200,7 @@ object relationFilterToFragment extends Poly1 {
               |""".stripMargin) ++ filterFrag ++
                 Fragment.const(")")
 
-            f.EVERY.flatMap(ff => EntityFilter2.filterFragment[B, T](ff)(link.tableB, tableFilter)).map(sqlString)
+            f.EVERY.flatMap(ff => EntityFilter2.filterFragment[B, T](ff, right)(tableFilter)).map(sqlString)
             // SOME
             // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
             // EXISTS(
@@ -219,8 +224,14 @@ object relationFilterToFragment extends Poly1 {
             //None
           } else {
             // Single relation is implemented using a direct table
-            val left  = link.tableA.defaultSyntax.name
-            val right = link.tableB.defaultSyntax.name
+            val left     = link.tableA.defaultSyntax //.syntax("l")
+            val right    = link.tableB.defaultSyntax //.syntax("r")
+            val leftCond = link.leftJoinFields
+            val leftCondSql = leftCond
+              .map {
+                case (lf, rf) => s"${left.column(lf)} = ${right.column(rf)}"
+              }
+              .mkString(" AND ")
             // EVERY
             // EXISTS(
             //  SELECT ONE WHERE
@@ -236,15 +247,22 @@ object relationFilterToFragment extends Poly1 {
             //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
             //   WHERE rightTable.id = leftTable.id
             // )
+            val sqlString = (filterFrag: Fragment) =>
+              Fragment.const(s"""
+                                |EXISTS (
+                                |SELECT ONE
+                                |FROM ${right.name}
+                                |WHERE ${leftCondSql} AND
+                                |""".stripMargin) ++ filterFrag ++
+                Fragment.const(")")
 
+            f.EVERY.flatMap(ff => EntityFilter2.filterFragment[B, T](ff, right)(tableFilter)).map(sqlString)
             // NONE
             // NOT EXISTS(
             //   SELECT ONE
             //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
             //   WHERE rightTable.id = leftTable.id
             // )
-
-            None
           }
         )
       )
@@ -309,8 +327,6 @@ object Test extends App {
 
   val test = Derivator[AFilter]().make.relationValues(LabelledGeneric[AFilter].to(aFilter))
   println(test)
-
-  println(implicitly[Table[Unit]])
 }
 
 // alternative
@@ -318,6 +334,7 @@ object Test extends App {
 trait TableFilterRel[T, U] {
   def keys(): List[Symbol]
   def values(u: U): List[Option[Filter[_]]]
+  def relations(u: U): List[Option[Fragment]]
 
   def andCombinator(u: U): Option[Seq[U]] = None
 }
@@ -340,8 +357,9 @@ object TableFilterRel {
           keyToTraversableR: ops.hlist.ToTraversable.Aux[RKeys, List, Symbol],
           valueToTraversableR: ops.hlist.ToTraversable.Aux[RValues, List, Option[Filter[_]]]
       ): TableFilterRel[T, U] = new TableFilterRel[T, U] {
-        override def keys(): List[Symbol]                  = tableFilterLR.value.keys().toList
-        override def values(u: U): List[Option[Filter[_]]] = tableFilterLR.value.values(lgenU.to(u)).toList
+        override def keys(): List[Symbol]                    = tableFilterLR.value.keys().toList
+        override def values(u: U): List[Option[Filter[_]]]   = tableFilterLR.value.values(lgenU.to(u)).toList
+        override def relations(u: U): List[Option[Fragment]] = tableFilterLR.value.relationValues(lgenU.to(u))
       }
     }
   }
@@ -437,13 +455,12 @@ object ReprRelationFilter {
 
 object EntityFilter2 {
 
-  def filterFragment[T, U <: EntityFilter[U]](filter: U)(
-    implicit
-    table: Table[T],
-    tableFilter: TableFilterRel[T, U]
+  def filterFragment[T, U <: EntityFilter[U]](filter: U, syntax: Table[T]#Syntax)(
+      implicit
+      tableFilter: TableFilterRel[T, U]
   ): Option[Fragment] = {
     def make(filter: U): Option[Fragment] = {
-      val left  = tableFilter.keys().map(_.name).map(table.defaultSyntax.column)
+      val left  = tableFilter.keys().map(_.name).map(syntax.column)
       val right = tableFilter.values(filter)
       val zipped = left.zip(right).map {
         case (col, optionFilter) => optionFilter.flatMap(_.toOptionFragment(col))
@@ -451,18 +468,23 @@ object EntityFilter2 {
       FragmentUtils.optionalAndOpt(zipped: _*)
     }
 
+    def makeRelations(filter: U): Option[Fragment] = {
+      FragmentUtils.optionalAndOpt(tableFilter.relations(filter): _*)
+    }
+
     FragmentUtils.optionalAndOpt(
       make(filter),
+      makeRelations(filter),
       filter.AND.flatMap { and =>
-        val recs = and.map(filterFragment(_))
+        val recs = and.map(filterFragment(_, syntax))
         FragmentUtils.optionalAndOpt(recs: _*)
       },
       filter.OR.flatMap { or =>
-        val recs = or.map(filterFragment(_))
+        val recs = or.map(filterFragment(_, syntax))
         FragmentUtils.optionalOrOpt(recs: _*)
       },
       filter.NOT.flatMap { not =>
-        val rec = filterFragment(not)
+        val rec = filterFragment(not, syntax)
         FragmentUtils.optionalNot(rec)
       }
     )

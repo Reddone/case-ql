@@ -1,9 +1,12 @@
 package com.github.reddone.caseql.sql.generic
 
+import java.util.concurrent.atomic.AtomicLong
+
 import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
+import scala.collection.concurrent.TrieMap
 import scala.language.dynamics
 import scala.reflect.runtime.universe.{Symbol => _, _}
 
@@ -11,6 +14,8 @@ trait Table[T] extends TableQuery[T] { self =>
   type Key
 
   def name: String
+
+  def shortenedName: String
 
   def schema: Option[String]
 
@@ -32,7 +37,7 @@ trait Table[T] extends TableQuery[T] { self =>
 
   final def syntax(alias: String): Syntax = Syntax(alias, self)
 
-  final val defaultSyntax: Syntax = Syntax("", self)
+  final lazy val defaultSyntax: Syntax = Syntax(shortenedName, self)
 
   sealed case class Syntax(alias: String, support: self.type) extends Dynamic {
 
@@ -41,7 +46,7 @@ trait Table[T] extends TableQuery[T] { self =>
     lazy val name: String = {
       val fullName        = StringUtils.addPrefix(support.name, support.schema)
       val aliasedFullName = StringUtils.addSuffix(fullName, aliasO, " ")
-      aliasedFullName
+      if (alias == support.name) fullName else aliasedFullName
     }
 
     lazy val columns: List[String] = support.fields.map(c).map(StringUtils.addPrefix(_, aliasO))
@@ -58,6 +63,10 @@ trait Table[T] extends TableQuery[T] { self =>
 
 object Table {
 
+  private val counter       = new AtomicLong(0L)
+
+  private val tableRegister = new TrieMap[String, String]()
+
   type Aux[T, Key0] = Table[T] { type Key = Key0 }
 
   def apply[T](implicit ev: Table[T]): Aux[T, ev.Key] = ev
@@ -69,6 +78,9 @@ object Table {
     def apply[T, K] = new Partial[T, K]
 
     class Partial[T, K] {
+
+      // TODO: singleton ???
+      def apply(implicit ev: Table[T]): Aux[T, ev.Key] = ev
 
       def apply[L <: HList, LKeys <: HList, R <: HList, RKeys <: HList](
           aName: Option[String] = None,
@@ -95,6 +107,11 @@ object Table {
         override val name: String = aName.getOrElse(StringUtils.camelToSnake(typeOf[T](tag).typeSymbol.name.toString))
 
         override val schema: Option[String] = aSchema
+
+        override val shortenedName: String = tableRegister.getOrElseUpdate(
+          name,
+          StringUtils.shorten(name) + counter.getAndIncrement().toString
+        )
 
         override val fieldConverter: Map[String, String] = aFieldConverter
 
