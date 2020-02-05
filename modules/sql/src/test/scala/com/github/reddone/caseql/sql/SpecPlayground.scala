@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.filter.FilterWrapper
+import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
@@ -37,7 +37,7 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
       AND: Option[Seq[TestFilter]],
       OR: Option[Seq[TestFilter]],
       NOT: Option[TestFilter]
-  ) extends FilterWrapper[TestFilter]
+  ) extends EntityFilter[TestFilter]
   // test modifier
   case class TestModifier(
       field1: Option[IntModifier],

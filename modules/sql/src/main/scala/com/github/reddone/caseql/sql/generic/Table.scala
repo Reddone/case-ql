@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.generic
 
-import com.github.reddone.caseql.sql.util.StringUtils
+import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
@@ -64,20 +64,6 @@ object Table {
 
   implicit val unit: Table[Unit] = derive[Unit, Unit]()
 
-//  new Table[Unit] { table =>
-//    override type Key = Unit
-//    override def name: String = ???
-//    override def schema: Option[String] = ???
-//    override def fieldConverter: Map[String, String] = ???
-//    override def fieldMapper(field: String): String = ???
-//    override def fields: List[String] = ???
-//    override def keyFields: List[String] = ???
-//    override implicit def read: Read[Unit] = implicitly[Read[Unit]]
-//    override implicit def write: Write[Unit] = ???
-//    override implicit def keyRead: Read[table.Key] = ???
-//    override implicit def keyWrite: Write[table.Key] = ???
-//  }
-
   object derive {
 
     def apply[T, K] = new Partial[T, K]
@@ -122,9 +108,9 @@ object Table {
 
         override implicit val write: Write[T] = writeT
 
-        override implicit val keyRead: Read[table.Key] = readK
+        override implicit val keyRead: Read[Key] = readK
 
-        override implicit val keyWrite: Write[table.Key] = writeK
+        override implicit val keyWrite: Write[Key] = writeK
       }
     }
   }

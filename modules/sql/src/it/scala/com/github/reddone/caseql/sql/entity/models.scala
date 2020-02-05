@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.entity
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.filter.FilterWrapper
+import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
@@ -42,7 +42,7 @@ object models {
       AND: Option[Seq[DeveloperFilter]],
       OR: Option[Seq[DeveloperFilter]],
       NOT: Option[DeveloperFilter]
-  ) extends FilterWrapper[DeveloperFilter]
+  ) extends EntityFilter[DeveloperFilter]
 
   object DeveloperFilter {
     implicit val decoder: Decoder[DeveloperFilter] = deriveDecoder[DeveloperFilter]
@@ -92,7 +92,7 @@ object models {
       AND: Option[Seq[ProjectFilter]],
       OR: Option[Seq[ProjectFilter]],
       NOT: Option[ProjectFilter]
-  ) extends FilterWrapper[ProjectFilter]
+  ) extends EntityFilter[ProjectFilter]
 
   object ProjectFilter {
     implicit val decoder: Decoder[ProjectFilter] = deriveDecoder[ProjectFilter]
@@ -138,7 +138,7 @@ object models {
       AND: Option[Seq[DeveloperProjectLinkFilter]],
       OR: Option[Seq[DeveloperProjectLinkFilter]],
       NOT: Option[DeveloperProjectLinkFilter]
-  ) extends FilterWrapper[DeveloperProjectLinkFilter]
+  ) extends EntityFilter[DeveloperProjectLinkFilter]
 
   object DeveloperProjectLinkFilter {
     implicit val decoder: Decoder[DeveloperProjectLinkFilter] = deriveDecoder[DeveloperProjectLinkFilter]

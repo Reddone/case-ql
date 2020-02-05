@@ -1,17 +1,18 @@
 package com.github.reddone.caseql.sql.generic
 
 import cats.implicits._
-import com.github.reddone.caseql.sql.filter.FilterWrapper
+import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.util.FragmentUtils
 import com.github.reddone.caseql.sql.tokens.{Update => UpdateToken, _}
 import doobie._
 import Fragment._
+import fs2.Stream
 
 trait TableQuery[T] { table: Table[T] =>
 
   // WHERE
 
-  def filterFragment[U <: FilterWrapper[U]](filter: U, syntax: table.Syntax)(
+  def filterFragment[U <: EntityFilter[U]](filter: U, syntax: table.Syntax)(
       implicit tableFilter: TableFilter[T, U]
   ): Option[Fragment] = {
     def make(filter: U): Option[Fragment] = {
@@ -42,7 +43,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // SELECT
 
-  def selectFragment[U <: FilterWrapper[U]](filter: U, syntax: table.Syntax)(
+  def selectFragment[U <: EntityFilter[U]](filter: U, syntax: table.Syntax)(
       implicit tableFilter: TableFilter[T, U]
   ): Fragment = {
     val whereFragment  = filterFragment(filter, syntax).map(const(Where) ++ _).getOrElse(empty)
@@ -51,7 +52,7 @@ trait TableQuery[T] { table: Table[T] =>
     selectFragment ++ whereFragment
   }
 
-  def selectQuery[U <: FilterWrapper[U]](filter: U, syntax: table.Syntax)(
+  def selectQuery[U <: EntityFilter[U]](filter: U, syntax: table.Syntax)(
       implicit tableFilter: TableFilter[T, U]
   ): ConnectionIO[List[T]] = {
     selectFragment(filter, syntax).query[T].to[List]
@@ -84,7 +85,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // UPDATE
 
-  def updateFragment[U, V <: FilterWrapper[V]](modifier: U, filter: V)(
+  def updateFragment[U, V <: EntityFilter[V]](modifier: U, filter: V)(
       implicit
       tableModifier: TableModifier[T, U],
       tableFilter: TableFilter[T, V]
@@ -102,7 +103,7 @@ trait TableQuery[T] { table: Table[T] =>
     updateFragment ++ setFragment ++ whereFragment
   }
 
-  def updateQuery[U, V <: FilterWrapper[V]](modifier: U, filter: V)(
+  def updateQuery[U, V <: EntityFilter[V]](modifier: U, filter: V)(
       implicit
       tableModifier: TableModifier[T, U],
       tableFilter: TableFilter[T, V]
@@ -112,7 +113,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // DELETE
 
-  def deleteFragment[U <: FilterWrapper[U]](filter: U)(
+  def deleteFragment[U <: EntityFilter[U]](filter: U)(
       implicit tableFilter: TableFilter[T, U]
   ): Fragment = {
     val whereFragment  = filterFragment(filter, table.defaultSyntax).map(const(Where) ++ _).getOrElse(empty)
@@ -121,7 +122,7 @@ trait TableQuery[T] { table: Table[T] =>
     deleteFragment ++ whereFragment
   }
 
-  def deleteQuery[U <: FilterWrapper[U]](filter: U)(
+  def deleteQuery[U <: EntityFilter[U]](filter: U)(
       implicit tableFilter: TableFilter[T, U]
   ): ConnectionIO[table.Key] = {
     deleteFragment(filter).update.withUniqueGeneratedKeys[table.Key](table.defaultSyntax.keyColumns: _*)

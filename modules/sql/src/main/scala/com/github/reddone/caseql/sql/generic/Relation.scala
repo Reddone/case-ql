@@ -4,11 +4,12 @@ import java.io.FilterWriter
 
 import cats.data.NonEmptyList
 import cats.implicits._
-import com.github.reddone.caseql.sql.filter.FilterWrapper
+import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.filter.models.{Filter, IntFilter, LongFilter, StringFilter}
 import com.github.reddone.caseql.sql.generic.Table.{Aux, derive}
 import com.github.reddone.caseql.sql.generic.TableFunction.extractFilter
 import com.github.reddone.caseql.sql.modifier.models.Modifier
+import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._
 import doobie.implicits._
 import io.circe.Decoder
@@ -18,140 +19,68 @@ import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Poly1, Witness, ops}
 import shapeless.labelled.{FieldType, field}
 import shapeless.{::, HNil, Poly1, Witness}
 
-// We have TableFilter[A, AA] and TableFilter[B, BB]
-
-// 1) we can put RelationFilters inside filters and go unsafe
-// 2) There is not way to keep track of relation between A and B inside filter
-
-// a relation between A and B
-
-// one to one        -> inner join    A has one B
-// one to one opt    -> left join     A may have one B
-// one to many       -> inner join    A has many B (fkey is on b)
-// one to many opt   -> left join     A may have many B (fkey is on b)
-
-// relation filter
-// we can create either a single relation filter or a multi rel filter
-
-//sealed trait RelFilter[A, B, T <: FilterWrapper[T]]
+// experiment for replacing filter wrapper
+//final case class EntityFilter[T](
+//    t: Option[T],
+//    AND: Option[Seq[EntityFilter[T]]],
+//    OR: Option[Seq[EntityFilter[T]]],
+//    NOT: Option[EntityFilter[T]]
+//)
+// We have to add filter keyword to every object
+// {
+//   filter: {
+//    a: { EQ: 3, GT: 5}
+//    b: { EQ: 2},
+//    relation: {
+//      EVERY: {
+//        filter: {}
+//      }
+//    }
+//   },
+//   AND: [
+//     AND: [{filter: {}, AND: []}, filter: {}],
+//     OR: []
+//   ]
 //
-//final case class SingleRelFilter[A, B, T <: FilterWrapper[T]](
-//    SOME: Option[T],
-//    NONE: Option[T]
-//) extends RelFilter[A, B, T]
 //
-//object SingleRelFilter {
-//  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[SingleRelFilter[A, B, T]] =
-//    io.circe.generic.semiauto.deriveDecoder[SingleRelFilter[A, B, T]]
+// }
+// experiment to introduce batch insert, update, delete
+// final case class GraphFilter(filter, union: Option[Seq[GraphFIlter]], expect)
+// final case class GraphUpdater(modifier, filter, batch: Option[Seq[Updater]])
+// final case class GraphInserter(modifier)
+// final case class GraphDeleter(filter, batch: )
+
+//final case class EntityFilter[T](
+//    t: Option[T],
+//    AND: Option[Seq[EntityFilter[T]]],
+//    OR: Option[Seq[EntityFilter[T]]],
+//    NOT: Option[EntityFilter[T]]
+//)
+//
+//object Test {
+//  class A
+//
+//  val wrap = EntityFilter(None, AND = Some(Seq(EntityFilter(Some(new A()), None, None, None))), None, None)
 //}
 //
-//final case class MultiRelFilter[A, B, T <: FilterWrapper[T]](
-//    EVERY: Option[T],
-//    SOME: Option[T],
-//    NONE: Option[T]
-//) extends RelFilter[A, B, T]
-//
-//object MultiRelFilter {
-//  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[MultiRelFilter[A, B, T]] =
-//    io.circe.generic.semiauto.deriveDecoder[MultiRelFilter[A, B, T]]
-//}
+//final case class RelationFilter[T](
+//    EVERY: Option[EntityFilter[T]],
+//    SOME: Option[EntityFilter[T]],
+//    NONE: Option[EntityFilter[T]]
+//)
 
-final case class RelFilter[A, B, T <: FilterWrapper[T]](
+// rel filter
+
+final case class RelFilter[A, B, T <: EntityFilter[T]](
     EVERY: Option[T],
     SOME: Option[T],
     NONE: Option[T]
 )
 
 object RelFilter {
-  implicit def decoder[A, B, T <: FilterWrapper[T]: Decoder]: Decoder[RelFilter[A, B, T]] =
+  implicit def decoder[A, B, T <: EntityFilter[T]: Decoder]: Decoder[RelFilter[A, B, T]] =
     io.circe.generic.semiauto.deriveDecoder[RelFilter[A, B, T]]
 }
-
-// link
-
-trait Link[A, B] {
-  type C
-
-  def tableA: Table[A]
-  def tableB: Table[B]
-  def tableC: Table[C]
-  def leftCondition: List[(String, String)]
-  def rightCondition: List[(String, String)]
-  def isJunction: Boolean
-}
-
-object Link {
-
-  type Aux[A, B, C0] = Link[A, B] { type C = C0 }
-
-  def direct[A, B](
-      condition: (Table[A], Table[B]) => NonEmptyList[(String, String)]
-  )(
-      implicit
-      tableAA: Table[A],
-      tableBB: Table[B],
-      tableCC: Table[Unit]
-  ): Aux[A, B, Unit] = new Link[A, B] {
-    override type C = Unit
-    override def tableA: Table[A]                       = tableAA
-    override def tableB: Table[B]                       = tableBB
-    override def tableC: Table[C]                       = tableCC
-    override def isJunction: Boolean                    = false
-    override def leftCondition: List[(String, String)]  = condition(tableAA, tableBB).toList
-    override def rightCondition: List[(String, String)] = List.empty
-  }
-
-  def junction[A, B, C0](
-      leftCond: (Table[A], Table[C0]) => NonEmptyList[(String, String)],
-      rightCond: (Table[B], Table[C0]) => NonEmptyList[(String, String)]
-  )(
-      implicit
-      tableAA: Table[A],
-      tableBB: Table[B],
-      tableCC: Table[C0]
-  ): Aux[A, B, C0] = new Link[A, B] {
-    override type C = C0
-    override def tableA: Table[A]                       = tableAA
-    override def tableB: Table[B]                       = tableBB
-    override def tableC: Table[C]                       = tableCC
-    override def leftCondition: List[(String, String)]  = leftCond(tableAA, tableCC).toList
-    override def rightCondition: List[(String, String)] = rightCond(tableBB, tableCC).toList
-    override def isJunction: Boolean                    = true
-  }
-
-  implicit def inverse[A, B, C0](
-      implicit link: Link.Aux[A, B, C0]
-  ): Aux[B, A, C0] = new Link[B, A] {
-    override type C = C0
-    override def tableA: Table[B]                       = link.tableB
-    override def tableB: Table[A]                       = link.tableA
-    override def tableC: Table[C]                       = link.tableC
-    override def leftCondition: List[(String, String)]  = link.rightCondition
-    override def rightCondition: List[(String, String)] = link.leftCondition
-    override def isJunction: Boolean                    = link.isJunction
-  }
-}
-
-//final case class DirectLink[A, B](
-//    //condition: (Table[A], Table[B]) => Seq[(String, String)]
-//)(implicit tableAA: Table[A], tableBB: Table[B])
-//    extends Link[A, B] {
-//  type J = Unit
-//  override def tableA: Table[A]            = tableAA
-//  override def tableB: Table[B]            = tableBB
-//  override def tableC: Option[Table[Unit]] = None
-//}
-//
-//final case class JunctionLink[A, B](
-//    //leftCondition: (Table[A], Table[Link[A, B]#J]) => Seq[(String, String)],
-//    //rightCondition: (Table[B], Table[Link[A, B]#J]) => Seq[(String, String)]
-//)(implicit tableAA: Table[A], tableBB: Table[B], tableC: Table[Link[A, B]#J])
-//    extends Link[A, B] {
-//  type J = Unit
-//  override def tableA: Table[A]         = tableAA
-//  override def tableB: Table[B]         = tableBB
-//  override def tableC: Option[Table[J]] = Some(tableC)
-//}
 
 // relation
 
@@ -218,139 +147,109 @@ object Link {
 
 object extractRelationFilter extends TableFunction.extract[Option[RelFilter[_, _, _]]]
 
-// create the filter according to the relation type
-// if it's a multiple we have to act in a different way than a single
-
 object relationFilterToFragment extends Poly1 {
-  implicit def atOptionSingleRelationFilter[A, B, T <: FilterWrapper[T], K <: Symbol, V <: Option[
-    RelFilter[A, B, T]
-  ]](
+  implicit def atOptionRelFilter[A, B, T <: EntityFilter[T], K <: Symbol, V <: Option[RelFilter[A, B, T]]](
       implicit
       wt: Witness.Aux[K],
-      link: Link[A, B], // accept only single rel
+      link: Link[A, B],
       tableFilter: TableFilterRel[B, T]
   ): Case.Aux[FieldType[K, V], FieldType[K, Option[Fragment]]] =
     at[FieldType[K, V]] { ft =>
       //implicit val table = relation.tableB
       //field[K](ft.flatMap(f => FilterWrapper.filterFragment[B, T](f.filter)))
-      field[K](ft.flatMap({
-        case x: RelFilter[A, B, T] =>
+      field[K](
+        ft.flatMap(f =>
           if (link.isJunction) {
             // Single relation is implemented using a junction table
-            val nameLeft     = link.tableA.defaultSyntax.name
-            val nameJunction = link.tableC.defaultSyntax.name
-            val nameRight    = link.tableB.defaultSyntax.name
-            // ONE
+            val left      = link.tableA.syntax("l")
+            val right     = link.tableB.syntax("r")
+            val middle    = link.tableC.syntax("m")
+            val leftCond  = link.leftJoinFields
+            val rightCond = link.rightJoinFields
+            // EVERY
+            // NOT EXISTS(
+            //   SELECT ONE
+            //   FROM joinTable
+            //   LEFT JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
+            //   ON jointable.id = rightTable.id
+            //   WHERE joinTable.id = leftTable.id AND IS NULL rightTable.id
+            // )
+            val leftCondSql = leftCond
+              .map {
+                case (lf, rf) => s"${left.column(lf)} = ${middle.column(rf)}"
+              }
+              .mkString(" AND ")
+            val rightCondSql = rightCond
+              .map {
+                case (lf, rf) => s"${right.column(lf)} = ${middle.column(rf)}"
+              }
+              .mkString(" AND ")
+            val rightIsNull = rightCond.map(_._1).map(r => s"IS NULL $r").mkString(" AND ")
+            val sqlString = (filterFrag: Fragment) =>
+              Fragment.const(s"""
+              |NOT EXISTS (
+              |SELECT ONE
+              |FROM ${middle.name} LEFT JOIN ${right.name}
+              |ON ${rightCondSql}
+              |WHERE ${leftCondSql} AND $rightIsNull AND
+              |""".stripMargin) ++ filterFrag ++
+                Fragment.const(")")
+
+            f.EVERY.flatMap(ff => EntityFilter2.filterFragment[B, T](ff)(link.tableB, tableFilter)).map(sqlString)
+            // SOME
+            // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
+            // EXISTS(
+            //   SELECT ONE
+            //   FROM joinTable
+            //   INNER JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
+            //   ON jointable.id = rightTable.id
+            //   WHERE joinTable.id = leftTable.id
+            // )
 
             // NONE
+            // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of SOME
+            // NOT EXISTS(
+            //   SELECT ONE
+            //   FROM joinTable
+            //   INNER JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
+            //   ON jointable.id = rightTable.id
+            //   WHERE joinTable.id = leftTable.id
+            // )
 
-            None
+            //None
           } else {
             // Single relation is implemented using a direct table
+            val left  = link.tableA.defaultSyntax.name
+            val right = link.tableB.defaultSyntax.name
+            // EVERY
+            // EXISTS(
+            //  SELECT ONE WHERE
+            //  (SELECT COUNT(*) FROM (SELECT * FROM rightTable WHERE filter)
+            //    as rightTable WHERE rightTable.id = leftTable.id)
+            //   =
+            //   (SELECT COUNT(*) FROM rightTable WHERE rightTable.id = leftTable.id
+            // )
 
-            // ONE
+            // SOME
+            // EXISTS(
+            //   SELECT ONE
+            //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
+            //   WHERE rightTable.id = leftTable.id
+            // )
 
             // NONE
+            // NOT EXISTS(
+            //   SELECT ONE
+            //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
+            //   WHERE rightTable.id = leftTable.id
+            // )
 
             None
           }
-      }))
+        )
+      )
     }
-
-  /*
-  implicit def atOptionSingleRelationFilter[A, B, T <: FilterWrapper[T], K <: Symbol, V <: Option[
-    SingleRelFilter[A, B, T]
-  ]](
-      implicit
-      wt: Witness.Aux[K],
-      relation: SingleRelation[A, B], // accept only single rel
-      tableB: Table[B],
-      tableFilter: TableFilter[B, T]
-  ): Case.Aux[FieldType[K, V], FieldType[K, Option[Fragment]]] =
-    at[FieldType[K, V]] { ft =>
-      //implicit val table = relation.tableB
-      //field[K](ft.flatMap(f => FilterWrapper.filterFragment[B, T](f.filter)))
-      relation match {
-        // EXISTS(SELECT ONE FROM rightTable WHERE leftTable.id = rightTable.id AND (filter))
-        case rel: OneToOneRel[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-        // EXISTS(SELECT ONE FROM rightTable WHERE leftID = rightID AND (filter))
-        case rel: OneToOneOptRel[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-        // EXISTS(SELECT ONE FROM rightTable WHERE leftID = rightID AND (filter))
-        case rel: ManyToOneRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-        // EXISTS(SELECT ONE FROM rightTable WHERE leftID = rightID AND (filter))
-        case rel: ManyToOneOptRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-      }
-    }
-
-  implicit def atOptionMultiRelationFilter[A, B, T <: FilterWrapper[T], K <: Symbol, V <: Option[
-    MultiRelFilter[A, B, T]
-  ]](
-      implicit
-      wt: Witness.Aux[K],
-      link: Link[A, B], // accept only multi relation
-      tableB: Table[B],
-      tableFilter: TableFilter[B, T]
-  ): Case.Aux[FieldType[K, V], FieldType[K, Option[Fragment]]] =
-    at[FieldType[K, V]] { ft =>
-      //implicit val table = relation.tableB
-      //field[K](ft.flatMap(f => FilterWrapper.filterFragment[B, T](f.filter)))
-      link match {
-        case x => ???
-        // USING JOIN TABLE - EVERY
-        // NOT EXISTS(
-        //   SELECT ONE
-        //   FROM joinTable
-        //   LEFT JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
-        //   ON jointable.id = rightTable.id
-        //   WHERE joinTable.id = leftTable.id AND IS NULL rightTable.id
-        // )
-        // USING JOIN TABLE - SOME (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
-        // EXISTS(
-        //   SELECT ONE
-        //   FROM joinTable
-        //   INNER JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
-        //   ON jointable.id = rightTable.id
-        //   WHERE joinTable.id = leftTable.id
-        // )
-        // USING JOIN TABLE - NONE (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of SOME
-        // NOT EXISTS(
-        //   SELECT ONE
-        //   FROM joinTable
-        //   INNER JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
-        //   ON jointable.id = rightTable.id
-        //   WHERE joinTable.id = leftTable.id
-        // )
-
-        //case rel: OneToManyRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-
-        // USING FIELD ON OTHER ENTITY - EVERY
-        // EXISTS(
-        //  SELECT ONE WHERE
-        //  (SELECT COUNT(*) FROM (SELECT * FROM rightTable WHERE filter)
-        //    as rightTable WHERE rightTable.id = leftTable.id)
-        //   =
-        //   (SELECT COUNT(*) FROM rightTable WHERE rightTable.id = leftTable.id
-        // )
-        // USING FIELD ON OTHER ENTITY - SOME - Contrary of NONE
-        // EXISTS(
-        //   SELECT ONE
-        //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
-        //   WHERE rightTable.id = leftTable.id
-        // )
-        // USING FILED ON OTHER ENTITY - NONE - Contrary of SOME
-        // NOT EXISTS(
-        //   SELECT ONE
-        //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
-        //   WHERE rightTable.id = leftTable.id
-        // )
-
-        //case rel: OneToManyOptRelation[A, B] => field[K](ft.flatMap(f => None: Option[Fragment]))
-      }
-    }
- */
 }
-
-// test
 
 object Test extends App {
 
@@ -363,13 +262,13 @@ object Test extends App {
   implicit val tableB: Aux[B, BKey] = Table.derive[B, BKey]()
 
   implicit val relAB: Link[A, B] =
-    Link.direct[A, B]((a, b) => NonEmptyList.of((a.defaultSyntax.field1, b.defaultSyntax.field2)))
+    Link.direct[A, B]((a, b) => NonEmptyList.of(("field1", "field2")))
 
   case class AFilter(
       field1: Option[StringFilter],
       field2: Option[IntFilter],
       bRelation: Option[RelFilter[A, B, BFilter]]
-  ) extends FilterWrapper[AFilter] {
+  ) extends EntityFilter[AFilter] {
     override def AND: Option[Seq[AFilter]] = None
     override def OR: Option[Seq[AFilter]]  = None
     override def NOT: Option[AFilter]      = None
@@ -380,7 +279,7 @@ object Test extends App {
   case class BFilter(
       field1: Option[LongFilter],
       field2: Option[StringFilter]
-  ) extends FilterWrapper[BFilter] {
+  ) extends EntityFilter[BFilter] {
     override def AND: Option[Seq[BFilter]] = None
     override def OR: Option[Seq[BFilter]]  = None
     override def NOT: Option[BFilter]      = None
@@ -466,6 +365,8 @@ object ReprTableFilterRel {
       type Values = Values0
     }
 
+  //val and =
+
   implicit def tableFilter[
       L <: HList,
       LKeys <: HList,
@@ -487,7 +388,6 @@ object ReprTableFilterRel {
       unzippedR: ops.record.UnzipFields.Aux[RFilter, RFilterKeys, RFilterValues],
       alignR: ops.record.AlignByKeys.Aux[RFilter, LKeys, RAligned],
       extTR: <:<[RAligned, LZipped],
-      //hasRelations: HasRelation[RRelFilter],
       rel: ReprRelationFilter[R]
   ): Aux[L, R, RFilterKeys, RFilterValues] = new ReprTableFilterRel[L, R] {
     override type Keys   = RFilterKeys
@@ -507,6 +407,10 @@ case class Derivator[T]() {
       rep: ReprRelationFilter[L]
   ): ReprRelationFilter[L] = rep
 }
+
+trait IsEntityFilter[L, RFilter] {}
+
+object IsEntityFilter {}
 
 trait ReprRelationFilter[R <: HList] {
   def relationValues(r: R): List[Option[Fragment]]
@@ -528,5 +432,39 @@ object ReprRelationFilter {
       r.flatMap(extractRelationFilter)(extractRelFilterTR)
         .map(relationFilterToFragment)(mapper)
         .toList(toList)
+  }
+}
+
+object EntityFilter2 {
+
+  def filterFragment[T, U <: EntityFilter[U]](filter: U)(
+    implicit
+    table: Table[T],
+    tableFilter: TableFilterRel[T, U]
+  ): Option[Fragment] = {
+    def make(filter: U): Option[Fragment] = {
+      val left  = tableFilter.keys().map(_.name).map(table.defaultSyntax.column)
+      val right = tableFilter.values(filter)
+      val zipped = left.zip(right).map {
+        case (col, optionFilter) => optionFilter.flatMap(_.toOptionFragment(col))
+      }
+      FragmentUtils.optionalAndOpt(zipped: _*)
+    }
+
+    FragmentUtils.optionalAndOpt(
+      make(filter),
+      filter.AND.flatMap { and =>
+        val recs = and.map(filterFragment(_))
+        FragmentUtils.optionalAndOpt(recs: _*)
+      },
+      filter.OR.flatMap { or =>
+        val recs = or.map(filterFragment(_))
+        FragmentUtils.optionalOrOpt(recs: _*)
+      },
+      filter.NOT.flatMap { not =>
+        val rec = filterFragment(not)
+        FragmentUtils.optionalNot(rec)
+      }
+    )
   }
 }

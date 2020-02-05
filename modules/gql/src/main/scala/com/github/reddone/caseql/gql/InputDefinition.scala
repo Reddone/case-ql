@@ -8,8 +8,8 @@ import ByteTypeDefinition._
 import EnumDefinition._
 import JavaSqlTypeDefinition._
 import JavaTimeTypeDefinition._
-import com.github.reddone.caseql.sql.filter.FilterWrapper
-import com.github.reddone.caseql.sql.generic.MultiRelFilter
+import com.github.reddone.caseql.sql.filter.EntityFilter
+import com.github.reddone.caseql.sql.generic.RelFilter
 import sangria.schema._
 
 object InputDefinition {
@@ -912,27 +912,37 @@ object InputDefinition {
 
   // Modifier[Boolean]
   implicit val BooleanModifierType: InputObjectType[BooleanModifier] =
-    InputObjectType[BooleanModifier](
+    makeModifierType(
       "BooleanModifier",
       "Modifier for a Boolean value",
-      () =>
-        List(
-          InputField(ActionName, ModifierActionType),
-          InputField(ValueName, OptionInputType(BooleanType))
-        )
+      BooleanType
     )
+//    InputObjectType[BooleanModifier](
+//      "BooleanModifier",
+//      "Modifier for a Boolean value",
+//      () =>
+//        List(
+//          InputField(ActionName, ModifierActionType),
+//          InputField(ValueName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // ModifierOption[Boolean]
   implicit val BooleanModifierOptionType: InputObjectType[BooleanModifierOption] =
-    InputObjectType[BooleanModifierOption](
+    makeModifierOptionType(
       "BooleanModifierOption",
       "Modifier for an Option[Boolean] value",
-      () =>
-        List(
-          InputField(ActionName, ModifierOptionActionType),
-          InputField(ValueName, OptionInputType(BooleanType))
-        )
+      BooleanType
     )
+//    InputObjectType[BooleanModifierOption](
+//      "BooleanModifierOption",
+//      "Modifier for an Option[Boolean] value",
+//      () =>
+//        List(
+//          InputField(ActionName, ModifierOptionActionType),
+//          InputField(ValueName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Modifier[Byte]
   implicit val ByteModifierType: InputObjectType[ByteModifier] =
@@ -1344,11 +1354,11 @@ object InputDefinition {
 
   // TODO: add single relation input type
 
-  def makeMultiRelInputType[AA, BB, T <: FilterWrapper[T]](
+  def makeRelInputType[AA, BB, T <: EntityFilter[T]](
       inputType: InputObjectType[T]
-  ): InputObjectType[MultiRelFilter[AA, BB, T]] =
-    InputObjectType[MultiRelFilter[AA, BB, T]](
-      "BooleanFilterOption",
+  ): InputObjectType[RelFilter[AA, BB, T]] =
+    InputObjectType[RelFilter[AA, BB, T]](
+      "RelFilter",
       "Filter for an Option[Boolean] value",
       () =>
         List(

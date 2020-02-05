@@ -6,15 +6,15 @@ import doobie._
 import doobie.implicits._
 import Fragment._
 
-trait FilterWrapper[T <: FilterWrapper[T]] {
+trait EntityFilter[T <: EntityFilter[T]] {
   def AND: Option[Seq[T]]
   def OR: Option[Seq[T]]
   def NOT: Option[T]
 }
 
-object FilterWrapper {
+object EntityFilter {
 
-  def filterFragment[T, U <: FilterWrapper[U]](filter: U)(
+  def filterFragment[T, U <: EntityFilter[U]](filter: U)(
       implicit
       table: Table[T],
       tableFilter: TableFilter[T, U]

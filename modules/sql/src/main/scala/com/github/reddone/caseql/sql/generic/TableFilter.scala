@@ -1,24 +1,24 @@
 package com.github.reddone.caseql.sql.generic
 
-import com.github.reddone.caseql.sql.filter.FilterWrapper
+import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.generic.TableFunction.extractFilter
 import com.github.reddone.caseql.sql.filter.models.Filter
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-trait TableFilter[T, U <: FilterWrapper[U]] {
+trait TableFilter[T, U <: EntityFilter[U]] {
   def keys(): List[Symbol]
   def values(u: U): List[Option[Filter[_]]]
 }
 
 object TableFilter {
 
-  def apply[T, U <: FilterWrapper[U]](implicit ev: TableFilter[T, U]): TableFilter[T, U] = ev
+  def apply[T, U <: EntityFilter[U]](implicit ev: TableFilter[T, U]): TableFilter[T, U] = ev
 
   object derive {
 
-    def apply[T, U <: FilterWrapper[U]] = new Partial[T, U]
+    def apply[T, U <: EntityFilter[U]] = new Partial[T, U]
 
-    class Partial[T, U <: FilterWrapper[U]] {
+    class Partial[T, U <: EntityFilter[U]] {
 
       def apply[L <: HList, R <: HList, RKeys <: HList, RValues <: HList]()(
           implicit
