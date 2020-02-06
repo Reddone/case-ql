@@ -23,14 +23,14 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
       field4: Option[TimestampModifierOption]
-  ) extends EntityModifier[Test, TestModifier]
+  ) extends EntityModifier[TestModifier]
   // simple case but unordered, should compile
   case class TestModifierUnordered(
       field4: Option[TimestampModifierOption],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
       field1: Option[IntModifier]
-  ) extends EntityModifier[Test, TestModifierUnordered]
+  ) extends EntityModifier[TestModifierUnordered]
   // with other fields, should compile
   case class TestModifierOther(
       field1: Option[IntModifier],
@@ -39,7 +39,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampModifierOption],
       otherField1: String,
       otherField2: Seq[Int]
-  ) extends EntityModifier[Test, TestModifierOther]
+  ) extends EntityModifier[TestModifierOther]
   // with other fields and unordered, should compile
   case class TestModifierOtherUnordered(
       otherField2: Seq[Int],
@@ -48,7 +48,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       field3: Option[LongModifier],
       otherField1: String,
       field1: Option[IntModifier]
-  ) extends EntityModifier[Test, TestModifierOtherUnordered]
+  ) extends EntityModifier[TestModifierOtherUnordered]
   // one more field, should not compile
   case class TestModifierPlus(
       field1: Option[IntModifier],
@@ -56,7 +56,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       field3: Option[LongModifier],
       field4: Option[TimestampModifierOption],
       field5: Option[StringModifier]
-  ) extends EntityModifier[Test, TestModifierPlus]
+  ) extends EntityModifier[TestModifierPlus]
   // one more field and unordered, should not compile
   case class TestModifierPlusUnordered(
       field1: Option[IntModifier],
@@ -64,19 +64,19 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampModifierOption],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier]
-  ) extends EntityModifier[Test, TestModifierPlusUnordered]
+  ) extends EntityModifier[TestModifierPlusUnordered]
   // one less field, should not compile
   case class TestModifierLess(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier]
-  ) extends EntityModifier[Test, TestModifierLess]
+  ) extends EntityModifier[TestModifierLess]
   // one less field and unordered, should not compile
   case class TestModifierLessUnordered(
       field2: Option[StringModifierOption],
       field1: Option[IntModifier],
       field3: Option[LongModifier]
-  ) extends EntityModifier[Test, TestModifierLessUnordered]
+  ) extends EntityModifier[TestModifierLessUnordered]
 
   "TableModifier derivation" should "compile in the simple case" in {
     """TableModifier.derive[Test, TestModifier]()""" should compile

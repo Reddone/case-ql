@@ -1,4 +1,8 @@
-//package com.github.reddone.caseql.sql.generic
+package com.github.reddone.caseql.sql.generic
+
+import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
+import doobie.free.connection.ConnectionIO
+import doobie.util.fragment.Fragment
 //
 //import cats.implicits._
 //import com.github.reddone.caseql.sql.filter.EntityFilter
@@ -16,6 +20,46 @@
 //
 //
 //
+
+sealed trait SelectBuilderState
+sealed trait Initialized
+sealed trait WithTable
+sealed trait WithFilter
+sealed trait Completed
+
+class SelectBuilder[S <: SelectBuilderState, T, FT <: EntityFilter[FT]](
+    table: Option[Table[T]],
+    filter: Option[EntityFilter[FT]]
+) {
+
+  def withTable[T0](table: Table[T0])(
+      implicit ev: S =:= Initialized
+  ): SelectBuilder[S with WithTable, T0, FT] = ???
+
+  def withFilter[FT0](filter: EntityFilter[FT0])(
+      implicit
+      ev: S =:= Initialized with WithTable,
+      tableFilter: TableFilter[T, FT0]
+  ): SelectBuilder[S with WithFilter, T, FT0] = ???
+
+  def build(implicit ev: S =:= Initialized with WithTable with WithFilter) = ???
+}
+
+object SelectBuilder {
+
+  def apply = new SelectBuilder[Initialized, _, _](None, None)
+}
+
+trait SQLAction[R] {
+  def toFragment: Fragment
+  def execute: ConnectionIO[R]
+}
+
+class SelectWhere[T, FT](table: Table[T], filter: EntityFilter[FT]) {
+  def toFragment: Fragment
+}
+
+trait Mutation
 
 //case class Selection[T]() {
 //

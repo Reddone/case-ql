@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.generic
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.util.StringUtils
+import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
@@ -134,8 +134,14 @@ object Table {
 
         override implicit val keyWrite: Write[Key] = writeK
 
-        def selectCol[S <: Symbol](field: S)(implicit selector: ops.record.Selector[KeysT, S]): String = {
+        def selectCol[S <: Symbol](field: S)(implicit selector: ops.record.Selector[ReprK, S]): String = {
           field.name
+        }
+
+        def filterByKey(key: Key): Fragment = {
+          FragmentUtils
+            .wrapInUpdate[Key](Fragment.const(defaultSyntax.keyColumns.map(k => s"$k = ?").mkString(" AND ")))
+            .toFragment(key)
         }
       }
     }

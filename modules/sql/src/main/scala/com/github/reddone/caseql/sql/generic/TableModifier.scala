@@ -6,19 +6,19 @@ import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-trait TableModifier[A, MA <: EntityModifier[A, MA]] {
+trait TableModifier[A, MA <: EntityModifier[MA]] {
   def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])]
 }
 
 object TableModifier {
 
-  def apply[A, MA <: EntityModifier[A, MA]](implicit ev: TableModifier[A, MA]): TableModifier[A, MA] = ev
+  def apply[A, MA <: EntityModifier[MA]](implicit ev: TableModifier[A, MA]): TableModifier[A, MA] = ev
 
   object derive {
 
-    def apply[A, MA <: EntityModifier[A, MA]] = new Partial[A, MA]
+    def apply[A, MA <: EntityModifier[MA]] = new Partial[A, MA]
 
-    class Partial[A, MA <: EntityModifier[A, MA]] {
+    class Partial[A, MA <: EntityModifier[MA]] {
 
       def apply[ReprA <: HList, ReprMA <: HList]()(
           implicit

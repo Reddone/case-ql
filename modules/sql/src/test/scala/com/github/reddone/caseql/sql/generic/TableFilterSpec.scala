@@ -23,7 +23,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
       field4: Option[TimestampFilterOption]
-  ) extends EntityFilter[Test, TestFilter] {
+  ) extends EntityFilter[TestFilter] {
     override def AND: Option[Seq[TestFilter]] = None
     override def OR: Option[Seq[TestFilter]]  = None
     override def NOT: Option[TestFilter]      = None
@@ -34,7 +34,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
       field1: Option[IntFilter]
-  ) extends EntityFilter[Test, TestFilterUnordered] {
+  ) extends EntityFilter[TestFilterUnordered] {
     override def AND: Option[Seq[TestFilterUnordered]] = None
     override def OR: Option[Seq[TestFilterUnordered]]  = None
     override def NOT: Option[TestFilterUnordered]      = None
@@ -47,7 +47,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampFilterOption],
       otherField1: String,
       otherField2: Seq[Int]
-  ) extends EntityFilter[Test, TestFilterOther] {
+  ) extends EntityFilter[TestFilterOther] {
     override def AND: Option[Seq[TestFilterOther]] = None
     override def OR: Option[Seq[TestFilterOther]]  = None
     override def NOT: Option[TestFilterOther]      = None
@@ -60,7 +60,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field3: Option[LongFilter],
       otherField1: String,
       field1: Option[IntFilter]
-  ) extends EntityFilter[Test, TestFilterOtherUnordered] {
+  ) extends EntityFilter[TestFilterOtherUnordered] {
     override def AND: Option[Seq[TestFilterOtherUnordered]] = None
     override def OR: Option[Seq[TestFilterOtherUnordered]]  = None
     override def NOT: Option[TestFilterOtherUnordered]      = None
@@ -72,7 +72,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field3: Option[LongFilter],
       field4: Option[TimestampFilterOption],
       field5: Option[StringFilter]
-  ) extends EntityFilter[Test, TestFilterPlus] {
+  ) extends EntityFilter[TestFilterPlus] {
     override def AND: Option[Seq[TestFilterPlus]] = None
     override def OR: Option[Seq[TestFilterPlus]]  = None
     override def NOT: Option[TestFilterPlus]      = None
@@ -84,7 +84,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field4: Option[TimestampFilterOption],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter]
-  ) extends EntityFilter[Test, TestFilterPlusUnordered] {
+  ) extends EntityFilter[TestFilterPlusUnordered] {
     override def AND: Option[Seq[TestFilterPlusUnordered]] = None
     override def OR: Option[Seq[TestFilterPlusUnordered]]  = None
     override def NOT: Option[TestFilterPlusUnordered]      = None
@@ -94,7 +94,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter]
-  ) extends EntityFilter[Test, TestFilterLess] {
+  ) extends EntityFilter[TestFilterLess] {
     override def AND: Option[Seq[TestFilterLess]] = None
     override def OR: Option[Seq[TestFilterLess]]  = None
     override def NOT: Option[TestFilterLess]      = None
@@ -104,7 +104,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field2: Option[StringFilterOption],
       field1: Option[IntFilter],
       field3: Option[LongFilter]
-  ) extends EntityFilter[Test, TestFilterLessUnordered] {
+  ) extends EntityFilter[TestFilterLessUnordered] {
     override def AND: Option[Seq[TestFilterLessUnordered]] = None
     override def OR: Option[Seq[TestFilterLessUnordered]]  = None
     override def NOT: Option[TestFilterLessUnordered]      = None

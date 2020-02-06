@@ -43,7 +43,7 @@ object models {
       AND: Option[Seq[DeveloperFilter]],
       OR: Option[Seq[DeveloperFilter]],
       NOT: Option[DeveloperFilter]
-  ) extends EntityFilter[Developer, DeveloperFilter]
+  ) extends EntityFilter[DeveloperFilter]
 
   object DeveloperFilter {
     implicit val decoder: Decoder[DeveloperFilter] = deriveDecoder[DeveloperFilter]
@@ -55,7 +55,7 @@ object models {
       id: Option[LongModifier],
       fullName: Option[StringModifier],
       age: Option[IntModifier]
-  ) extends EntityModifier[Developer, DeveloperModifier]
+  ) extends EntityModifier[DeveloperModifier]
 
   object DeveloperModifier {
     implicit val decoder: Decoder[DeveloperModifier] = deriveDecoder[DeveloperModifier]
@@ -93,7 +93,7 @@ object models {
       AND: Option[Seq[ProjectFilter]],
       OR: Option[Seq[ProjectFilter]],
       NOT: Option[ProjectFilter]
-  ) extends EntityFilter[Project, ProjectFilter]
+  ) extends EntityFilter[ProjectFilter]
 
   object ProjectFilter {
     implicit val decoder: Decoder[ProjectFilter] = deriveDecoder[ProjectFilter]
@@ -107,7 +107,7 @@ object models {
       description: Option[StringModifierOption],
       createdAt: Option[TimestampModifier],
       updatedAt: Option[TimestampModifier]
-  ) extends EntityModifier[Project, ProjectModifier]
+  ) extends EntityModifier[ProjectModifier]
 
   object ProjectModifier {
     implicit val decoder: Decoder[ProjectModifier] = deriveDecoder[ProjectModifier]
@@ -139,7 +139,7 @@ object models {
       AND: Option[Seq[DeveloperProjectLinkFilter]],
       OR: Option[Seq[DeveloperProjectLinkFilter]],
       NOT: Option[DeveloperProjectLinkFilter]
-  ) extends EntityFilter[DeveloperProjectLink, DeveloperProjectLinkFilter]
+  ) extends EntityFilter[DeveloperProjectLinkFilter]
 
   object DeveloperProjectLinkFilter {
     implicit val decoder: Decoder[DeveloperProjectLinkFilter] = deriveDecoder[DeveloperProjectLinkFilter]
@@ -150,7 +150,7 @@ object models {
   final case class DeveloperProjectLinkModifier(
       developerId: Option[LongModifier],
       projectId: Option[LongModifier]
-  ) extends EntityModifier[DeveloperProjectLink, DeveloperProjectLinkModifier]
+  ) extends EntityModifier[DeveloperProjectLinkModifier]
 
   object DeveloperProjectLinkModifier {
     implicit val decoder: Decoder[DeveloperProjectLinkModifier] = deriveDecoder[DeveloperProjectLinkModifier]

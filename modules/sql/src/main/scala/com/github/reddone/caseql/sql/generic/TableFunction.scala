@@ -51,7 +51,7 @@ object TableFunction {
   }
 
   object relationFilterToOptionFragment extends Poly1 {
-    implicit def atOptionRelationFilter[A, B, FB <: EntityFilter[B, FB], K <: Symbol, V <: Option[
+    implicit def atOptionRelationFilter[A, B, FB <: EntityFilter[FB], K <: Symbol, V <: Option[
       RelationFilter[A, B, FB]
     ]](
         implicit
@@ -104,7 +104,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              //f.EVERY.flatMap(ff => EntityFilter2.filterFragment[B, T](ff, right)(tableFilter)).map(sqlString)
+              f.EVERY.flatMap(ff => link.tableB.filterFragment(ff)).map(sqlString)
               // SOME
               // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
               // EXISTS(
@@ -125,7 +125,7 @@ object TableFunction {
               //   WHERE joinTable.id = leftTable.id
               // )
 
-              None
+              //None
             } else {
               // we have to always re-alias the right table because of self joins
               // We can use the same syntax inside filters by wrapping everything inside a sub query
@@ -163,7 +163,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              //f.EVERY.flatMap(ff => EntityFilter2.filterFragment[B, T](ff, right)(tableFilter)).map(sqlString)
+              f.EVERY.flatMap(ff => link.tableB.filterFragment(ff)).map(sqlString)
               // NONE
               // NOT EXISTS(
               //   SELECT ONE
@@ -171,7 +171,7 @@ object TableFunction {
               //   WHERE rightTable.id = leftTable.id
               // )
 
-              None
+              //None
             }
           )
         )

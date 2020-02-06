@@ -6,20 +6,20 @@ import com.github.reddone.caseql.sql.generic.TableFunction._
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-trait TableFilter[A, FA <: EntityFilter[A, FA]] {
+trait TableFilter[A, FA <: EntityFilter[FA]] {
   def entityFilterFragments(filter: FA): List[Option[Fragment]]
   def relationFilterFragments(filter: FA): List[Option[Fragment]]
 }
 
 object TableFilter {
 
-  def apply[A, FA <: EntityFilter[A, FA]](implicit ev: TableFilter[A, FA]): TableFilter[A, FA] = ev
+  def apply[A, FA <: EntityFilter[FA]](implicit ev: TableFilter[A, FA]): TableFilter[A, FA] = ev
 
   object derive {
 
-    def apply[A, FA <: EntityFilter[A, FA]] = new Partial[A, FA]
+    def apply[A, FA <: EntityFilter[FA]] = new Partial[A, FA]
 
-    class Partial[A, FA <: EntityFilter[A, FA]] {
+    class Partial[A, FA <: EntityFilter[FA]] {
 
       def apply[ReprA <: HList, ReprFA <: HList]()(
           implicit

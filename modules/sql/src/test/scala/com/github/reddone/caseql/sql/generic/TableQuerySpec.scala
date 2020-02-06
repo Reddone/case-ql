@@ -37,14 +37,14 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       AND: Option[Seq[TestFilter]],
       OR: Option[Seq[TestFilter]],
       NOT: Option[TestFilter]
-  ) extends EntityFilter[Test, TestFilter]
+  ) extends EntityFilter[TestFilter]
   // test modifier
   case class TestModifier(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
       field4: Option[TimestampModifierOption]
-  ) extends EntityModifier[Test, TestModifier]
+  ) extends EntityModifier[TestModifier]
 
   implicit val table: Table[Test]                               = Table.derive[Test, TestKey]()
   val syntax: table.Syntax                                      = table.syntax("t")

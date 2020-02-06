@@ -13,7 +13,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // WHERE
 
-  def filterFragment[FT <: EntityFilter[T, FT]](filter: FT)(
+  def filterFragment[FT <: EntityFilter[FT]](filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): Option[Fragment] = {
     FragmentUtils.optionalAndOpt(
@@ -36,7 +36,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // SELECT
 
-  def selectFragment[FT <: EntityFilter[T, FT]](filter: FT)(
+  def selectFragment[FT <: EntityFilter[FT]](filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): Fragment = {
     val whereFragment  = filterFragment(filter).map(const(Where) ++ _).getOrElse(empty)
@@ -45,7 +45,7 @@ trait TableQuery[T] { table: Table[T] =>
     selectFragment ++ whereFragment
   }
 
-  def selectQuery[FT <: EntityFilter[T, FT]](filter: FT)(
+  def selectQuery[FT <: EntityFilter[FT]](filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): ConnectionIO[List[T]] = {
     selectFragment(filter).query[T].to[List]
@@ -53,7 +53,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // INSERT
 
-  def insertFragment[MT <: EntityModifier[T, MT]](modifier: MT)(
+  def insertFragment[MT <: EntityModifier[MT]](modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
   ): Fragment = {
     val namedFragments = tableModifier.entityModifierNamedFragments(modifier).filter(_._2.isEmpty).map {
@@ -69,7 +69,7 @@ trait TableQuery[T] { table: Table[T] =>
     insertFragment ++ valueFragment
   }
 
-  def insertQuery[MT <: EntityModifier[T, MT]](modifier: MT)(
+  def insertQuery[MT <: EntityModifier[MT]](modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
   ): ConnectionIO[table.Key] = {
     insertFragment(modifier).update.withUniqueGeneratedKeys[table.Key](table.defaultSyntax.keyColumns: _*)
@@ -77,7 +77,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // UPDATE
 
-  def updateFragment[MT <: EntityModifier[T, MT], FT <: EntityFilter[T, FT]](modifier: MT, filter: FT)(
+  def updateFragment[MT <: EntityModifier[MT], FT <: EntityFilter[FT]](modifier: MT, filter: FT)(
       implicit
       tableModifier: TableModifier[T, MT],
       tableFilter: TableFilter[T, FT]
@@ -94,7 +94,7 @@ trait TableQuery[T] { table: Table[T] =>
     updateFragment ++ setFragment ++ whereFragment
   }
 
-  def updateQuery[MT <: EntityModifier[T, MT], FT <: EntityFilter[T, FT]](modifier: MT, filter: FT)(
+  def updateQuery[MT <: EntityModifier[MT], FT <: EntityFilter[FT]](modifier: MT, filter: FT)(
       implicit
       tableModifier: TableModifier[T, MT],
       tableFilter: TableFilter[T, FT]
@@ -104,7 +104,7 @@ trait TableQuery[T] { table: Table[T] =>
 
   // DELETE
 
-  def deleteFragment[FT <: EntityFilter[T, FT]](filter: FT)(
+  def deleteFragment[FT <: EntityFilter[FT]](filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): Fragment = {
     val whereFragment  = filterFragment(filter).map(const(Where) ++ _).getOrElse(empty)
@@ -113,7 +113,7 @@ trait TableQuery[T] { table: Table[T] =>
     deleteFragment ++ whereFragment
   }
 
-  def deleteQuery[FT <: EntityFilter[T, FT]](filter: FT)(
+  def deleteQuery[FT <: EntityFilter[FT]](filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): ConnectionIO[table.Key] = {
     deleteFragment(filter).update.withUniqueGeneratedKeys[table.Key](table.defaultSyntax.keyColumns: _*)

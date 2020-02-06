@@ -272,7 +272,7 @@ object Relation extends App {
       field1: Option[StringFilter],
       field2: Option[IntFilter],
       bRelation: Option[RelationFilter[A, B, BFilter]]
-  ) extends EntityFilter[A, AFilter] {
+  ) extends EntityFilter[AFilter] {
     override def AND: Option[Seq[AFilter]] = None
     override def OR: Option[Seq[AFilter]]  = None
     override def NOT: Option[AFilter]      = None
@@ -281,14 +281,14 @@ object Relation extends App {
   case class BFilter(
       field1: Option[LongFilter],
       field2: Option[StringFilter]
-  ) extends EntityFilter[B, BFilter] {
+  ) extends EntityFilter[BFilter] {
     override def AND: Option[Seq[BFilter]] = None
     override def OR: Option[Seq[BFilter]]  = None
     override def NOT: Option[BFilter]      = None
   }
 
   implicit val filterB: TableFilter[B, BFilter] = TableFilter.derive[B, BFilter]()
-  //implicit val filterA: TableFilter[A, AFilter] = TableFilter.derive[A, AFilter]()
+  implicit val filterA: TableFilter[A, AFilter] = TableFilter.derive[A, AFilter]()
 
   val bFilter = BFilter(
     Some(LongFilter.empty.copy(EQ = Some(1L))),
@@ -308,7 +308,7 @@ object Relation extends App {
       .to(aFilter)
       .flatMap(extractRelationFilter)
       .map(relationFilterToOptionFragment)
-      //.toList[Option[Fragment]]
+      .toList[Option[Fragment]]
   )
 
   //val test = Derivator[A, AFilter]().make.relationValues(LabelledGeneric[AFilter].to(aFilter))
