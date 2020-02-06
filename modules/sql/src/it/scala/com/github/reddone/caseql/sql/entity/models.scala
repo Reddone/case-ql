@@ -2,10 +2,11 @@ package com.github.reddone.caseql.sql.entity
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
+import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.util.CirceDecoders._
 import doobie._
 import doobie.implicits._
@@ -26,7 +27,7 @@ object models {
 
   object Developer {
     implicit val decoder: Decoder[Developer] = deriveDecoder[Developer]
-    implicit val table: Table[Developer] = Table.derive[Developer, DeveloperKey]()
+    implicit val table: Table[Developer]     = Table.derive[Developer, DeveloperKey]()
   }
 
   final case class DeveloperKey(id: Long)
@@ -42,7 +43,7 @@ object models {
       AND: Option[Seq[DeveloperFilter]],
       OR: Option[Seq[DeveloperFilter]],
       NOT: Option[DeveloperFilter]
-  ) extends EntityFilter[DeveloperFilter]
+  ) extends EntityFilter[Developer, DeveloperFilter]
 
   object DeveloperFilter {
     implicit val decoder: Decoder[DeveloperFilter] = deriveDecoder[DeveloperFilter]
@@ -54,7 +55,7 @@ object models {
       id: Option[LongModifier],
       fullName: Option[StringModifier],
       age: Option[IntModifier]
-  )
+  ) extends EntityModifier[Developer, DeveloperModifier]
 
   object DeveloperModifier {
     implicit val decoder: Decoder[DeveloperModifier] = deriveDecoder[DeveloperModifier]
@@ -74,7 +75,7 @@ object models {
 
   object Project {
     implicit val decoder: Decoder[Project] = deriveDecoder[Project]
-    implicit val table: Table[Project] = Table.derive[Project, ProjectKey]()
+    implicit val table: Table[Project]     = Table.derive[Project, ProjectKey]()
   }
 
   final case class ProjectKey(id: Long)
@@ -92,7 +93,7 @@ object models {
       AND: Option[Seq[ProjectFilter]],
       OR: Option[Seq[ProjectFilter]],
       NOT: Option[ProjectFilter]
-  ) extends EntityFilter[ProjectFilter]
+  ) extends EntityFilter[Project, ProjectFilter]
 
   object ProjectFilter {
     implicit val decoder: Decoder[ProjectFilter] = deriveDecoder[ProjectFilter]
@@ -106,7 +107,7 @@ object models {
       description: Option[StringModifierOption],
       createdAt: Option[TimestampModifier],
       updatedAt: Option[TimestampModifier]
-  )
+  ) extends EntityModifier[Project, ProjectModifier]
 
   object ProjectModifier {
     implicit val decoder: Decoder[ProjectModifier] = deriveDecoder[ProjectModifier]
@@ -123,7 +124,7 @@ object models {
 
   object DeveloperProjectLink {
     implicit val decoder: Decoder[DeveloperProjectLink] = deriveDecoder[DeveloperProjectLink]
-    implicit val table: Table[DeveloperProjectLink] = Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
+    implicit val table: Table[DeveloperProjectLink]     = Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
   }
 
   final case class DeveloperProjectLinkKey(developerId: Long, projectId: Long)
@@ -138,7 +139,7 @@ object models {
       AND: Option[Seq[DeveloperProjectLinkFilter]],
       OR: Option[Seq[DeveloperProjectLinkFilter]],
       NOT: Option[DeveloperProjectLinkFilter]
-  ) extends EntityFilter[DeveloperProjectLinkFilter]
+  ) extends EntityFilter[DeveloperProjectLink, DeveloperProjectLinkFilter]
 
   object DeveloperProjectLinkFilter {
     implicit val decoder: Decoder[DeveloperProjectLinkFilter] = deriveDecoder[DeveloperProjectLinkFilter]
@@ -149,7 +150,7 @@ object models {
   final case class DeveloperProjectLinkModifier(
       developerId: Option[LongModifier],
       projectId: Option[LongModifier]
-  )
+  ) extends EntityModifier[DeveloperProjectLink, DeveloperProjectLinkModifier]
 
   object DeveloperProjectLinkModifier {
     implicit val decoder: Decoder[DeveloperProjectLinkModifier] = deriveDecoder[DeveloperProjectLinkModifier]

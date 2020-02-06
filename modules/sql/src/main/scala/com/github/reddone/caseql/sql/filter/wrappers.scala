@@ -1,0 +1,24 @@
+package com.github.reddone.caseql.sql.filter
+
+import io.circe.Decoder
+import io.circe.generic.semiauto.deriveDecoder
+
+object wrappers {
+
+  trait EntityFilter[A, FA <: EntityFilter[A, FA]] {
+    def AND: Option[Seq[FA]]
+    def OR: Option[Seq[FA]]
+    def NOT: Option[FA]
+  }
+
+  final case class RelationFilter[A, B, FB <: EntityFilter[B, FB]](
+      EVERY: Option[FB],
+      SOME: Option[FB],
+      NONE: Option[FB]
+  )
+
+  object RelationFilter {
+    implicit def decoder[A, B, FB <: EntityFilter[B, FB]: Decoder]: Decoder[RelationFilter[A, B, FB]] =
+      deriveDecoder[RelationFilter[A, B, FB]]
+  }
+}

@@ -17,7 +17,11 @@
 //
 //
 
-
+//case class Selection[T]() {
+//
+//
+//  def whereRelation[B, A](filter: EntityFilter[B, A])(implicit link: Link[T, B])
+//}
 //object Query {
 //
 //  trait Selection

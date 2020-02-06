@@ -1,82 +1,110 @@
 package com.github.reddone.caseql.sql.generic
 
-import com.github.reddone.caseql.sql.filter.EntityFilter
-import com.github.reddone.caseql.sql.generic.TableFunction.extractFilter
 import com.github.reddone.caseql.sql.filter.models.Filter
+import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
+import com.github.reddone.caseql.sql.generic.TableFunction._
+import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-trait TableFilter[T, U <: EntityFilter[U]] {
-  def keys(): List[Symbol]
-  def values(u: U): List[Option[Filter[_]]]
+trait TableFilter[A, FA <: EntityFilter[A, FA]] {
+  def entityFilterFragments(filter: FA): List[Option[Fragment]]
+  def relationFilterFragments(filter: FA): List[Option[Fragment]]
 }
 
 object TableFilter {
 
-  def apply[T, U <: EntityFilter[U]](implicit ev: TableFilter[T, U]): TableFilter[T, U] = ev
+  def apply[A, FA <: EntityFilter[A, FA]](implicit ev: TableFilter[A, FA]): TableFilter[A, FA] = ev
 
   object derive {
 
-    def apply[T, U <: EntityFilter[U]] = new Partial[T, U]
+    def apply[A, FA <: EntityFilter[A, FA]] = new Partial[A, FA]
 
-    class Partial[T, U <: EntityFilter[U]] {
+    class Partial[A, FA <: EntityFilter[A, FA]] {
 
-      def apply[L <: HList, R <: HList, RKeys <: HList, RValues <: HList]()(
+      def apply[ReprA <: HList, ReprFA <: HList]()(
           implicit
-          lgenT: LabelledGeneric.Aux[T, L],
-          lgenU: LabelledGeneric.Aux[U, R],
-          tableFilterLR: Lazy[ReprTableFilter.Aux[L, R, RKeys, RValues]],
-          keyToTraversableR: ops.hlist.ToTraversable.Aux[RKeys, List, Symbol],
-          valueToTraversableR: ops.hlist.ToTraversable.Aux[RValues, List, Option[Filter[_]]]
-      ): TableFilter[T, U] = new TableFilter[T, U] {
-        override def keys(): List[Symbol]                  = tableFilterLR.value.keys().toList
-        override def values(u: U): List[Option[Filter[_]]] = tableFilterLR.value.values(lgenU.to(u)).toList
+          lgenA: LabelledGeneric.Aux[A, ReprA],
+          lgenFA: LabelledGeneric.Aux[FA, ReprFA],
+          entityFilterFA: Lazy[ReprEntityFilter[A, ReprA, ReprFA]],
+          relationFilterFA: Lazy[ReprRelationFilter[A, ReprFA]]
+      ): TableFilter[A, FA] = new TableFilter[A, FA] {
+        override def entityFilterFragments(filter: FA): List[Option[Fragment]] = {
+          entityFilterFA.value.entityFilterFragments(lgenFA.to(filter))
+        }
+        override def relationFilterFragments(filter: FA): List[Option[Fragment]] = {
+          relationFilterFA.value.relationFilterFragments(lgenFA.to(filter))
+        }
       }
     }
   }
 }
 
-trait ReprTableFilter[L <: HList, R <: HList] {
-  type Keys <: HList
-  type Values <: HList
-
-  def keys(): Keys
-  def values(r: R): Values
+trait ReprEntityFilter[A, ReprA <: HList, ReprFA <: HList] {
+  def entityFilterFragments(filterRepr: ReprFA): List[Option[Fragment]]
 }
 
-object ReprTableFilter {
+object ReprEntityFilter {
+
   type OptionFilter[A] = Option[Filter[A]]
 
-  type Aux[L <: HList, R <: HList, Keys0 <: HList, Values0 <: HList] = ReprTableFilter[L, R] {
-    type Keys   = Keys0
-    type Values = Values0
-  }
-
-  implicit def tableFilter[
-      L <: HList,
-      LKeys <: HList,
-      LValues <: HList,
-      LValuesWrapped <: HList,
-      LZipped <: HList,
-      R <: HList,
-      RFilter <: HList,
-      RFilterKeys <: HList,
-      RFilterValues <: HList,
-      RAligned <: HList
+  implicit def derive[
+      A,
+      ReprA <: HList,
+      KeysA <: HList,
+      ValuesA <: HList,
+      WrappedValuesA <: HList,
+      ZippedA <: HList,
+      ReprFA <: HList,
+      FilterFA <: HList,
+      FragmentFA <: HList,
+      AlignedFilterFA <: HList
   ](
       implicit
-      keysL: ops.record.Keys.Aux[L, LKeys],
-      valuesL: ops.record.Values.Aux[L, LValues],
-      mappedValuesL: ops.hlist.Mapped.Aux[LValues, OptionFilter, LValuesWrapped],
-      zippedL: ops.hlist.ZipWithKeys.Aux[LKeys, LValuesWrapped, LZipped],
-      extractFilterR: ops.hlist.FlatMapper.Aux[extractFilter.type, R, RFilter],
-      unzippedR: ops.record.UnzipFields.Aux[RFilter, RFilterKeys, RFilterValues],
-      alignR: ops.record.AlignByKeys.Aux[RFilter, LKeys, RAligned],
-      extTR: <:<[RAligned, LZipped]
-  ): Aux[L, R, RFilterKeys, RFilterValues] = new ReprTableFilter[L, R] {
-    override type Keys   = RFilterKeys
-    override type Values = RFilterValues
+      tableA: Table[A],
+      keysA: ops.record.Keys.Aux[ReprA, KeysA],
+      valuesA: ops.record.Values.Aux[ReprA, ValuesA],
+      wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionFilter, WrappedValuesA],
+      zippedA: ops.hlist.ZipWithKeys.Aux[KeysA, WrappedValuesA, ZippedA],
+      filtersA: ops.hlist.FlatMapper.Aux[extractFilter.type, ReprFA, FilterFA],
+      fragmentsFA: ops.hlist.Mapper.Aux[filterToNamedOptionFragment.type, FilterFA, FragmentFA],
+      toListFragmentsFA: ops.hlist.ToList[FragmentFA, (String, String => Option[Fragment])],
+      alignedFA: ops.record.AlignByKeys.Aux[FilterFA, KeysA, AlignedFilterFA],
+      isSubtypeFA: <:<[AlignedFilterFA, ZippedA]
+  ): ReprEntityFilter[A, ReprA, ReprFA] = new ReprEntityFilter[A, ReprA, ReprFA] {
+    override def entityFilterFragments(filterRepr: ReprFA): List[Option[Fragment]] = {
+      filterRepr.flatMap(extractFilter).map(filterToNamedOptionFragment).toList.map {
+        case (name, makeFragment) =>
+          val column   = tableA.defaultSyntax.column(name)
+          val fragment = makeFragment(column)
+          fragment
+      }
+    }
+  }
+}
 
-    override def keys(): RFilterKeys         = unzippedR.keys()
-    override def values(r: R): RFilterValues = unzippedR.values(r.flatMap(extractFilter))
+trait ReprRelationFilter[A, ReprFA <: HList] {
+  def relationFilterFragments(filterRepr: ReprFA): List[Option[Fragment]]
+}
+
+object ReprRelationFilter {
+
+  implicit def derive[
+      A,
+      ReprFA <: HList,
+      RelationFilterFA <: HList,
+      FragmentFA <: HList
+  ](
+      implicit
+      relationFiltersFA: ops.hlist.FlatMapper.Aux[extractRelationFilter.type, ReprFA, RelationFilterFA],
+      // TODO: use A to check that every RelationFilter is in the form RelationFilter[A, _, _]
+      // TODO: B and FB inside RelationFilter can be anything, the mapper will validate them later
+      //belongsToT: ops.record.Values.Aux[RelationFilterFA, OUT],
+      //aaaa: ops.hlist.Comapped[OUT, Option[RelationFilter[A, _, _]],
+      fragmentsFA: ops.hlist.Mapper.Aux[relationFilterToOptionFragment.type, RelationFilterFA, FragmentFA],
+      toListFragmentsFA: ops.hlist.ToList[FragmentFA, Option[Fragment]]
+  ): ReprRelationFilter[A, ReprFA] = new ReprRelationFilter[A, ReprFA] {
+    override def relationFilterFragments(filterRepr: ReprFA): List[Option[Fragment]] = {
+      filterRepr.flatMap(extractRelationFilter).map(relationFilterToOptionFragment).toList
+    }
   }
 }

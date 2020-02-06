@@ -2,18 +2,19 @@ package com.github.reddone.caseql.gql
 
 import java.time.temporal.Temporal
 
+import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.modifier.models._
 import ByteTypeDefinition._
 import EnumDefinition._
 import JavaSqlTypeDefinition._
 import JavaTimeTypeDefinition._
-import com.github.reddone.caseql.sql.filter.EntityFilter
-import com.github.reddone.caseql.sql.generic.RelFilter
 import sangria.schema._
+import scala.reflect.runtime.universe.{Symbol => _, _}
 
 object InputDefinition {
 
+  // filter field names
   private val EqName            = "EQ"
   private val NotEqName         = "NOT_EQ"
   private val InName            = "IN"
@@ -27,8 +28,12 @@ object InputDefinition {
   private val ContainsSomeName  = "CONTAINS_SOME"
   private val ContainsNoneName  = "CONTAINS_NONE"
   private val IsNullName        = "IS_NULL"
-  private val ActionName        = "action"
-  private val ValueName         = "value"
+  private val EveryName         = "EVERY"
+  private val SomeName          = "SOME"
+  private val NoneName          = "NONE"
+  // modifier field names
+  private val ActionName = "action"
+  private val ValueName  = "value"
 
   // Filter[T: Numeric]
   def makeAbstractNumericFilterType[T: Numeric, R <: AbstractNumericFilter[T]](
@@ -1352,19 +1357,17 @@ object InputDefinition {
         )
     )
 
-  // TODO: add single relation input type
-
-  def makeRelInputType[AA, BB, T <: EntityFilter[T]](
-      inputType: InputObjectType[T]
-  ): InputObjectType[RelFilter[AA, BB, T]] =
-    InputObjectType[RelFilter[AA, BB, T]](
-      "RelFilter",
-      "Filter for an Option[Boolean] value",
+  def makeRelationFilterInputType[A, B, FB <: EntityFilter[B, FB]: TypeTag](
+      inputType: InputObjectType[FB]
+  ): InputObjectType[RelationFilter[A, B, FB]] =
+    InputObjectType[RelationFilter[A, B, FB]](
+      s"RelationFilter for ${typeOf[FB].typeSymbol.name.toString}",
+      s"RelationFilter for a ${typeOf[FB].typeSymbol.name.toString} entity filter",
       () =>
         List(
-          InputField("EVERY", OptionInputType(inputType)),
-          InputField("SOME", OptionInputType(inputType)),
-          InputField("NONE", OptionInputType(inputType))
+          InputField(EveryName, OptionInputType(inputType)),
+          InputField(SomeName, OptionInputType(inputType)),
+          InputField(NoneName, OptionInputType(inputType))
         )
     )
 }

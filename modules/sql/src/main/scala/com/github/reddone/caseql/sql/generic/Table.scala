@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.generic
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
+import com.github.reddone.caseql.sql.util.StringUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
@@ -63,7 +63,7 @@ trait Table[T] extends TableQuery[T] { self =>
 
 object Table {
 
-  private val counter       = new AtomicLong(0L)
+  private val counter = new AtomicLong(0L)
 
   private val tableRegister = new TrieMap[String, String]()
 
@@ -82,7 +82,7 @@ object Table {
       // TODO: singleton ???
       def apply(implicit ev: Table[T]): Aux[T, ev.Key] = ev
 
-      def apply[L <: HList, LKeys <: HList, R <: HList, RKeys <: HList](
+      def apply[ReprT <: HList, KeysT <: HList, ReprK <: HList, KeysK <: HList](
           aName: Option[String] = None,
           aSchema: Option[String] = None,
           aFieldConverter: Map[String, String] = Map.empty[String, String],
@@ -90,17 +90,17 @@ object Table {
       )(
           implicit
           tag: TypeTag[T],
-          lgenT: LabelledGeneric.Aux[T, L],
+          lgenT: LabelledGeneric.Aux[T, ReprT],
           readT: Read[T],
           writeT: Write[T],
-          keysL: ops.record.Keys.Aux[L, LKeys],
-          toListL: Lazy[ops.hlist.ToList[LKeys, Symbol]],
-          lgenK: LabelledGeneric.Aux[K, R],
+          keysT: ops.record.Keys.Aux[ReprT, KeysT],
+          toListKeysT: Lazy[ops.hlist.ToList[KeysT, Symbol]],
+          lgenK: LabelledGeneric.Aux[K, ReprK],
           readK: Read[K],
           writeK: Write[K],
-          keysR: ops.record.Keys.Aux[R, RKeys],
-          toListR: Lazy[ops.hlist.ToList[RKeys, Symbol]],
-          extractorLR: ops.record.Extractor[L, R]
+          keysK: ops.record.Keys.Aux[ReprK, KeysK],
+          toListKeysK: Lazy[ops.hlist.ToList[KeysK, Symbol]],
+          extractorTK: ops.record.Extractor[ReprT, ReprK]
       ): Aux[T, K] = new Table[T] { table =>
         override type Key = K
 
@@ -113,18 +113,18 @@ object Table {
           tableRegister.put(name, a)
           a
         }
-          //tableRegister.getOrElseUpdate(
-          //name,
-          //StringUtils.shorten(name) + counter.getAndIncrement().toString
+        //tableRegister.getOrElseUpdate(
+        //name,
+        //StringUtils.shorten(name) + counter.getAndIncrement().toString
         //)
 
         override val fieldConverter: Map[String, String] = aFieldConverter
 
         override def fieldMapper(field: String): String = aFieldMapper(field)
 
-        override val fields: List[String] = keysL().toList(toListL.value).map(_.name)
+        override val fields: List[String] = keysT().toList(toListKeysT.value).map(_.name)
 
-        override val keyFields: List[String] = keysR().toList(toListR.value).map(_.name)
+        override val keyFields: List[String] = keysK().toList(toListKeysK.value).map(_.name)
 
         override implicit val read: Read[T] = readT
 
@@ -133,6 +133,10 @@ object Table {
         override implicit val keyRead: Read[Key] = readK
 
         override implicit val keyWrite: Write[Key] = writeK
+
+        def selectCol[S <: Symbol](field: S)(implicit selector: ops.record.Selector[KeysT, S]): String = {
+          field.name
+        }
       }
     }
   }

@@ -1,81 +1,77 @@
 package com.github.reddone.caseql.sql.generic
 
-import com.github.reddone.caseql.sql.generic.TableFunction.extractModifier
+import com.github.reddone.caseql.sql.generic.TableFunction._
 import com.github.reddone.caseql.sql.modifier.models.Modifier
+import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
+import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-trait TableModifier[T, U] {
-  def keys(): List[Symbol]
-  def values(u: U): List[Option[Modifier[_]]]
+trait TableModifier[A, MA <: EntityModifier[A, MA]] {
+  def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])]
 }
 
 object TableModifier {
 
-  def apply[T, U](implicit ev: TableModifier[T, U]): TableModifier[T, U] = ev
+  def apply[A, MA <: EntityModifier[A, MA]](implicit ev: TableModifier[A, MA]): TableModifier[A, MA] = ev
 
   object derive {
 
-    def apply[T, U] = new Partial[T, U]
+    def apply[A, MA <: EntityModifier[A, MA]] = new Partial[A, MA]
 
-    class Partial[T, U] {
+    class Partial[A, MA <: EntityModifier[A, MA]] {
 
-      def apply[L <: HList, R <: HList, RKeys <: HList, RValues <: HList]()(
+      def apply[ReprA <: HList, ReprMA <: HList]()(
           implicit
-          lgenT: LabelledGeneric.Aux[T, L],
-          lgenU: LabelledGeneric.Aux[U, R],
-          tableModifierLR: Lazy[ReprTableModifier.Aux[L, R, RKeys, RValues]],
-          keyToTraversableR: ops.hlist.ToTraversable.Aux[RKeys, List, Symbol],
-          valueToTraversableR: ops.hlist.ToTraversable.Aux[RValues, List, Option[Modifier[_]]]
-      ): TableModifier[T, U] = new TableModifier[T, U] {
-        override def keys(): List[Symbol]                    = tableModifierLR.value.keys().toList
-        override def values(u: U): List[Option[Modifier[_]]] = tableModifierLR.value.values(lgenU.to(u)).toList
+          lgenA: LabelledGeneric.Aux[A, ReprA],
+          lgenMA: LabelledGeneric.Aux[MA, ReprMA],
+          entityModifierMA: Lazy[ReprEntityModifier[A, ReprA, ReprMA]]
+      ): TableModifier[A, MA] = new TableModifier[A, MA] {
+        override def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])] = {
+          entityModifierMA.value.entityModifierNamedFragments(lgenMA.to(modifier))
+        }
       }
     }
   }
 }
 
-trait ReprTableModifier[L <: HList, R <: HList] {
-  type Keys <: HList
-  type Values <: HList
-
-  def keys(): Keys
-  def values(r: R): Values
+trait ReprEntityModifier[A, ReprA <: HList, ReprMA <: HList] {
+  def entityModifierNamedFragments(modifierRepr: ReprMA): List[(String, Option[Fragment])]
 }
 
-object ReprTableModifier {
+object ReprEntityModifier {
+
   type OptionModifier[A] = Option[Modifier[A]]
 
-  type Aux[L <: HList, R <: HList, Keys0 <: HList, Values0 <: HList] = ReprTableModifier[L, R] {
-    type Keys   = Keys0
-    type Values = Values0
-  }
-
-  implicit def tableModifier[
-      L <: HList,
-      LKeys <: HList,
-      LValues <: HList,
-      LValuesWrapped <: HList,
-      LZipped <: HList,
-      R <: HList,
-      RModifier <: HList,
-      RModifierKeys <: HList,
-      RModifierValues <: HList,
-      RAligned <: HList
+  implicit def derive[
+      A,
+      ReprA <: HList,
+      KeysA <: HList,
+      ValuesA <: HList,
+      WrappedValuesA <: HList,
+      ZippedA <: HList,
+      ReprMA <: HList,
+      ModifierMA <: HList,
+      NamedFragmentMA <: HList,
+      AlignedModifierMA <: HList
   ](
       implicit
-      keysL: ops.record.Keys.Aux[L, LKeys],
-      valuesL: ops.record.Values.Aux[L, LValues],
-      mappedValuesL: ops.hlist.Mapped.Aux[LValues, OptionModifier, LValuesWrapped],
-      zippedL: ops.hlist.ZipWithKeys.Aux[LKeys, LValuesWrapped, LZipped],
-      extractModifierR: ops.hlist.FlatMapper.Aux[extractModifier.type, R, RModifier],
-      unzippedR: ops.record.UnzipFields.Aux[RModifier, RModifierKeys, RModifierValues],
-      alignR: ops.record.AlignByKeys.Aux[RModifier, LKeys, RAligned],
-      extTR: <:<[RAligned, LZipped]
-  ): Aux[L, R, RModifierKeys, RModifierValues] = new ReprTableModifier[L, R] {
-    override type Keys   = RModifierKeys
-    override type Values = RModifierValues
-
-    override def keys(): RModifierKeys         = unzippedR.keys()
-    override def values(r: R): RModifierValues = unzippedR.values(r.flatMap(extractModifier))
+      tableA: Table[A],
+      keysA: ops.record.Keys.Aux[ReprA, KeysA],
+      valuesA: ops.record.Values.Aux[ReprA, ValuesA],
+      wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionModifier, WrappedValuesA],
+      zippedA: ops.hlist.ZipWithKeys.Aux[KeysA, WrappedValuesA, ZippedA],
+      filtersA: ops.hlist.FlatMapper.Aux[extractModifier.type, ReprMA, ModifierMA],
+      namedFragmentsMA: ops.hlist.Mapper.Aux[modifierToNamedOptionFragment.type, ModifierMA, NamedFragmentMA],
+      toListNamedFragmentsMA: ops.hlist.ToList[NamedFragmentMA, (String, Option[Fragment])],
+      alignedMA: ops.record.AlignByKeys.Aux[ModifierMA, KeysA, AlignedModifierMA],
+      isSubtypeMA: <:<[AlignedModifierMA, ZippedA]
+  ): ReprEntityModifier[A, ReprA, ReprMA] = new ReprEntityModifier[A, ReprA, ReprMA] {
+    override def entityModifierNamedFragments(modifierRepr: ReprMA): List[(String, Option[Fragment])] = {
+      modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
+        case (name, fragment) =>
+          val column = tableA.defaultSyntax.column(name)
+          (column, fragment)
+      }
+    }
   }
 }

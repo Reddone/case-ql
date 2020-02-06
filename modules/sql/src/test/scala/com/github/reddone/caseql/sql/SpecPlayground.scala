@@ -2,13 +2,14 @@ package com.github.reddone.caseql.sql
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.filter.EntityFilter
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
 import doobie._
 import doobie.implicits._
 import Fragment._
+import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
+import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import javasql._
 import javatime._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -37,17 +38,16 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
       AND: Option[Seq[TestFilter]],
       OR: Option[Seq[TestFilter]],
       NOT: Option[TestFilter]
-  ) extends EntityFilter[TestFilter]
+  ) extends EntityFilter[Test, TestFilter]
   // test modifier
   case class TestModifier(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
       field4: Option[TimestampModifierOption]
-  )
+  ) extends EntityModifier[Test, TestModifier]
 
-  val table: Table[Test]                                        = Table.derive[Test, TestKey]()
-  val syntax: table.Syntax                                      = table.syntax("t")
+  implicit val table: Table[Test]                               = Table.derive[Test, TestKey]()
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 

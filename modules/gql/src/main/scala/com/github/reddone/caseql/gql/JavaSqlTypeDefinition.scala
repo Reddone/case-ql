@@ -10,7 +10,7 @@ import scala.util.{Failure, Success, Try}
 
 object JavaSqlTypeDefinition {
 
-  // Date
+  // java.sql.Date
 
   case object DateCoercionViolation extends ValueCoercionViolation("Date value 'yyyy-mm-dd' expected")
 
@@ -36,7 +36,7 @@ object JavaSqlTypeDefinition {
       }
     )
 
-  // Time
+  // java.sql.Time
 
   case object TimeCoercionViolation extends ValueCoercionViolation("Time value 'hh:mm:ss' expected")
 
@@ -62,7 +62,7 @@ object JavaSqlTypeDefinition {
       }
     )
 
-  // Timestamp
+  // java.sql.Timestamp
 
   case object TimestampCoercionViolation
       extends ValueCoercionViolation("Timestamp value 'yyyy-mm-dd hh:mm:ss' expected")
