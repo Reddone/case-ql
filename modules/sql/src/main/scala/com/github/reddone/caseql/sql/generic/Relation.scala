@@ -223,6 +223,9 @@ object relationFilterToFragment extends Poly1 {
 
             //None
           } else {
+            // we have to always re-alias the right table because of self joins
+            // We can use the same syntax inside filters by wrapping everything inside a sub query
+
             // Single relation is implemented using a direct table
             val left     = link.tableA.defaultSyntax //.syntax("l")
             val right    = link.tableB.defaultSyntax //.syntax("r")

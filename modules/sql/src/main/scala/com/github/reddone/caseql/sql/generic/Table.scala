@@ -108,10 +108,15 @@ object Table {
 
         override val schema: Option[String] = aSchema
 
-        override val shortenedName: String = tableRegister.getOrElseUpdate(
-          name,
-          StringUtils.shorten(name) + counter.getAndIncrement().toString
-        )
+        override val shortenedName: String = {
+          val a = StringUtils.shorten(name) + counter.getAndIncrement().toString
+          tableRegister.put(name, a)
+          a
+        }
+          //tableRegister.getOrElseUpdate(
+          //name,
+          //StringUtils.shorten(name) + counter.getAndIncrement().toString
+        //)
 
         override val fieldConverter: Map[String, String] = aFieldConverter
 

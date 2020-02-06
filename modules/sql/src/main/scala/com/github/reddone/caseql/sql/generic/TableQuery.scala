@@ -46,8 +46,8 @@ trait TableQuery[T] { table: Table[T] =>
   def selectFragment[U <: EntityFilter[U]](filter: U, syntax: table.Syntax)(
       implicit tableFilter: TableFilter[T, U]
   ): Fragment = {
-    val whereFragment  = filterFragment(filter, syntax).map(const(Where) ++ _).getOrElse(empty)
-    val selectFragment = const(s"$Select ${syntax.columns.mkString(", ")} $From ${syntax.name}")
+    val whereFragment  = filterFragment(filter, defaultSyntax).map(const(Where) ++ _).getOrElse(empty)
+    val selectFragment = const(s"$Select ${defaultSyntax.columns.mkString(", ")} $From ${defaultSyntax.name}")
 
     selectFragment ++ whereFragment
   }
