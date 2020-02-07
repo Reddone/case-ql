@@ -6,7 +6,7 @@ import com.github.reddone.caseql.sql.tokens.{And, Placeholder, Update => UpdateT
 import doobie._
 import Fragment._
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.generic.ops.FilterOps
+import com.github.reddone.caseql.sql.generic.ops.QueryOps
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import fs2.Stream
 
@@ -17,7 +17,7 @@ trait TableQuery[T] { table: Table[T] =>
   def selectFragment[FT <: EntityFilter[FT]](syntax: table.Syntax, filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): Fragment = {
-    val whereFragment  = FilterOps.byFilterConditionFragment(syntax, filter).map(const(Where) ++ _).getOrElse(empty)
+    val whereFragment  = QueryOps.byFilterConditionFragment(syntax, filter).map(const(Where) ++ _).getOrElse(empty)
     val selectFragment = const(s"$Select ${syntax.columns.mkString(", ")} $From ${syntax.name}")
 
     selectFragment ++ whereFragment
@@ -66,7 +66,7 @@ trait TableQuery[T] { table: Table[T] =>
     // TODO: handle empty modifier
     val joined = namedFragments.map { case (col, parameter) => const(col + " =") ++ parameter }
     val whereFragment =
-      FilterOps.byFilterConditionFragment(table.defaultSyntax, filter).map(const(Where) ++ _).getOrElse(empty)
+      QueryOps.byFilterConditionFragment(table.defaultSyntax, filter).map(const(Where) ++ _).getOrElse(empty)
     val setFragment    = Fragments.set(joined: _*)
     val updateFragment = const(s"$UpdateToken ${table.defaultSyntax.name}")
 
@@ -86,7 +86,7 @@ trait TableQuery[T] { table: Table[T] =>
   def deleteFragment[FT <: EntityFilter[FT]](syntax: table.Syntax, filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): Fragment = {
-    val whereFragment  = FilterOps.byFilterConditionFragment(syntax, filter).map(const(Where) ++ _).getOrElse(empty)
+    val whereFragment  = QueryOps.byFilterConditionFragment(syntax, filter).map(const(Where) ++ _).getOrElse(empty)
     val deleteFragment = const(s"$Delete $From ${syntax.name}")
 
     deleteFragment ++ whereFragment

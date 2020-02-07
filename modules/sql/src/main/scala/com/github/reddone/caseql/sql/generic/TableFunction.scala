@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.generic
 
 import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.generic.ops.FilterOps
+import com.github.reddone.caseql.sql.generic.ops.QueryOps
 import com.github.reddone.caseql.sql.modifier.models.Modifier
 import doobie._
 import shapeless.labelled.{FieldType, field}
@@ -102,7 +102,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              f.EVERY.flatMap(ff => FilterOps.byFilterConditionFragment(right, ff)).map(sqlString)
+              f.EVERY.flatMap(ff => QueryOps.byFilterConditionFragment(right, ff)).map(sqlString)
               // SOME
               // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
               // EXISTS(
@@ -161,7 +161,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              f.EVERY.flatMap(ff => FilterOps.byFilterConditionFragment(right, ff)).map(sqlString)
+              f.EVERY.flatMap(ff => QueryOps.byFilterConditionFragment(right, ff)).map(sqlString)
               // NONE
               // NOT EXISTS(
               //   SELECT ONE

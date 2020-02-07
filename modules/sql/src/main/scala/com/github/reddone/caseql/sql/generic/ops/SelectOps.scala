@@ -28,7 +28,7 @@ object SelectOps {
       with SQLStreamingQuery[T] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = FilterOps
+      val whereFragment = QueryOps
         .byFilterConditionFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
@@ -48,7 +48,7 @@ object SelectOps {
       with SQLQuery[Option[T]] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ FilterOps.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryOps.byKeyConditionFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 

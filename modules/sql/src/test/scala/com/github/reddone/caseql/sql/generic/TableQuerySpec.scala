@@ -5,7 +5,7 @@ import java.time.Instant
 
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.generic.ops.FilterOps
+import com.github.reddone.caseql.sql.generic.ops.QueryOps
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._
@@ -63,7 +63,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       None
     )
 
-    FilterOps.byFilterConditionFragment(syntax, filter1) shouldBe None
+    QueryOps.byFilterConditionFragment(syntax, filter1) shouldBe None
 
     val filter2 = TestFilter(
       Some(IntFilter.empty),
@@ -75,7 +75,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       None
     )
 
-    FilterOps.byFilterConditionFragment(syntax, filter2) shouldBe None
+    QueryOps.byFilterConditionFragment(syntax, filter2) shouldBe None
   }
 
   it should "work with a flat filter" in {
@@ -97,7 +97,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "((t.field4 = ? ) ) " +
       ") " +
       "\")"
-    val result = FilterOps.byFilterConditionFragment(syntax, filter1)
+    val result = QueryOps.byFilterConditionFragment(syntax, filter1)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -143,7 +143,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "(((t.field1 = ? ) ) AND ((t.field2 = ? ) ) ) " +
       ") ) " +
       "\")"
-    val result = FilterOps.byFilterConditionFragment(syntax, filter2)
+    val result = QueryOps.byFilterConditionFragment(syntax, filter2)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -239,7 +239,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       ") ) " +
       ") ) " +
       "\")"
-    val result = FilterOps.byFilterConditionFragment(syntax, filter1)
+    val result = QueryOps.byFilterConditionFragment(syntax, filter1)
 
     result shouldBe defined
     result.get.toString shouldBe expected

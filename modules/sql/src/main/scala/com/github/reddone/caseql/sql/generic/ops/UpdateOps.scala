@@ -40,7 +40,7 @@ object UpdateOps {
       with SQLQuery[Int] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = FilterOps
+      val whereFragment = QueryOps
         .byFilterConditionFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
@@ -65,7 +65,7 @@ object UpdateOps {
       with SQLStreamingQuery[K] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = FilterOps
+      val whereFragment = QueryOps
         .byFilterConditionFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
@@ -89,7 +89,7 @@ object UpdateOps {
       with SQLQuery[Int] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ FilterOps.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryOps.byKeyConditionFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 
@@ -111,7 +111,7 @@ object UpdateOps {
       with SQLStreamingQuery[K] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ FilterOps.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryOps.byKeyConditionFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 
