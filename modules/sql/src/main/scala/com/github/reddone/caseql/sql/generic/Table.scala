@@ -133,16 +133,6 @@ object Table {
         override implicit val keyRead: Read[Key] = readK
 
         override implicit val keyWrite: Write[Key] = writeK
-
-        def selectCol[S <: Symbol](field: S)(implicit selector: ops.record.Selector[ReprK, S]): String = {
-          field.name
-        }
-
-        def filterByKey(key: Key): Fragment = {
-          FragmentUtils
-            .wrapInUpdate[Key](Fragment.const(defaultSyntax.keyColumns.map(k => s"$k = ?").mkString(" AND ")))
-            .toFragment(key)
-        }
       }
     }
   }

@@ -7,8 +7,8 @@ import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableFilter[A, FA <: EntityFilter[FA]] {
-  def entityFilterFragments(filter: FA): List[Option[Fragment]]
-  def relationFilterFragments(filter: FA): List[Option[Fragment]]
+  def entityFilterFragments(filter: FA): Table[A]#Syntax => List[Option[Fragment]]
+  def relationFilterFragments(filter: FA): Table[A]#Syntax => List[Option[Fragment]]
 }
 
 object TableFilter {
@@ -28,10 +28,10 @@ object TableFilter {
           entityFilterFA: Lazy[ReprEntityFilter[A, ReprA, ReprFA]],
           relationFilterFA: Lazy[ReprRelationFilter[A, ReprFA]]
       ): TableFilter[A, FA] = new TableFilter[A, FA] {
-        override def entityFilterFragments(filter: FA): List[Option[Fragment]] = {
+        override def entityFilterFragments(filter: FA): Table[A]#Syntax => List[Option[Fragment]] = {
           entityFilterFA.value.entityFilterFragments(lgenFA.to(filter))
         }
-        override def relationFilterFragments(filter: FA): List[Option[Fragment]] = {
+        override def relationFilterFragments(filter: FA): Table[A]#Syntax => List[Option[Fragment]] = {
           relationFilterFA.value.relationFilterFragments(lgenFA.to(filter))
         }
       }
@@ -40,7 +40,7 @@ object TableFilter {
 }
 
 trait ReprEntityFilter[A, ReprA <: HList, ReprFA <: HList] {
-  def entityFilterFragments(filterRepr: ReprFA): List[Option[Fragment]]
+  def entityFilterFragments(filterRepr: ReprFA): Table[A]#Syntax => List[Option[Fragment]]
 }
 
 object ReprEntityFilter {
@@ -60,7 +60,6 @@ object ReprEntityFilter {
       AlignedFilterFA <: HList
   ](
       implicit
-      tableA: Table[A],
       keysA: ops.record.Keys.Aux[ReprA, KeysA],
       valuesA: ops.record.Values.Aux[ReprA, ValuesA],
       wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionFilter, WrappedValuesA],
@@ -71,19 +70,24 @@ object ReprEntityFilter {
       alignedFA: ops.record.AlignByKeys.Aux[FilterFA, KeysA, AlignedFilterFA],
       isSubtypeFA: <:<[AlignedFilterFA, ZippedA]
   ): ReprEntityFilter[A, ReprA, ReprFA] = new ReprEntityFilter[A, ReprA, ReprFA] {
-    override def entityFilterFragments(filterRepr: ReprFA): List[Option[Fragment]] = {
-      filterRepr.flatMap(extractFilter).map(filterToNamedOptionFragment).toList.map {
-        case (name, makeFragment) =>
-          val column   = tableA.defaultSyntax.column(name)
-          val fragment = makeFragment(column)
-          fragment
-      }
+    override def entityFilterFragments(filterRepr: ReprFA): Table[A]#Syntax => List[Option[Fragment]] = {
+      syntax: Table[A]#Syntax =>
+        filterRepr
+          .flatMap(extractFilter)
+          .map(filterToNamedOptionFragment)
+          .toList
+          .map {
+            case (field, makeFragment) =>
+              val column   = syntax.column(field)
+              val fragment = makeFragment(column)
+              fragment
+          }
     }
   }
 }
 
 trait ReprRelationFilter[A, ReprFA <: HList] {
-  def relationFilterFragments(filterRepr: ReprFA): List[Option[Fragment]]
+  def relationFilterFragments(filterRepr: ReprFA): Table[A]#Syntax => List[Option[Fragment]]
 }
 
 object ReprRelationFilter {
@@ -101,10 +105,15 @@ object ReprRelationFilter {
       //belongsToT: ops.record.Values.Aux[RelationFilterFA, OUT],
       //aaaa: ops.hlist.Comapped[OUT, Option[RelationFilter[A, _, _]],
       fragmentsFA: ops.hlist.Mapper.Aux[relationFilterToOptionFragment.type, RelationFilterFA, FragmentFA],
-      toListFragmentsFA: ops.hlist.ToList[FragmentFA, Option[Fragment]]
+      toListFragmentsFA: ops.hlist.ToList[FragmentFA, Table[A]#Syntax => Option[Fragment]]
   ): ReprRelationFilter[A, ReprFA] = new ReprRelationFilter[A, ReprFA] {
-    override def relationFilterFragments(filterRepr: ReprFA): List[Option[Fragment]] = {
-      filterRepr.flatMap(extractRelationFilter).map(relationFilterToOptionFragment).toList
+    override def relationFilterFragments(filterRepr: ReprFA): Table[A]#Syntax => List[Option[Fragment]] = {
+      syntax: Table[A]#Syntax =>
+        filterRepr
+          .flatMap(extractRelationFilter)
+          .map(relationFilterToOptionFragment)
+          .toList
+          .map(_.apply(syntax))
     }
   }
 }
