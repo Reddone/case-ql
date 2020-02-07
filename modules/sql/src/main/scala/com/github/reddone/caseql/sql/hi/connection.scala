@@ -10,7 +10,7 @@ import fs2.Stream
 import fs2.Stream.{bracket, eval}
 import resultset._
 
-// Taken from doobie examples, because using Read[Row] with stream results in many metadata calls. It is not
+// Taken from doobie examples, because using Read[Row] results in many metadata calls with stream. It is not
 // a problem on medium sized tables, so you can use Row provided in this project with the normal doobie api.
 // This implementation calls getMetadata just one time instead of always calling it on unsafeGet:
 // https://github.com/tpolecat/doobie/blob/master/modules/example/src/main/scala/example/GenericStream.scala

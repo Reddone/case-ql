@@ -1,11 +1,11 @@
-package com.github.reddone.caseql.sql.generic
+package com.github.reddone.caseql.sql.query
 
 import java.sql.Timestamp
 import java.time.Instant
 
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.generic.ops.QueryOps
+import com.github.reddone.caseql.sql.query.action.QueryAction
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._
@@ -63,7 +63,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       None
     )
 
-    QueryOps.byFilterConditionFragment(syntax, filter1) shouldBe None
+    QueryAction.byFilterConditionFragment(syntax, filter1) shouldBe None
 
     val filter2 = TestFilter(
       Some(IntFilter.empty),
@@ -75,7 +75,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       None
     )
 
-    QueryOps.byFilterConditionFragment(syntax, filter2) shouldBe None
+    QueryAction.byFilterConditionFragment(syntax, filter2) shouldBe None
   }
 
   it should "work with a flat filter" in {
@@ -97,7 +97,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "((t.field4 = ? ) ) " +
       ") " +
       "\")"
-    val result = QueryOps.byFilterConditionFragment(syntax, filter1)
+    val result = QueryAction.byFilterConditionFragment(syntax, filter1)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -143,7 +143,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "(((t.field1 = ? ) ) AND ((t.field2 = ? ) ) ) " +
       ") ) " +
       "\")"
-    val result = QueryOps.byFilterConditionFragment(syntax, filter2)
+    val result = QueryAction.byFilterConditionFragment(syntax, filter2)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -239,7 +239,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       ") ) " +
       ") ) " +
       "\")"
-    val result = QueryOps.byFilterConditionFragment(syntax, filter1)
+    val result = QueryAction.byFilterConditionFragment(syntax, filter1)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -261,7 +261,8 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "FROM test t " +
       "WHERE (((t.field1 = ? ) ) ) " +
       "\")"
-    val result = table.selectFragment(syntax, filter1)
+    val result = table.select(syntax, filter1).toFragment
+    table.selectByKey(syntax, TestKey(1, 2L))
 
     result.toString shouldBe expected
   }
@@ -278,7 +279,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "INSERT INTO test (field1, field2, field3) " +
       "VALUES (? , ? , DEFAULT ) " +
       "\")"
-    val result = table.insertFragment(modifier1)
+    val result = table.insertOne(modifier1).toFragment
 
     result.toString shouldBe expected
   }
@@ -305,7 +306,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
       "WHERE (((field1 = ? ) ) ) " +
       "\")"
-    val result = table.updateFragment(modifier1, filter1)
+    val result = table.update(syntax, modifier1, filter1).toFragment
 
     result.toString shouldBe expected
   }
@@ -325,7 +326,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "DELETE FROM test " +
       "WHERE (((field1 = ? ) ) ) " +
       "\")"
-    val result = table.deleteFragment(syntax, filter1)
+    val result = table.delete(syntax, filter1).toFragment
 
     result.toString shouldBe expected
   }

@@ -1,10 +1,9 @@
-package com.github.reddone.caseql.sql.generic
+package com.github.reddone.caseql.sql.query
 
 import cats.data.NonEmptyList
 import com.github.reddone.caseql.sql.filter.models.{IntFilter, LongFilter, StringFilter}
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.generic.Table.Aux
-import com.github.reddone.caseql.sql.generic.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
+import com.github.reddone.caseql.sql.query.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
 import doobie._
 import io.circe.Decoder
 import shapeless.LabelledGeneric
@@ -262,11 +261,12 @@ object Relation extends App {
   case class B(field1: Long, field2: String)
   case class BKey(field1: Long)
 
-  implicit val tableA: Aux[A, AKey] = Table.derive[A, AKey]()
-  implicit val tableB: Aux[B, BKey] = Table.derive[B, BKey]()
+  implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
+  implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
 
-  implicit val relAB: Link[A, B] =
-    Link.direct[A, B]((a, b) => NonEmptyList.of(("field1", "field2")))
+  implicit val relAB: Link[A, B] = Link.direct(tableA, tableB) { (a, b) =>
+    NonEmptyList.of(("field1", "field2"))
+  }
 
   case class AFilter(
       field1: Option[StringFilter],
@@ -308,7 +308,7 @@ object Relation extends App {
       .to(aFilter)
       .flatMap(extractRelationFilter)
       .map(relationFilterToOptionFragment)
-      .toList[Table[A]#Syntax => Option[Fragment]]
+      .toList[Syntax[A] => Option[Fragment]]
       .map(_.apply(tableA.defaultSyntax))
   )
   //val test = Derivator[A, AFilter]().make.relationValues(LabelledGeneric[AFilter].to(aFilter))

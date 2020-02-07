@@ -1,8 +1,8 @@
-package com.github.reddone.caseql.sql.generic
+package com.github.reddone.caseql.sql.query
 
 import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.generic.ops.QueryOps
+import com.github.reddone.caseql.sql.query.action.QueryAction
 import com.github.reddone.caseql.sql.modifier.models.Modifier
 import doobie._
 import shapeless.labelled.{FieldType, field}
@@ -60,16 +60,16 @@ object TableFunction {
         wt: Witness.Aux[K],
         link: Link[A, B],
         tableFilter: TableFilter[B, FB]
-    ): Case.Aux[FieldType[K, V], FieldType[K, Table[A]#Syntax => Option[Fragment]]] =
+    ): Case.Aux[FieldType[K, V], FieldType[K, Syntax[A] => Option[Fragment]]] =
       at[FieldType[K, V]] { ft =>
-        field[K]((syntax: Table[A]#Syntax) =>
+        field[K]((syntax: Syntax[A]) =>
           ft.flatMap(f =>
             // use TableFilterFB to derive a where condition for right inside a subquery
             if (link.isJunction) {
               // Single relation is implemented using a junction table
               //val left      = link.tableA.syntax("l")
-              val right     = link.tableB.syntax("r")
-              val middle    = link.tableC.syntax("m")
+              val right     = link.rightSyntax
+              val middle    = link.junctionSyntax
               val leftCond  = link.leftJoinFields
               val rightCond = link.rightJoinFields
               // EVERY
@@ -102,7 +102,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              f.EVERY.flatMap(ff => QueryOps.byFilterConditionFragment(right, ff)).map(sqlString)
+              f.EVERY.flatMap(ff => QueryAction.byFilterConditionFragment(right, ff)(tableFilter)).map(sqlString)
               // SOME
               // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
               // EXISTS(
@@ -130,7 +130,7 @@ object TableFunction {
 
               // Single relation is implemented using a direct table
               //val left     = link.tableA.defaultSyntax //.syntax("l")
-              val right    = link.tableB.defaultSyntax //.syntax("r")
+              val right    = link.rightSyntax //.syntax("r")
               val leftCond = link.leftJoinFields
               val leftCondSql = leftCond
                 .map {
@@ -161,7 +161,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              f.EVERY.flatMap(ff => QueryOps.byFilterConditionFragment(right, ff)).map(sqlString)
+              f.EVERY.flatMap(ff => QueryAction.byFilterConditionFragment(right, ff)).map(sqlString)
               // NONE
               // NOT EXISTS(
               //   SELECT ONE

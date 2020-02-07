@@ -1,16 +1,16 @@
-package com.github.reddone.caseql.sql.generic.ops
+package com.github.reddone.caseql.sql.query.action
 
 import cats.implicits._
-import com.github.reddone.caseql.sql.generic.ops.QueryOps.{SQLFragment, SQLQuery}
-import com.github.reddone.caseql.sql.generic.{Table, TableModifier}
+import com.github.reddone.caseql.sql.query.action.QueryAction.{SQLAction, SQLFragment}
+import com.github.reddone.caseql.sql.query.{Syntax, TableModifier}
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.tokens.{InsertInto, Values}
 import doobie._
 import Fragment._
 
-object InsertOps {
+object InsertAction {
 
-  sealed abstract class InsertFragment[T, MT <: EntityModifier[MT]](syntax: Table[T]#Syntax, modifier: MT)(
+  sealed abstract class InsertFragment[T, MT <: EntityModifier[MT]](syntax: Syntax[T], modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
   ) extends SQLFragment {
 
@@ -25,25 +25,25 @@ object InsertOps {
     }
   }
 
-  final case class One[T, MT <: EntityModifier[MT]](syntax: Table[T]#Syntax, modifier: MT)(
+  final case class One[T, MT <: EntityModifier[MT]](syntax: Syntax[T], modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
   ) extends InsertFragment[T, MT](syntax, modifier)
-      with SQLQuery[Int] { self =>
+      with SQLAction[Int] { self =>
 
     override def execute: ConnectionIO[Int] = {
       self.toFragment.update.run
     }
   }
 
-  final case class OneReturningKey[T, MT <: EntityModifier[MT], K <: Table[T]#Key](
-      syntax: Table[T]#Syntax,
+  final case class OneReturningKey[T, K, MT <: EntityModifier[MT]](
+      syntax: Syntax[T],
       modifier: MT
   )(
       implicit
       read: Read[K],
       tableModifier: TableModifier[T, MT]
   ) extends InsertFragment[T, MT](syntax, modifier)
-      with SQLQuery[K] { self =>
+      with SQLAction[K] { self =>
 
     override def execute: ConnectionIO[K] = {
       self.toFragment.update.withUniqueGeneratedKeys[K](syntax.keyColumns: _*)

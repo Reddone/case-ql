@@ -1,16 +1,16 @@
-package com.github.reddone.caseql.sql.generic.ops
+package com.github.reddone.caseql.sql.query.action
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableQuery}
-import com.github.reddone.caseql.sql.generic.ops.QueryOps._
+import com.github.reddone.caseql.sql.query.{Syntax, Table, TableFilter, TableQuery}
+import com.github.reddone.caseql.sql.query.action.QueryAction._
 import com.github.reddone.caseql.sql.tokens.{From, Select, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object SelectOps {
+object SelectAction {
 
-  sealed abstract class SelectFragment[T](syntax: Table[T]#Syntax)(
+  sealed abstract class SelectFragment[T](syntax: Syntax[T])(
       implicit read: Read[T]
   ) extends SQLFragment {
 
@@ -20,15 +20,15 @@ object SelectOps {
     }
   }
 
-  final case class ByFilter[T, FT <: EntityFilter[FT]](syntax: Table[T]#Syntax, filter: FT)(
+  final case class ByFilter[T, FT <: EntityFilter[FT]](syntax: Syntax[T], filter: FT)(
       implicit
       read: Read[T],
       tableFilter: TableFilter[T, FT]
   ) extends SelectFragment[T](syntax)
-      with SQLStreamingQuery[T] { self =>
+      with SQLStreamingAction[T] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = QueryOps
+      val whereFragment = QueryAction
         .byFilterConditionFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
@@ -40,15 +40,15 @@ object SelectOps {
     }
   }
 
-  final case class ByKey[T, K <: Table[T]#Key](syntax: Table[T]#Syntax, key: K)(
+  final case class ByKey[T, K](syntax: Syntax[T], key: K)(
       implicit
       read: Read[T],
       write: Write[K]
   ) extends SelectFragment[T](syntax)
-      with SQLQuery[Option[T]] { self =>
+      with SQLAction[Option[T]] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ QueryOps.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryAction.byKeyConditionFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 

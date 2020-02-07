@@ -1,33 +1,33 @@
-package com.github.reddone.caseql.sql.generic.ops
+package com.github.reddone.caseql.sql.query.action
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.generic.{Table, TableFilter}
+import com.github.reddone.caseql.sql.query.{Syntax, Table, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{And, Placeholder}
 import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object QueryOps {
+object QueryAction {
 
   trait SQLFragment {
     def toFragment: Fragment
   }
 
-  trait SQLQuery[R] { self: SQLFragment =>
+  trait SQLAction[R] { self: SQLFragment =>
     def execute: ConnectionIO[R]
   }
 
-  trait SQLStreamingQuery[R] { self: SQLFragment =>
+  trait SQLStreamingAction[R] { self: SQLFragment =>
     def execute: Stream[ConnectionIO, R]
 
-    final def asSQLQuery: SQLQuery[List[R]] = new SQLQuery[List[R]] with SQLFragment {
+    final def asSQLAction: SQLAction[List[R]] = new SQLAction[List[R]] with SQLFragment {
       def toFragment: Fragment           = self.toFragment
       def execute: ConnectionIO[List[R]] = self.execute.compile.toList
     }
   }
 
-  def byKeyConditionFragment[T, K <: Table[T]#Key](syntax: Table[T]#Syntax, key: K)(
+  def byKeyConditionFragment[T, K](syntax: Syntax[T], key: K)(
       implicit write: Write[K]
   ): Fragment = {
     FragmentUtils
@@ -35,7 +35,7 @@ object QueryOps {
       .toFragment(key)
   }
 
-  def byFilterConditionFragment[T, FT <: EntityFilter[FT]](syntax: Table[T]#Syntax, filter: FT)(
+  def byFilterConditionFragment[T, FT <: EntityFilter[FT]](syntax: Syntax[T], filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ): Option[Fragment] = {
     FragmentUtils.optionalAndOpt(

@@ -1,13 +1,13 @@
-package com.github.reddone.caseql.sql.generic
+package com.github.reddone.caseql.sql.query
 
-import com.github.reddone.caseql.sql.generic.TableFunction._
+import com.github.reddone.caseql.sql.query.TableFunction._
 import com.github.reddone.caseql.sql.modifier.models.Modifier
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableModifier[A, MA <: EntityModifier[MA]] {
-  def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])]
+  def entityModifierNamedFragments(modifier: MA): Syntax[A] => List[(String, Option[Fragment])]
 }
 
 object TableModifier {
@@ -26,7 +26,7 @@ object TableModifier {
           lgenMA: LabelledGeneric.Aux[MA, ReprMA],
           entityModifierMA: Lazy[ReprEntityModifier[A, ReprA, ReprMA]]
       ): TableModifier[A, MA] = new TableModifier[A, MA] {
-        override def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])] = {
+        override def entityModifierNamedFragments(modifier: MA): Syntax[A] => List[(String, Option[Fragment])] = {
           entityModifierMA.value.entityModifierNamedFragments(lgenMA.to(modifier))
         }
       }
@@ -35,7 +35,7 @@ object TableModifier {
 }
 
 trait ReprEntityModifier[A, ReprA <: HList, ReprMA <: HList] {
-  def entityModifierNamedFragments(modifierRepr: ReprMA): List[(String, Option[Fragment])]
+  def entityModifierNamedFragments(modifierRepr: ReprMA): Syntax[A] => List[(String, Option[Fragment])]
 }
 
 object ReprEntityModifier {
@@ -55,7 +55,6 @@ object ReprEntityModifier {
       AlignedModifierMA <: HList
   ](
       implicit
-      tableA: Table[A],
       keysA: ops.record.Keys.Aux[ReprA, KeysA],
       valuesA: ops.record.Values.Aux[ReprA, ValuesA],
       wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionModifier, WrappedValuesA],
@@ -66,12 +65,13 @@ object ReprEntityModifier {
       alignedMA: ops.record.AlignByKeys.Aux[ModifierMA, KeysA, AlignedModifierMA],
       isSubtypeMA: <:<[AlignedModifierMA, ZippedA]
   ): ReprEntityModifier[A, ReprA, ReprMA] = new ReprEntityModifier[A, ReprA, ReprMA] {
-    override def entityModifierNamedFragments(modifierRepr: ReprMA): List[(String, Option[Fragment])] = {
-      modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
-        case (name, fragment) =>
-          val column = tableA.defaultSyntax.column(name)
-          (column, fragment)
-      }
+    override def entityModifierNamedFragments(modifierRepr: ReprMA): Syntax[A] => List[(String, Option[Fragment])] = {
+      syntax: Syntax[A] =>
+        modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
+          case (name, fragment) =>
+            val column = syntax.column(name)
+            (column, fragment)
+        }
     }
   }
 }

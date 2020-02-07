@@ -1,17 +1,17 @@
-package com.github.reddone.caseql.sql.generic.ops
+package com.github.reddone.caseql.sql.query.action
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.generic.ops.QueryOps._
-import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier, TableQuery}
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
+import com.github.reddone.caseql.sql.query.action.QueryAction._
+import com.github.reddone.caseql.sql.query.{Syntax, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.tokens.Where
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object UpdateOps {
+object UpdateAction {
 
-  sealed abstract class UpdateFragment[T, MT <: EntityModifier[MT]](syntax: Table[T]#Syntax, modifier: MT)(
+  sealed abstract class UpdateFragment[T, MT <: EntityModifier[MT]](syntax: Syntax[T], modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
   ) extends SQLFragment {
 
@@ -29,7 +29,7 @@ object UpdateOps {
   }
 
   final case class ByFilter[T, MT <: EntityModifier[MT], FT <: EntityFilter[FT]](
-      syntax: Table[T]#Syntax,
+      syntax: Syntax[T],
       modifier: MT,
       filter: FT
   )(
@@ -37,10 +37,10 @@ object UpdateOps {
       tableModifier: TableModifier[T, MT],
       tableFilter: TableFilter[T, FT]
   ) extends UpdateFragment[T, MT](syntax, modifier)
-      with SQLQuery[Int] { self =>
+      with SQLAction[Int] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = QueryOps
+      val whereFragment = QueryAction
         .byFilterConditionFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
@@ -52,8 +52,8 @@ object UpdateOps {
     }
   }
 
-  final case class ByFilterReturningKeys[T, MT <: EntityModifier[MT], FT <: EntityFilter[FT], K <: Table[T]#Key](
-      syntax: Table[T]#Syntax,
+  final case class ByFilterReturningKeys[T, K, MT <: EntityModifier[MT], FT <: EntityFilter[FT]](
+      syntax: Syntax[T],
       modifier: MT,
       filter: FT
   )(
@@ -62,10 +62,10 @@ object UpdateOps {
       tableModifier: TableModifier[T, MT],
       tableFilter: TableFilter[T, FT]
   ) extends UpdateFragment[T, MT](syntax, modifier)
-      with SQLStreamingQuery[K] { self =>
+      with SQLStreamingAction[K] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = QueryOps
+      val whereFragment = QueryAction
         .byFilterConditionFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
@@ -77,8 +77,8 @@ object UpdateOps {
     }
   }
 
-  final case class ByKey[T, MT <: EntityModifier[MT], K <: Table[T]#Key](
-      syntax: Table[T]#Syntax,
+  final case class ByKey[T, K, MT <: EntityModifier[MT]](
+      syntax: Syntax[T],
       modifier: MT,
       key: K
   )(
@@ -86,10 +86,10 @@ object UpdateOps {
       write: Write[K],
       tableModifier: TableModifier[T, MT]
   ) extends UpdateFragment[T, MT](syntax, modifier)
-      with SQLQuery[Int] { self =>
+      with SQLAction[Int] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ QueryOps.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryAction.byKeyConditionFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 
@@ -98,8 +98,8 @@ object UpdateOps {
     }
   }
 
-  final case class ByKeyReturningKeys[T, MT <: EntityModifier[MT], K <: Table[T]#Key](
-      syntax: Table[T]#Syntax,
+  final case class ByKeyReturningKeys[T, K, MT <: EntityModifier[MT]](
+      syntax: Syntax[T],
       modifier: MT,
       key: K
   )(
@@ -108,10 +108,10 @@ object UpdateOps {
       write: Write[K],
       tableModifier: TableModifier[T, MT]
   ) extends UpdateFragment[T, MT](syntax, modifier)
-      with SQLStreamingQuery[K] { self =>
+      with SQLStreamingAction[K] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ QueryOps.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryAction.byKeyConditionFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 

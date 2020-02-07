@@ -3,7 +3,7 @@ package com.github.reddone.caseql.sql
 import java.sql.Timestamp
 
 import com.github.reddone.caseql.sql.filter.models._
-import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
+import com.github.reddone.caseql.sql.query.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
 import doobie._
 import doobie.implicits._
