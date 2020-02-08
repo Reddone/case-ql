@@ -308,8 +308,8 @@ object Relation extends App {
       .to(aFilter)
       .flatMap(extractRelationFilter)
       .map(relationFilterToOptionFragment)
-      .toList[TableSyntax[A] => Option[Fragment]]
-      .map(_.apply(tableA.internalSyntax))
+      .toList[Option[String] => Option[Fragment]]
+      .map(_.apply(None))
   )
   //val test = Derivator[A, AFilter]().make.relationValues(LabelledGeneric[AFilter].to(aFilter))
   //println(test)

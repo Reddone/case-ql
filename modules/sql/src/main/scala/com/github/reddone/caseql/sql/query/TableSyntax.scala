@@ -28,5 +28,10 @@ final case class TableSyntax[T](alias: String, support: Table[T, _]) extends Dyn
 
 object TableSyntax {
 
+  // TODO: rewrite
+  private def aliasedSyntax[T, K](table: Table[T, K], alias: Option[String]): TableSyntax[T] = {
+    alias.map(_ => table.internalSyntax).getOrElse(table.internalSyntax)
+  }
+
   implicit def derive[T, K](implicit table: Table[T, K]): TableSyntax[T] = table.internalSyntax
 }

@@ -48,7 +48,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
   ) extends EntityModifier[TestModifier]
 
   implicit val table: Table[Test, TestKey]                      = Table.derive[Test, TestKey]()
-  val syntax: TableSyntax[Test]                                      = table.syntax("t")
+  val syntax: TableSyntax[Test]                                 = table.syntax("t")
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 
@@ -63,7 +63,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       None
     )
 
-    QueryAction.byFilterFragment(syntax, filter1) shouldBe None
+    table.byFilterFragment(filter1, None) shouldBe None
 
     val filter2 = TestFilter(
       Some(IntFilter.empty),
@@ -75,7 +75,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       None
     )
 
-    QueryAction.byFilterFragment(syntax, filter2) shouldBe None
+    table.byFilterFragment(filter2, None) shouldBe None
   }
 
   it should "work with a flat filter" in {
@@ -97,7 +97,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "((t.field4 = ? ) ) " +
       ") " +
       "\")"
-    val result = QueryAction.byFilterFragment(syntax, filter1)
+    val result = table.byFilterFragment(filter1, None)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -143,7 +143,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       "(((t.field1 = ? ) ) AND ((t.field2 = ? ) ) ) " +
       ") ) " +
       "\")"
-    val result = QueryAction.byFilterFragment(syntax, filter2)
+    val result = table.byFilterFragment(filter2, None)
 
     result shouldBe defined
     result.get.toString shouldBe expected
@@ -239,7 +239,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       ") ) " +
       ") ) " +
       "\")"
-    val result = QueryAction.byFilterFragment(syntax, filter1)
+    val result = table.byFilterFragment(filter1, None)
 
     result shouldBe defined
     result.get.toString shouldBe expected
