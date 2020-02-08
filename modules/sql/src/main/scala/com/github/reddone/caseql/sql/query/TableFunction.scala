@@ -101,7 +101,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              f.EVERY.flatMap(ff => tableFilter.combineFilterFragments(ff, None)).map(sqlString)
+              f.EVERY.flatMap(ff => right.support.combineFilterFragments(ff, None)).map(sqlString)
               // SOME
               // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id") - Contrary of NONE
               // EXISTS(
@@ -160,7 +160,7 @@ object TableFunction {
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
 
-              f.EVERY.flatMap(ff => tableFilter.combineFilterFragments(ff, None)).map(sqlString)
+              f.EVERY.flatMap(ff => right.support.combineFilterFragments(ff, None)).map(sqlString)
               // NONE
               // NOT EXISTS(
               //   SELECT ONE

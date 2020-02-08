@@ -3,15 +3,12 @@ package com.github.reddone.caseql.sql.query
 import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.query.TableFunction._
-import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableFilter[A, FA <: EntityFilter[FA]] {
   def entityFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
   def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
-
-
 }
 
 object TableFilter {
