@@ -1,15 +1,15 @@
-package com.github.reddone.caseql.sql.query.action
+package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.query.action.QueryAction._
-import com.github.reddone.caseql.sql.query.{Table, TableFilter, TableModifier, TableSyntax}
+import com.github.reddone.caseql.sql.table.query.Action._
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.tokens.Where
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object UpdateAction {
+object UpdateQuery {
 
   sealed abstract class UpdateFragment[T, K, MT <: EntityModifier[MT]](
       table: Table[T, K],

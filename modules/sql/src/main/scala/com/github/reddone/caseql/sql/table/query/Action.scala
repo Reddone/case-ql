@@ -1,9 +1,9 @@
-package com.github.reddone.caseql.sql.query.action
+package com.github.reddone.caseql.sql.table.query
 
 import doobie._
 import fs2.Stream
 
-object QueryAction {
+object Action {
 
   trait SQLFragment {
     def toFragment: Fragment

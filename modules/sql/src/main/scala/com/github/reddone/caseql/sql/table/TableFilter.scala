@@ -1,8 +1,8 @@
-package com.github.reddone.caseql.sql.query
+package com.github.reddone.caseql.sql.table
 
 import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.query.TableFunction._
+import com.github.reddone.caseql.sql.table.TableFunction._
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 

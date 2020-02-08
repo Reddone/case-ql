@@ -1,14 +1,14 @@
-package com.github.reddone.caseql.sql.query.action
+package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.query.action.QueryAction._
-import com.github.reddone.caseql.sql.query.{Table, TableFilter}
+import com.github.reddone.caseql.sql.table.query.Action._
+import com.github.reddone.caseql.sql.table.{Table, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{From, Select, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object SelectAction {
+object SelectQuery {
 
   sealed abstract class SelectFragment[T, K](
       table: Table[T, K],

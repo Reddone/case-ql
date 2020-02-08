@@ -1,4 +1,4 @@
-package com.github.reddone.caseql.sql.query
+package com.github.reddone.caseql.sql.table
 
 import java.sql.Timestamp
 

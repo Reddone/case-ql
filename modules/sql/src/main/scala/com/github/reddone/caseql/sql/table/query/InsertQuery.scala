@@ -1,14 +1,14 @@
-package com.github.reddone.caseql.sql.query.action
+package com.github.reddone.caseql.sql.table.query
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.query.action.QueryAction.{SQLAction, SQLFragment}
-import com.github.reddone.caseql.sql.query.{Table, TableModifier}
+import com.github.reddone.caseql.sql.table.query.Action.{SQLAction, SQLFragment}
+import com.github.reddone.caseql.sql.table.{Table, TableModifier}
 import com.github.reddone.caseql.sql.tokens.{InsertInto, Values}
 import doobie._
 import Fragment._
 
-object InsertAction {
+object InsertQuery {
 
   sealed abstract class InsertFragment[T, K, MT <: EntityModifier[MT]](
       table: Table[T, K],

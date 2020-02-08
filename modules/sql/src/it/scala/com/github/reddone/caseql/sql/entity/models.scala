@@ -4,7 +4,7 @@ import java.sql.Timestamp
 
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.query.{Table, TableFilter, TableModifier}
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.util.CirceDecoders._

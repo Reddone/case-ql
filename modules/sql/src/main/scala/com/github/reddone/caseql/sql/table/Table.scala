@@ -1,4 +1,4 @@
-package com.github.reddone.caseql.sql.query
+package com.github.reddone.caseql.sql.table
 
 import java.util.concurrent.atomic.AtomicLong
 
@@ -34,9 +34,9 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
   implicit def keyWrite: Write[K]
 
-  private[query] final def syntax(alias: String): TableSyntax[T] = TableSyntax(alias, self)
+  private[table] final def syntax(alias: String): TableSyntax[T] = TableSyntax(alias, self)
 
-  private[query] final lazy val internalSyntax: TableSyntax[T] = TableSyntax(shortenedName, self)
+  private[table] final lazy val internalSyntax: TableSyntax[T] = TableSyntax(shortenedName, self)
 }
 
 object Table {

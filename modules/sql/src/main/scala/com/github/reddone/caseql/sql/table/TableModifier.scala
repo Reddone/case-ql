@@ -1,8 +1,8 @@
-package com.github.reddone.caseql.sql.query
+package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.query.TableFunction._
 import com.github.reddone.caseql.sql.modifier.models.Modifier
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
+import com.github.reddone.caseql.sql.table.TableFunction._
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
@@ -66,8 +66,10 @@ object ReprEntityModifier {
       alignedMA: ops.record.AlignByKeys.Aux[ModifierMA, KeysA, AlignedModifierMA],
       isSubtypeMA: <:<[AlignedModifierMA, ZippedA]
   ): ReprEntityModifier[A, ReprA, ReprMA] = new ReprEntityModifier[A, ReprA, ReprMA] {
-    override def entityModifierNamedFragments(modifierRepr: ReprMA): Option[String] => List[(String, Option[Fragment])] = {
-      alias: Option[String] => {
+    override def entityModifierNamedFragments(
+        modifierRepr: ReprMA
+    ): Option[String] => List[(String, Option[Fragment])] = { alias: Option[String] =>
+      {
         val syntax = tableSyntaxA // TODO: use alias to derive new syntax
         modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
           case (name, fragment) =>

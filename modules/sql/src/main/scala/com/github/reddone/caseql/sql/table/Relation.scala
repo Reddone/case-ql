@@ -1,11 +1,10 @@
-package com.github.reddone.caseql.sql.query
+package com.github.reddone.caseql.sql.table
 
 import cats.data.NonEmptyList
 import com.github.reddone.caseql.sql.filter.models.{IntFilter, LongFilter, StringFilter}
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.query.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
+import com.github.reddone.caseql.sql.table.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
 import doobie._
-import io.circe.Decoder
 import shapeless.LabelledGeneric
 
 // experiment for replacing filter wrapper

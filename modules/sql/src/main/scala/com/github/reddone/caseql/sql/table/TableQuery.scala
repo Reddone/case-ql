@@ -1,8 +1,8 @@
-package com.github.reddone.caseql.sql.query
+package com.github.reddone.caseql.sql.table
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.query.action.{DeleteAction, InsertAction, SelectAction, UpdateAction}
+import com.github.reddone.caseql.sql.table.query.{DeleteQuery, InsertQuery, SelectQuery, UpdateQuery}
 import com.github.reddone.caseql.sql.tokens.{And, Placeholder}
 import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie.Fragment
@@ -13,26 +13,26 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   final def select[FT <: EntityFilter[FT]](filter: FT, alias: Option[String] = None)(
       implicit tableFilter: TableFilter[T, FT]
-  ): SelectAction.ByFilter[T, K, FT] = {
-    SelectAction.ByFilter(table, filter, alias)
+  ): SelectQuery.ByFilter[T, K, FT] = {
+    SelectQuery.ByFilter(table, filter, alias)
   }
 
-  final def selectByKey(key: K, alias: Option[String] = None): SelectAction.ByKey[T, K] = {
-    SelectAction.ByKey(table, key, alias)
+  final def selectByKey(key: K, alias: Option[String] = None): SelectQuery.ByKey[T, K] = {
+    SelectQuery.ByKey(table, key, alias)
   }
 
   // INSERT
 
   final def insertOne[MT <: EntityModifier[MT]](modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
-  ): InsertAction.One[T, K, MT] = {
-    InsertAction.One(table, modifier)
+  ): InsertQuery.One[T, K, MT] = {
+    InsertQuery.One(table, modifier)
   }
 
   final def insertOneReturningKey[MT <: EntityModifier[MT]](modifier: MT)(
       implicit tableModifier: TableModifier[T, MT]
-  ): InsertAction.OneReturningKey[T, K, MT] = {
-    InsertAction.OneReturningKey(table, modifier)
+  ): InsertQuery.OneReturningKey[T, K, MT] = {
+    InsertQuery.OneReturningKey(table, modifier)
   }
 
   // UPDATE
@@ -45,8 +45,8 @@ trait TableQuery[T, K] { table: Table[T, K] =>
       implicit
       tableModifier: TableModifier[T, MT],
       tableFilter: TableFilter[T, FT]
-  ): UpdateAction.ByFilter[T, K, MT, FT] = {
-    UpdateAction.ByFilter(table, modifier, filter, alias)
+  ): UpdateQuery.ByFilter[T, K, MT, FT] = {
+    UpdateQuery.ByFilter(table, modifier, filter, alias)
   }
 
   final def updateReturningKeys[MT <: EntityModifier[MT], FT <: EntityFilter[FT]](
@@ -57,42 +57,42 @@ trait TableQuery[T, K] { table: Table[T, K] =>
       implicit
       tableModifier: TableModifier[T, MT],
       tableFilter: TableFilter[T, FT]
-  ): UpdateAction.ByFilterReturningKeys[T, K, MT, FT] = {
-    UpdateAction.ByFilterReturningKeys(table, modifier, filter, alias)
+  ): UpdateQuery.ByFilterReturningKeys[T, K, MT, FT] = {
+    UpdateQuery.ByFilterReturningKeys(table, modifier, filter, alias)
   }
 
   final def updateByKey[MT <: EntityModifier[MT]](modifier: MT, key: K, alias: Option[String] = None)(
       implicit tableModifier: TableModifier[T, MT]
-  ): UpdateAction.ByKey[T, K, MT] = {
-    UpdateAction.ByKey(table, modifier, key, alias)
+  ): UpdateQuery.ByKey[T, K, MT] = {
+    UpdateQuery.ByKey(table, modifier, key, alias)
   }
 
   final def updateByKeyReturningKeys[MT <: EntityModifier[MT]](modifier: MT, key: K, alias: Option[String] = None)(
       implicit tableModifier: TableModifier[T, MT]
-  ): UpdateAction.ByKeyReturningKeys[T, K, MT] = {
-    UpdateAction.ByKeyReturningKeys(table, modifier, key, alias)
+  ): UpdateQuery.ByKeyReturningKeys[T, K, MT] = {
+    UpdateQuery.ByKeyReturningKeys(table, modifier, key, alias)
   }
 
   // DELETE
 
   final def delete[FT <: EntityFilter[FT]](filter: FT, alias: Option[String] = None)(
       implicit tableFilter: TableFilter[T, FT]
-  ): DeleteAction.ByFilter[T, K, FT] = {
-    DeleteAction.ByFilter(table, filter, alias)
+  ): DeleteQuery.ByFilter[T, K, FT] = {
+    DeleteQuery.ByFilter(table, filter, alias)
   }
 
   final def deleteReturningKeys[FT <: EntityFilter[FT]](filter: FT, alias: Option[String] = None)(
       implicit tableFilter: TableFilter[T, FT]
-  ): DeleteAction.ByFilterReturningKeys[T, K, FT] = {
-    DeleteAction.ByFilterReturningKeys(table, filter, alias)
+  ): DeleteQuery.ByFilterReturningKeys[T, K, FT] = {
+    DeleteQuery.ByFilterReturningKeys(table, filter, alias)
   }
 
-  final def deleteByKey(key: K, alias: Option[String] = None): DeleteAction.ByKey[T, K] = {
-    DeleteAction.ByKey(table, key, alias)
+  final def deleteByKey(key: K, alias: Option[String] = None): DeleteQuery.ByKey[T, K] = {
+    DeleteQuery.ByKey(table, key, alias)
   }
 
-  final def deleteByKeyReturningKeys(key: K, alias: Option[String] = None): DeleteAction.ByKeyReturningKeys[T, K] = {
-    DeleteAction.ByKeyReturningKeys(table, key, alias)
+  final def deleteByKeyReturningKeys(key: K, alias: Option[String] = None): DeleteQuery.ByKeyReturningKeys[T, K] = {
+    DeleteQuery.ByKeyReturningKeys(table, key, alias)
   }
 
   // WHERE
