@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.query.action
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.query.action.QueryAction._
-import com.github.reddone.caseql.sql.query.{Syntax, Table, TableFilter}
+import com.github.reddone.caseql.sql.query.{TableSyntax, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{Delete, From, Where}
 import doobie._
 import Fragment._
@@ -10,7 +10,7 @@ import fs2.Stream
 
 object DeleteAction {
 
-  sealed abstract class DeleteFragment[T](syntax: Syntax[T]) extends SQLFragment {
+  sealed abstract class DeleteFragment[T](syntax: TableSyntax[T]) extends SQLFragment {
 
     override def toFragment: Fragment = {
       val deleteFragment = const(s"$Delete $From ${syntax.name}")
@@ -18,14 +18,14 @@ object DeleteAction {
     }
   }
 
-  final case class ByFilter[T, FT <: EntityFilter[FT]](syntax: Syntax[T], filter: FT)(
+  final case class ByFilter[T, FT <: EntityFilter[FT]](syntax: TableSyntax[T], filter: FT)(
       implicit tableFilter: TableFilter[T, FT]
   ) extends DeleteFragment[T](syntax)
       with SQLAction[Int] { self =>
 
     override def toFragment: Fragment = {
       val whereFragment = QueryAction
-        .byFilterConditionFragment(syntax, filter)
+        .byFilterFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
       super.toFragment ++ whereFragment
@@ -37,9 +37,8 @@ object DeleteAction {
   }
 
   final case class ByFilterReturningKeys[T, K, FT <: EntityFilter[FT]](
-      syntax: Syntax[T],
-      filter: FT,
-      token: Class[K]
+      syntax: TableSyntax[T],
+      filter: FT
   )(
       implicit
       read: Read[K],
@@ -49,7 +48,7 @@ object DeleteAction {
 
     override def toFragment: Fragment = {
       val whereFragment = QueryAction
-        .byFilterConditionFragment(syntax, filter)
+        .byFilterFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
       super.toFragment ++ whereFragment
@@ -60,13 +59,13 @@ object DeleteAction {
     }
   }
 
-  final case class ByKey[T, K](syntax: Syntax[T], key: K)(
+  final case class ByKey[T, K](syntax: TableSyntax[T], key: K)(
       implicit read: Write[K]
   ) extends DeleteFragment[T](syntax)
       with SQLAction[Int] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ QueryAction.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryAction.byKeyFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 
@@ -75,7 +74,7 @@ object DeleteAction {
     }
   }
 
-  final case class ByKeyReturningKeys[T, K](syntax: Syntax[T], key: K)(
+  final case class ByKeyReturningKeys[T, K](syntax: TableSyntax[T], key: K)(
       implicit
       read: Read[K],
       write: Write[K]
@@ -83,7 +82,7 @@ object DeleteAction {
       with SQLStreamingAction[K] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ QueryAction.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryAction.byKeyFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 

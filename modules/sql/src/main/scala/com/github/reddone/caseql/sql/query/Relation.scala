@@ -264,7 +264,7 @@ object Relation extends App {
   implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
   implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
 
-  implicit val relAB: Link[A, B] = Link.direct(tableA, tableB) { (a, b) =>
+  implicit val relAB: TableLink[A, B] = TableLink.direct(tableA, tableB) { (a, b) =>
     NonEmptyList.of(("field1", "field2"))
   }
 
@@ -308,8 +308,8 @@ object Relation extends App {
       .to(aFilter)
       .flatMap(extractRelationFilter)
       .map(relationFilterToOptionFragment)
-      .toList[Syntax[A] => Option[Fragment]]
-      .map(_.apply(tableA.defaultSyntax))
+      .toList[TableSyntax[A] => Option[Fragment]]
+      .map(_.apply(tableA.internalSyntax))
   )
   //val test = Derivator[A, AFilter]().make.relationValues(LabelledGeneric[AFilter].to(aFilter))
   //println(test)

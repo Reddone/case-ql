@@ -3,12 +3,15 @@ package com.github.reddone.caseql.sql.query
 import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.query.TableFunction._
+import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableFilter[A, FA <: EntityFilter[FA]] {
-  def entityFilterFragments(filter: FA): Syntax[A] => List[Option[Fragment]]
-  def relationFilterFragments(filter: FA): Syntax[A] => List[Option[Fragment]]
+  def entityFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
+  def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
+
+
 }
 
 object TableFilter {
@@ -28,10 +31,10 @@ object TableFilter {
           entityFilterFA: Lazy[ReprEntityFilter[A, ReprA, ReprFA]],
           relationFilterFA: Lazy[ReprRelationFilter[A, ReprFA]]
       ): TableFilter[A, FA] = new TableFilter[A, FA] {
-        override def entityFilterFragments(filter: FA): Syntax[A] => List[Option[Fragment]] = {
+        override def entityFilterFragments(filter: FA): Option[String] => List[Option[Fragment]] = {
           entityFilterFA.value.entityFilterFragments(lgenFA.to(filter))
         }
-        override def relationFilterFragments(filter: FA): Syntax[A] => List[Option[Fragment]] = {
+        override def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]] = {
           relationFilterFA.value.relationFilterFragments(lgenFA.to(filter))
         }
       }
@@ -40,7 +43,7 @@ object TableFilter {
 }
 
 trait ReprEntityFilter[A, ReprA <: HList, ReprFA <: HList] {
-  def entityFilterFragments(filterRepr: ReprFA): Syntax[A] => List[Option[Fragment]]
+  def entityFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
 }
 
 object ReprEntityFilter {
@@ -60,6 +63,7 @@ object ReprEntityFilter {
       AlignedFilterFA <: HList
   ](
       implicit
+      tableSyntaxA: TableSyntax[A],
       keysA: ops.record.Keys.Aux[ReprA, KeysA],
       valuesA: ops.record.Values.Aux[ReprA, ValuesA],
       wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionFilter, WrappedValuesA],
@@ -70,15 +74,15 @@ object ReprEntityFilter {
       alignedFA: ops.record.AlignByKeys.Aux[FilterFA, KeysA, AlignedFilterFA],
       isSubtypeFA: <:<[AlignedFilterFA, ZippedA]
   ): ReprEntityFilter[A, ReprA, ReprFA] = new ReprEntityFilter[A, ReprA, ReprFA] {
-    override def entityFilterFragments(filterRepr: ReprFA): Syntax[A] => List[Option[Fragment]] = {
-      syntax: Syntax[A] =>
+    override def entityFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] = {
+      alias: Option[String] =>
         filterRepr
           .flatMap(extractFilter)
           .map(filterToNamedOptionFragment)
           .toList
           .map {
             case (field, makeFragment) =>
-              val column   = syntax.column(field)
+              val column   = tableSyntaxA.column(field) // TODO: use alias to derive new syntax
               val fragment = makeFragment(column)
               fragment
           }
@@ -87,7 +91,7 @@ object ReprEntityFilter {
 }
 
 trait ReprRelationFilter[A, ReprFA <: HList] {
-  def relationFilterFragments(filterRepr: ReprFA): Syntax[A] => List[Option[Fragment]]
+  def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
 }
 
 object ReprRelationFilter {
@@ -105,15 +109,15 @@ object ReprRelationFilter {
       //belongsToT: ops.record.Values.Aux[RelationFilterFA, OUT],
       //aaaa: ops.hlist.Comapped[OUT, Option[RelationFilter[A, _, _]],
       fragmentsFA: ops.hlist.Mapper.Aux[relationFilterToOptionFragment.type, RelationFilterFA, FragmentFA],
-      toListFragmentsFA: ops.hlist.ToList[FragmentFA, Syntax[A] => Option[Fragment]]
+      toListFragmentsFA: ops.hlist.ToList[FragmentFA, Option[String] => Option[Fragment]]
   ): ReprRelationFilter[A, ReprFA] = new ReprRelationFilter[A, ReprFA] {
-    override def relationFilterFragments(filterRepr: ReprFA): Syntax[A] => List[Option[Fragment]] = {
-      syntax: Syntax[A] =>
+    override def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] = {
+      alias: Option[String] =>
         filterRepr
           .flatMap(extractRelationFilter)
           .map(relationFilterToOptionFragment)
           .toList
-          .map(_.apply(syntax))
+          .map(_.apply(alias))
     }
   }
 }

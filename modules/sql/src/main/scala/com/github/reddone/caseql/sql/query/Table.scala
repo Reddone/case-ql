@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.query
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
+import com.github.reddone.caseql.sql.util.StringUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
@@ -34,31 +34,9 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
   implicit def keyWrite: Write[K]
 
-  final def syntax(alias: String): Syntax[T] = Syntax(alias, self)
+  private[query] final def syntax(alias: String): TableSyntax[T] = TableSyntax(alias, self)
 
-  private[query] final lazy val defaultSyntax: Syntax[T] = Syntax(shortenedName, self)
-}
-
-// Syntax decouples a table from its key
-final case class Syntax[T](alias: String, support: Table[T, _]) extends Dynamic {
-
-  private val aliasO = if (alias.isEmpty) None else Some(alias)
-
-  lazy val name: String = {
-    val fullName        = StringUtils.addPrefix(support.name, support.schema)
-    val aliasedFullName = StringUtils.addSuffix(fullName, aliasO, " ")
-    if (alias == support.name) fullName else aliasedFullName
-  }
-
-  lazy val columns: List[String] = support.fields.map(c).map(StringUtils.addPrefix(_, aliasO))
-
-  lazy val keyColumns: List[String] = support.keyFields.map(c).map(StringUtils.addPrefix(_, aliasO))
-
-  def column(field: String): String = StringUtils.addPrefix(c(field), aliasO)
-
-  def selectDynamic(field: String): String = StringUtils.addPrefix(c(field), aliasO)
-
-  private def c(field: String): String = support.fieldConverter.getOrElse(field, support.fieldMapper(field))
+  private[query] final lazy val internalSyntax: TableSyntax[T] = TableSyntax(shortenedName, self)
 }
 
 object Table {
@@ -67,9 +45,9 @@ object Table {
 
   private val tableRegister = new TrieMap[String, String]()
 
-  // move register in a TableRegistrar
+  // TODO: move register in a TableRegistrar
 
-  def apply[T, K](implicit ev: Table[T, K]): Table[T, K] = ev
+  def apply[T, K](implicit table: Table[T, K]): Table[T, K] = table
 
   implicit val unit: Table[Unit, Unit] = derive[Unit, Unit]()
 
@@ -80,7 +58,7 @@ object Table {
     class Partial[T, K] {
 
       // TODO: singleton ???
-      def apply(implicit ev: Table[T, K]): Table[T, K] = ev
+      def apply(implicit table: Table[T, K]): Table[T, K] = table
 
       def apply[ReprT <: HList, KeysT <: HList, ReprK <: HList, KeysK <: HList](
           aName: Option[String] = None,
@@ -106,6 +84,8 @@ object Table {
         override val name: String = aName.getOrElse(StringUtils.camelToSnake(typeOf[T](tag).typeSymbol.name.toString))
 
         override val schema: Option[String] = aSchema
+
+        // TODO: write a proper shortener inside TableRegistrar
 
         override val shortenedName: String = {
           val a = StringUtils.shorten(name) + counter.getAndIncrement().toString

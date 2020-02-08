@@ -1,16 +1,44 @@
 package com.github.reddone.caseql.sql.query.action
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.query.{Syntax, Table, TableFilter, TableQuery}
 import com.github.reddone.caseql.sql.query.action.QueryAction._
+import com.github.reddone.caseql.sql.query.{Table, TableFilter, TableSyntax}
 import com.github.reddone.caseql.sql.tokens.{From, Select, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
 
+sealed trait SelectBuilderState
+
+class SelectBuilder[S <: SelectBuilderState](
+    private var fragment: Fragment,
+) {
+
+  def withSyntax[T, K](table: Table[T, K])(
+  ): SelectBuilder[T] = {
+    val selectFragment = const(s"$Select ${tableSyntax.columns.mkString(", ")} $From ${tableSyntax.name}")
+    new SelectBuilder(fragment ++ selectFragment, Some(tableSyntax), alias)
+  }
+
+  def withFilter[T, FT <: EntityFilter[FT]](filter: FT, tableFilter: TableFilter[T, FT]): SelectBuilder[T] = {
+    val whereFragment = QueryAction
+      .byFilterFragment(syntax, filter)
+      .map(const(Where) ++ _)
+      .getOrElse(empty)
+    new SelectBuilder(fragment ++ whereFragment)
+  }
+
+  def withFilter[K](key: K)(
+      implicit write: Write[K]
+  ): SelectBuilder = {
+    this
+  }
+
+}
+
 object SelectAction {
 
-  sealed abstract class SelectFragment[T](syntax: Syntax[T])(
+  sealed abstract class SelectFragment[T](syntax: TableSyntax[T])(
       implicit read: Read[T]
   ) extends SQLFragment {
 
@@ -20,7 +48,7 @@ object SelectAction {
     }
   }
 
-  final case class ByFilter[T, FT <: EntityFilter[FT]](syntax: Syntax[T], filter: FT)(
+  final case class ByFilter[T, FT <: EntityFilter[FT]](syntax: TableSyntax[T], filter: FT)(
       implicit
       read: Read[T],
       tableFilter: TableFilter[T, FT]
@@ -29,7 +57,7 @@ object SelectAction {
 
     override def toFragment: Fragment = {
       val whereFragment = QueryAction
-        .byFilterConditionFragment(syntax, filter)
+        .byFilterFragment(syntax, filter)
         .map(const(Where) ++ _)
         .getOrElse(empty)
       super.toFragment ++ whereFragment
@@ -40,7 +68,7 @@ object SelectAction {
     }
   }
 
-  final case class ByKey[T, K](syntax: Syntax[T], key: K)(
+  final case class ByKey[T, K](syntax: TableSyntax[T], key: K)(
       implicit
       read: Read[T],
       write: Write[K]
@@ -48,7 +76,7 @@ object SelectAction {
       with SQLAction[Option[T]] { self =>
 
     override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ QueryAction.byKeyConditionFragment(syntax, key)
+      val whereFragment = const(Where) ++ QueryAction.byKeyFragment(syntax, key)
       super.toFragment ++ whereFragment
     }
 

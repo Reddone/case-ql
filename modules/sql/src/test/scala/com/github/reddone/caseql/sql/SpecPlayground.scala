@@ -47,7 +47,7 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
       field4: Option[TimestampModifierOption]
   ) extends EntityModifier[TestModifier]
 
-  implicit val table: Table[Test]                               = Table.derive[Test, TestKey]()
+  implicit val table: Table[Test, TestKey]                      = Table.derive[Test, TestKey]()
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 
