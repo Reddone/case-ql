@@ -2,136 +2,101 @@ package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.table.query.Action._
-import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
+import com.github.reddone.caseql.sql.table.query.Query._
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier, TableSyntax}
 import com.github.reddone.caseql.sql.tokens.Where
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object UpdateQuery {
+sealed trait UpdateBuilderState
+sealed trait UpdateHasTable    extends UpdateBuilderState
+sealed trait UpdateHasModifier extends UpdateBuilderState
+sealed trait UpdateHasFilter   extends UpdateBuilderState
+sealed trait UpdateHasKey      extends UpdateBuilderState
 
-  sealed abstract class UpdateFragment[T, K, MT <: EntityModifier[MT]](
-      table: Table[T, K],
-      modifier: MT,
-      alias: Option[String]
-  )(
-      implicit tableModifier: TableModifier[T, MT]
-  ) extends SQLFragment {
+private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
+    table: Table[T, K],
+    alias: Option[String]
+) { self =>
 
-    override def toFragment: Fragment = {
-      val name = table.internalSyntax.name
-      val namedFragments = tableModifier
-        .entityModifierNamedFragments(modifier)(alias)
-        .filter(_._2.isEmpty)
-        .map {
-          case (column, modifier) => (column, modifier.get)
-        }
-      // TODO: handle empty modifier case
-      val updateFragment = const(s"$Update $name")
-      val setFragment = Fragments.set(namedFragments.map {
-        case (col, parameter) => const(col + " =") ++ parameter
-      }: _*) // love scala emojis
-
-      updateFragment ++ setFragment
-    }
+  private[this] var fragment: Fragment = {
+    // TODO: use alias
+    const(s"$Update ${table.internalSyntax.name}")
   }
 
-  final case class ByFilter[T, K, MT <: EntityModifier[MT], FT <: EntityFilter[FT]](
-      table: Table[T, K],
-      modifier: MT,
-      filter: FT,
-      alias: Option[String]
-  )(
+  private val syntax: TableSyntax[T] = table.internalSyntax
+
+  def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
       implicit
-      tableModifier: TableModifier[T, MT],
-      tableFilter: TableFilter[T, FT]
-  ) extends UpdateFragment[T, K, MT](table, modifier, alias)
-      with SQLAction[Int] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = table
-        .byFilterFragment(filter, alias)
-        .map(const(Where) ++ _)
-        .getOrElse(empty)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: ConnectionIO[Int] = {
-      self.toFragment.update.run
-    }
-  }
-
-  final case class ByFilterReturningKeys[T, K, MT <: EntityModifier[MT], FT <: EntityFilter[FT]](
-      table: Table[T, K],
-      modifier: MT,
-      filter: FT,
-      alias: Option[String]
-  )(
-      implicit
-      read: Read[K],
-      tableModifier: TableModifier[T, MT],
-      tableFilter: TableFilter[T, FT]
-  ) extends UpdateFragment[T, K, MT](table, modifier, alias)
-      with SQLStreamingAction[K] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = table
-        .byFilterFragment(filter, alias)
-        .map(const(Where) ++ _)
-        .getOrElse(empty)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: Stream[ConnectionIO, K] = {
-      val syntax = table.internalSyntax // TODO: add alias
-      self.toFragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
-    }
-  }
-
-  final case class ByKey[T, K, MT <: EntityModifier[MT]](
-      table: Table[T, K],
-      modifier: MT,
-      key: K,
-      alias: Option[String]
-  )(
-      implicit
-      write: Write[K],
+      ev: S =:= UpdateHasTable,
       tableModifier: TableModifier[T, MT]
-  ) extends UpdateFragment[T, K, MT](table, modifier, alias)
-      with SQLAction[Int] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: ConnectionIO[Int] = {
-      self.toFragment.update.run
-    }
+  ): UpdateBuilder[S with UpdateHasModifier, T, K] = {
+    val namedFragments = tableModifier
+      .entityModifierNamedFragments(modifier)(alias)
+      .filter(_._2.isEmpty)
+      .map {
+        case (column, modifier) => (column, modifier.get)
+      }
+    // TODO: handle empty modifier case
+    val setFragment = Fragments.set(namedFragments.map {
+      case (col, parameter) => const(col + " =") ++ parameter
+    }: _*) // love scala emojis
+    fragment = fragment ++ setFragment
+    self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, T, K]]
   }
 
-  final case class ByKeyReturningKeys[T, K, MT <: EntityModifier[MT]](
-      table: Table[T, K],
-      modifier: MT,
-      key: K,
-      alias: Option[String]
-  )(
+  def withFilter[FT <: EntityFilter[FT]](filter: FT)(
       implicit
-      read: Read[K],
-      write: Write[K],
-      tableModifier: TableModifier[T, MT]
-  ) extends UpdateFragment[T, K, MT](table, modifier, alias)
-      with SQLStreamingAction[K] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: Stream[ConnectionIO, K] = {
-      val syntax = table.internalSyntax // TODO: add alias
-      self.toFragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
-    }
+      ev: S =:= UpdateHasTable with UpdateHasModifier,
+      tableFilter: TableFilter[T, FT]
+  ): UpdateBuilder[S with UpdateHasFilter, T, K] = {
+    val whereFragment = table
+      .byFilterFragment(filter, alias)
+      .map(const(Where) ++ _)
+      .getOrElse(empty)
+    fragment = fragment ++ whereFragment
+    self.asInstanceOf[UpdateBuilder[S with UpdateHasFilter, T, K]]
   }
+
+  def withKey(key: K)(
+      implicit ev: S =:= UpdateHasTable with UpdateHasModifier
+  ): UpdateBuilder[S with UpdateHasKey, T, K] = {
+    val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
+    fragment = fragment ++ whereFragment
+    self.asInstanceOf[UpdateBuilder[S with UpdateHasKey, T, K]]
+  }
+
+  def buildUpdate(
+      implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasFilter
+  ): SQLAction[Int] = new SQLAction[Int] {
+    override def toFragment: Fragment       = fragment
+    override def execute: ConnectionIO[Int] = fragment.update.run
+  }
+
+  def buildUpdateReturningKeys(
+      implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasFilter
+  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+    override def toFragment: Fragment             = fragment
+    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+  }
+
+  def buildUpdateByKey(
+      implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasKey
+  ): SQLAction[Int] = new SQLAction[Int] {
+    override def toFragment: Fragment       = fragment
+    override def execute: ConnectionIO[Int] = fragment.update.run
+  }
+
+  def buildUpdateByKeyReturningKeys(
+      implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasKey
+  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+    override def toFragment: Fragment             = fragment
+    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+  }
+}
+
+private[table] object UpdateBuilder {
+
+  def forTable[T, K](table: Table[T, K], alias: Option[String]) = new UpdateBuilder[UpdateHasTable, T, K](table, alias)
 }

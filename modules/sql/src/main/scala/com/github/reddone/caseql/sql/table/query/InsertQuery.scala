@@ -2,59 +2,63 @@ package com.github.reddone.caseql.sql.table.query
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.table.query.Action.{SQLAction, SQLFragment}
-import com.github.reddone.caseql.sql.table.{Table, TableModifier}
+import com.github.reddone.caseql.sql.table.query.Query.SQLAction
+import com.github.reddone.caseql.sql.table.{Table, TableModifier, TableSyntax}
 import com.github.reddone.caseql.sql.tokens.{InsertInto, Values}
 import doobie._
 import Fragment._
 
-object InsertQuery {
+sealed trait InsertBuilderState
+sealed trait InsertHasTable    extends InsertBuilderState
+sealed trait InsertHasModifier extends InsertBuilderState
 
-  sealed abstract class InsertFragment[T, K, MT <: EntityModifier[MT]](
-      table: Table[T, K],
-      modifier: MT
-  )(
-      implicit tableModifier: TableModifier[T, MT]
-  ) extends SQLFragment {
+private[table] class InsertBuilder[S <: InsertBuilderState, T, K](
+    table: Table[T, K]
+) { self =>
 
-    override def toFragment: Fragment = {
-      val name = table.internalSyntax.name
-      val namedFragments = tableModifier
-        .entityModifierNamedFragments(modifier)(None)
-        .filter(_._2.isEmpty)
-        .map {
-          case (column, modifier) => (column, modifier.get)
-        }
-      // TODO: handle empty modifier case
-      val insertFragment = const(s"$InsertInto $name (${namedFragments.map(_._1).mkString(", ")}) $Values")
-      val valueFragment  = Fragments.parentheses(namedFragments.map(_._2).intercalate(const(",")))
-      insertFragment ++ valueFragment
-    }
+  private[this] var fragment: Fragment = {
+    const(s"$InsertInto ${table.internalSyntax.name}")
   }
 
-  final case class One[T, K, MT <: EntityModifier[MT]](table: Table[T, K], modifier: MT)(
-      implicit tableModifier: TableModifier[T, MT]
-  ) extends InsertFragment[T, K, MT](table, modifier)
-      with SQLAction[Int] { self =>
+  private val syntax: TableSyntax[T] = table.internalSyntax
 
-    override def execute: ConnectionIO[Int] = {
-      self.toFragment.update.run
-    }
-  }
-
-  final case class OneReturningKey[T, K, MT <: EntityModifier[MT]](
-      table: Table[T, K],
-      modifier: MT
-  )(
+  def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
       implicit
-      read: Read[K],
+      ev: S =:= InsertHasTable,
       tableModifier: TableModifier[T, MT]
-  ) extends InsertFragment[T, K, MT](table, modifier)
-      with SQLAction[K] { self =>
-
-    override def execute: ConnectionIO[K] = {
-      val syntax = table.internalSyntax // TODO: move this upper
-      self.toFragment.update.withUniqueGeneratedKeys[K](syntax.keyColumns: _*)
-    }
+  ): InsertBuilder[S with InsertHasModifier, T, K] = {
+    val name = table.internalSyntax.name
+    val namedFragments = tableModifier
+      .entityModifierNamedFragments(modifier)(None)
+      .filter(_._2.isEmpty)
+      .map {
+        case (column, modifier) => (column, modifier.get)
+      }
+    // TODO: handle empty modifier case
+    val insertFragment = const(s"(${namedFragments.map(_._1).mkString(", ")}) $Values")
+    val valueFragment  = Fragments.parentheses(namedFragments.map(_._2).intercalate(const(",")))
+    fragment = fragment ++ insertFragment ++ valueFragment
+    self.asInstanceOf[InsertBuilder[S with InsertHasModifier, T, K]]
   }
+
+  def buildInsertOne(
+      implicit ev: S =:= InsertHasTable with InsertHasModifier
+  ): SQLAction[Int] =
+    new SQLAction[Int] {
+      override def toFragment: Fragment       = fragment
+      override def execute: ConnectionIO[Int] = fragment.update.run
+    }
+
+  def buildInsertOneReturningKey(
+      implicit ev: S =:= InsertHasTable with InsertHasModifier
+  ): SQLAction[K] =
+    new SQLAction[K] {
+      override def toFragment: Fragment     = fragment
+      override def execute: ConnectionIO[K] = fragment.update.withUniqueGeneratedKeys[K](syntax.keyColumns: _*)
+    }
+}
+
+private[table] object InsertBuilder {
+
+  def forTable[T, K](table: Table[T, K]) = new InsertBuilder[InsertHasTable, T, K](table)
 }

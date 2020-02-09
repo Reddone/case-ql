@@ -1,112 +1,82 @@
 package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.query.Action._
-import com.github.reddone.caseql.sql.table.{Table, TableFilter}
+import com.github.reddone.caseql.sql.table.query.Query._
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableSyntax}
 import com.github.reddone.caseql.sql.tokens.{Delete, From, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
 
-object DeleteQuery {
+sealed trait DeleteBuilderState
+sealed trait DeleteHasTable  extends DeleteBuilderState
+sealed trait DeleteHasFilter extends DeleteBuilderState
+sealed trait DeleteHasKey    extends DeleteBuilderState
 
-  sealed abstract class DeleteFragment[T, K](
-      table: Table[T, K],
-      alias: Option[String]
-  ) extends SQLFragment {
+private[table] class DeleteBuilder[S, T, K](
+    table: Table[T, K],
+    alias: Option[String]
+) { self =>
 
-    override def toFragment: Fragment = {
-      val name           = table.internalSyntax.name
-      val deleteFragment = const(s"$Delete $From $name")
-      deleteFragment
-    }
+  private[this] var fragment: Fragment = {
+    val name           = table.internalSyntax.name // TODO: use alias
+    val deleteFragment = const(s"$Delete $From $name")
+    deleteFragment
   }
 
-  final case class ByFilter[T, K, FT <: EntityFilter[FT]](
-      table: Table[T, K],
-      filter: FT,
-      alias: Option[String]
-  )(
-      implicit tableFilter: TableFilter[T, FT]
-  ) extends DeleteFragment[T, K](table, alias)
-      with SQLAction[Int] { self =>
+  private val syntax: TableSyntax[T] = table.internalSyntax
 
-    override def toFragment: Fragment = {
-      val whereFragment = table
-        .byFilterFragment(filter, alias)
-        .map(const(Where) ++ _)
-        .getOrElse(empty)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: ConnectionIO[Int] = {
-      self.toFragment.update.run
-    }
-  }
-
-  final case class ByFilterReturningKeys[T, K, FT <: EntityFilter[FT]](
-      table: Table[T, K],
-      filter: FT,
-      alias: Option[String]
-  )(
+  def withFilter[FT <: EntityFilter[FT]](filter: FT)(
       implicit
-      read: Read[K],
+      ev: S =:= DeleteHasTable,
       tableFilter: TableFilter[T, FT]
-  ) extends DeleteFragment[T, K](table, alias)
-      with SQLStreamingAction[K] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = table
-        .byFilterFragment(filter, alias)
-        .map(const(Where) ++ _)
-        .getOrElse(empty)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: Stream[ConnectionIO, K] = {
-      val syntax = table.internalSyntax // TODO: add alias
-      self.toFragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
-    }
+  ): DeleteBuilder[S with DeleteHasFilter, T, K] = {
+    val whereFragment = table
+      .byFilterFragment(filter, alias)
+      .map(const(Where) ++ _)
+      .getOrElse(empty)
+    fragment = fragment ++ whereFragment
+    self.asInstanceOf[DeleteBuilder[S with DeleteHasFilter, T, K]]
   }
 
-  final case class ByKey[T, K](
-      table: Table[T, K],
-      key: K,
-      alias: Option[String]
-  )(
-      implicit read: Write[K]
-  ) extends DeleteFragment[T, K](table, alias)
-      with SQLAction[Int] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: ConnectionIO[Int] = {
-      self.toFragment.update.run
-    }
+  def withKey(key: K)(
+      implicit ev: S =:= DeleteHasTable
+  ): DeleteBuilder[S with DeleteHasKey, T, K] = {
+    val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
+    fragment = fragment ++ whereFragment
+    self.asInstanceOf[DeleteBuilder[S with DeleteHasKey, T, K]]
   }
 
-  final case class ByKeyReturningKeys[T, K](
-      table: Table[T, K],
-      key: K,
-      alias: Option[String]
-  )(
-      implicit
-      read: Read[K],
-      write: Write[K]
-  ) extends DeleteFragment[T, K](table, alias)
-      with SQLStreamingAction[K] { self =>
-
-    override def toFragment: Fragment = {
-      val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
-      super.toFragment ++ whereFragment
-    }
-
-    override def execute: Stream[ConnectionIO, K] = {
-      val syntax = table.internalSyntax // TODO: add alias
-      self.toFragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
-    }
+  def buildDelete(
+      implicit ev: S =:= DeleteHasTable with DeleteHasFilter
+  ): SQLAction[Int] = new SQLAction[Int] {
+    override def toFragment: Fragment       = fragment
+    override def execute: ConnectionIO[Int] = fragment.update.run
   }
+
+  def buildDeleteReturningKeys(
+      implicit ev: S =:= DeleteHasTable with DeleteHasFilter
+  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+    override def toFragment: Fragment             = fragment
+    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+  }
+
+  def buildDeleteByKey(
+      implicit ev: S =:= DeleteHasTable with DeleteHasKey
+  ): SQLAction[Int] = new SQLAction[Int] {
+    override def toFragment: Fragment       = fragment
+    override def execute: ConnectionIO[Int] = fragment.update.run
+  }
+
+  def buildDeleteByKeyReturningKeys(
+      implicit ev: S =:= DeleteHasTable with DeleteHasKey
+  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+    override def toFragment: Fragment             = fragment
+    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+  }
+}
+
+private[table] object DeleteBuilder {
+
+  def forTable[T, K](table: Table[T, K], alias: Option[String]) = new DeleteBuilder[DeleteHasTable, T, K](table, alias)
 }

@@ -3,20 +3,20 @@ package com.github.reddone.caseql.sql.table.query
 import doobie._
 import fs2.Stream
 
-object Action {
+object Query {
 
   trait SQLFragment {
     def toFragment: Fragment
   }
 
-  trait SQLAction[R] { self: SQLFragment =>
+  trait SQLAction[R] extends SQLFragment {
     def execute: ConnectionIO[R]
   }
 
-  trait SQLStreamingAction[R] { self: SQLFragment =>
+  trait SQLStreamingAction[R] extends SQLFragment { self =>
     def execute: Stream[ConnectionIO, R]
 
-    final def asSQLAction: SQLAction[List[R]] = new SQLAction[List[R]] with SQLFragment {
+    final def asSQLAction: SQLAction[List[R]] = new SQLAction[List[R]] {
       def toFragment: Fragment           = self.toFragment
       def execute: ConnectionIO[List[R]] = self.execute.compile.toList
     }
