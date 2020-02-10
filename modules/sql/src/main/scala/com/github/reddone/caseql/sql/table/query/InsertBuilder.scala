@@ -2,7 +2,6 @@ package com.github.reddone.caseql.sql.table.query
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.table.query.Query.{QueryBuilder, SQLAction}
 import com.github.reddone.caseql.sql.table.{Table, TableModifier}
 import com.github.reddone.caseql.sql.tokens.{InsertInto, Values}
 import doobie._
@@ -32,7 +31,7 @@ private[table] class InsertBuilder[S <: InsertBuilderState, T, K](
         case (column, modifier) => (column, modifier.get)
       }
     // TODO: handle empty modifier case, because all Option[Modifier[_] are empty
-    val columnsFragment = const(s"(${namedFragments.map(_._1).mkString(", ")}) $Values")
+    val columnsFragment = const(s"(${namedFragments.map(_._1).mkString(", ")})\n$Values")
     val valuesFragment  = Fragments.parentheses(namedFragments.map(_._2).intercalate(const(",")))
     fragment = fragment ++ columnsFragment ++ valuesFragment
     self.asInstanceOf[InsertBuilder[S with InsertHasModifier, T, K]]

@@ -5,7 +5,7 @@ import java.time.Instant
 
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.query.Query
+import com.github.reddone.caseql.sql.table.query.QueryBuilder
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._

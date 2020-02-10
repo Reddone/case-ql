@@ -1,12 +1,9 @@
 package com.github.reddone.caseql.sql.table
 
-import java.util.concurrent.atomic.AtomicLong
-
 import com.github.reddone.caseql.sql.util.StringUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-import scala.collection.concurrent.TrieMap
 import scala.language.dynamics
 import scala.reflect.runtime.universe.{Symbol => _, _}
 
@@ -39,24 +36,15 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
 object Table {
 
-  // TODO: write a proper TableRegistrar class to handle table aliases
-
-  private val counter = new AtomicLong(0L)
-
-  private val tableRegister = new TrieMap[String, String]()
+  implicit val unit: Table[Unit, Unit] = derive[Unit, Unit]()
 
   def apply[T, K](implicit table: Table[T, K]): Table[T, K] = table
-
-  implicit val unit: Table[Unit, Unit] = derive[Unit, Unit]()
 
   object derive {
 
     def apply[T, K] = new Partial[T, K]
 
     class Partial[T, K] {
-
-      // TODO: singleton ???
-      def apply(implicit table: Table[T, K]): Table[T, K] = table
 
       def apply[ReprT <: HList, KeysT <: HList, ReprK <: HList, KeysK <: HList](
           aName: Option[String] = None,
@@ -80,7 +68,9 @@ object Table {
           extractorTK: ops.record.Extractor[ReprT, ReprK]
       ): Table[T, K] = new Table[T, K] { self =>
 
-        override val name: String = aName.getOrElse(StringUtils.camelToSnake(typeOf[T](tag).typeSymbol.name.toString))
+        private val tpeName = typeOf[T].typeSymbol.name.toString
+
+        override val name: String = aName.getOrElse(StringUtils.camelToSnake(tpeName))
 
         override val schema: Option[String] = aSchema
 
@@ -100,16 +90,9 @@ object Table {
 
         override implicit val keyWrite: Write[K] = writeK
 
-        // TODO: write a proper TableRegistrar class to handle table aliases
+        override val alias: String = TableRegistrar.aliasFor(tpeName)
 
-        override val alias: String = tableRegister.getOrElseUpdate(
-          name,
-          StringUtils.shorten(name) + counter.getAndIncrement().toString
-        )
-
-        override val syntax: TableSyntax[T] = {
-          if (useTableAlias) TableSyntax(alias, self) else TableSyntax("", self)
-        }
+        override val syntax: TableSyntax[T] = if (useTableAlias) TableSyntax(alias, self) else TableSyntax("", self)
       }
     }
   }

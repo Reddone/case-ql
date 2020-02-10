@@ -7,17 +7,19 @@ import scala.language.dynamics
 // Syntax decouples a table from its key
 final case class TableSyntax[T](alias: String, support: Table[T, _]) extends Dynamic { self =>
 
-  private val aliasO = if (alias.isEmpty) None else Some(alias)
+  private val nameAlias = if (alias.isEmpty) None else Some(alias)
+
+  private val columnAlias = if (alias.isEmpty) Some(support.name) else Some(alias)
 
   val name: String = StringUtils.addPrefix(support.name, support.schema)
 
-  val aliasedName: String = StringUtils.addSuffix(name, aliasO, " ")
+  val aliasedName: String = StringUtils.addSuffix(name, nameAlias, " ")
 
-  val columns: List[String] = support.fields.map(c).map(StringUtils.addPrefix(_, aliasO))
+  val columns: List[String] = support.fields.map(c).map(StringUtils.addPrefix(_, columnAlias))
 
-  val keyColumns: List[String] = support.keyFields.map(c).map(StringUtils.addPrefix(_, aliasO))
+  val keyColumns: List[String] = support.keyFields.map(c).map(StringUtils.addPrefix(_, columnAlias))
 
-  def column(field: String): String = StringUtils.addPrefix(c(field), aliasO)
+  def column(field: String): String = StringUtils.addPrefix(c(field), columnAlias)
 
   def selectDynamic(field: String): String = column(field)
 

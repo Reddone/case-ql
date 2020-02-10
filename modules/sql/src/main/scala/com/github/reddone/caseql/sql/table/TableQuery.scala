@@ -2,7 +2,6 @@ package com.github.reddone.caseql.sql.table
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.table.query.Query.{SQLAction, SQLStreamingAction}
 import com.github.reddone.caseql.sql.table.query._
 import com.github.reddone.caseql.sql.tokens.{And, Placeholder}
 import com.github.reddone.caseql.sql.util.FragmentUtils

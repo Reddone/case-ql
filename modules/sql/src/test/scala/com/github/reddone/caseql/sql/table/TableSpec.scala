@@ -62,7 +62,6 @@ class TableSpec extends AnyFlatSpec with Matchers {
 
   "Table typeclass" should "work correctly" in {
     val table1: Table[Test, TestKey] = Table.derive[Test, TestKey]()
-    val syntax1: TableSyntax[Test]   = table1.syntax
 
     table1.name shouldBe "test"
     table1.schema shouldBe None
@@ -70,11 +69,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
     table1.fieldMapper("CamelCase") shouldBe "camel_case"
     table1.fields shouldBe List("field1", "field2", "field3", "field4")
     table1.keyFields shouldBe List("field1", "field3")
-
-    syntax1.name shouldBe "test"
-    syntax1.columns shouldBe List("field1", "field2", "field3", "field4")
-    syntax1.column("field1") shouldBe "field1"
-    syntax1.field1 shouldBe "field1"
+    table1.alias shouldBe "x1"
 
     val table2: Table[Test, TestKey] = Table.derive[Test, TestKey](
       Some("test_name"),
@@ -82,7 +77,6 @@ class TableSpec extends AnyFlatSpec with Matchers {
       Map("field1" -> "field_1", "field2" -> "field_2"),
       str => str.toUpperCase
     )
-    val syntax2: TableSyntax[Test] = table2.syntax.withAlias(Some("t"))
 
     table2.name shouldBe "test_name"
     table2.schema shouldBe Some("test_schema")
@@ -90,10 +84,14 @@ class TableSpec extends AnyFlatSpec with Matchers {
     table2.fieldMapper("lower") shouldBe "LOWER"
     table2.fields shouldBe List("field1", "field2", "field3", "field4")
     table2.keyFields shouldBe List("field1", "field3")
+    table2.alias shouldBe "x1"
+  }
 
-    syntax2.name shouldBe "test_schema.test_name t"
-    syntax2.columns shouldBe List("t.field_1", "t.field_2", "t.FIELD3", "t.FIELD4")
-    syntax2.column("field1") shouldBe "t.field_1"
-    syntax2.field1 shouldBe "t.field_1"
+  it should "provide a valid Unit instance" in {
+    Table.unit.name shouldBe "unit"
+    Table.unit.schema shouldBe empty
+    Table.unit.fields shouldBe empty
+    Table.unit.keyFields shouldBe empty
+    Table.unit.alias shouldBe "x0"
   }
 }

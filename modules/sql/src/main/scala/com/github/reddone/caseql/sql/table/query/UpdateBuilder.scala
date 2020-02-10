@@ -2,7 +2,6 @@ package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.table.query.Query._
 import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
 import com.github.reddone.caseql.sql.tokens.{From, Where}
 import doobie._
@@ -21,7 +20,7 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Update ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.alias}"
+    s"$Update ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.alias}\n"
   )
 
   def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
@@ -40,7 +39,7 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
       case (col, parameter) => const(col + " =") ++ parameter
     }: _*) // love scala emojis
     val fromFragment = const(
-      s"$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}"
+      s"\n$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}\n"
     )
     fragment = fragment ++ setFragment ++ fromFragment
     self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, T, K]]

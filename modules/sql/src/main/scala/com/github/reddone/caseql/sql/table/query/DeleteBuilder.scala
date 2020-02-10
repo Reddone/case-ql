@@ -1,7 +1,6 @@
 package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.query.Query._
 import com.github.reddone.caseql.sql.table.{Table, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{Delete, From, Where}
 import doobie._
@@ -19,8 +18,10 @@ private[table] class DeleteBuilder[S, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Delete ${if (querySyntax.alias.isEmpty) "" else querySyntax.alias + " "}" +
-      s"$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}"
+    s"""
+       |$Delete ${if (querySyntax.alias.isEmpty) "" else querySyntax.alias + " "}
+       |$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}
+       |""".stripMargin
   )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(

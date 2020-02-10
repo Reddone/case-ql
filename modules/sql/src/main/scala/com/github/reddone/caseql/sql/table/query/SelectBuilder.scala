@@ -1,7 +1,6 @@
 package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.query.Query._
 import com.github.reddone.caseql.sql.table.{Table, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{From, Select, Where}
 import doobie._
@@ -19,8 +18,10 @@ private[table] class SelectBuilder[S, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Select ${querySyntax.columns.mkString(", ")} " +
-      s"$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}"
+    s"""
+       |$Select ${querySyntax.columns.mkString(", ")} 
+       |$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}
+       |""".stripMargin
   )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(

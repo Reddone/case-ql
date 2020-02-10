@@ -1,6 +1,7 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.filter.models.{Filter, IntFilterOption, StringFilter}
+import com.github.reddone.caseql.sql.filter.models.{Filter, IntFilterOption, LongFilter, StringFilter}
+import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.modifier.models.{
   IntModifierOption,
   Modifier,
@@ -8,6 +9,7 @@ import com.github.reddone.caseql.sql.modifier.models.{
   ModifierOptionAction,
   StringModifier
 }
+import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import shapeless._
@@ -29,14 +31,28 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
       field2: Option[StringFilter],
       field3: Option[Int],
       field4: Option[IntFilterOption]
-  )
+  ) extends EntityFilter[TestFilter] {
+    override def AND: Option[Seq[TestFilter]] = None
+    override def OR: Option[Seq[TestFilter]]  = None
+    override def NOT: Option[TestFilter]      = None
+  }
   // modifier with other fields
   case class TestModifier(
       field1: String,
       field2: Option[StringModifier],
       field3: Option[Int],
       field4: Option[IntModifierOption]
-  )
+  ) extends EntityModifier[TestModifier]
+  // relation filter with other fields
+  case class TestRelationFilter(
+      field: Long,
+      field2: Option[LongFilter],
+      field3: Option[RelationFilter[Unit, Unit, TestFilter]]
+  ) extends EntityFilter[TestRelationFilter] {
+    override def AND: Option[Seq[TestRelationFilter]] = None
+    override def OR: Option[Seq[TestRelationFilter]]  = None
+    override def NOT: Option[TestRelationFilter]      = None
+  }
 
   "TableFunction extract" should "extract a generic type" in {
     object wrapperExtractor extends TableFunction.extract[Wrapper[_]]
@@ -87,6 +103,29 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
     type Wrong   = Option[Modifier[_]] :: String :: HNil
 
     val result = LabelledGeneric[TestModifier].to(modifier1).flatMap(TableFunction.extractModifier)
+
+    """implicitly[<:<[result.type, Correct]]""" should compile
+    """implicitly[<:<[result.type, Wrong]]""" shouldNot compile
+    illTyped { """implicitly[<:<[result.type, Wrong]]""" }
+  }
+
+  "TableFunction extractRelationFilter" should "extract Option[RelationFilter[_, _, _]]" in {
+    val filter1 = TestFilter(
+      "1",
+      Some(StringFilter.empty),
+      Some(3),
+      Some(IntFilterOption.empty)
+    )
+    val relationFilter1 = TestRelationFilter(
+      1L,
+      Some(LongFilter.empty),
+      Some(RelationFilter[Unit, Unit, TestFilter](Some(filter1), None, None))
+    )
+
+    val result = LabelledGeneric[TestRelationFilter].to(relationFilter1).flatMap(TableFunction.extractRelationFilter)
+
+    type Correct = Option[RelationFilter[_, _, _]] :: HNil
+    type Wrong   = Option[RelationFilter[_, _, _]] :: Option[Filter[_]] :: HNil
 
     """implicitly[<:<[result.type, Correct]]""" should compile
     """implicitly[<:<[result.type, Wrong]]""" shouldNot compile

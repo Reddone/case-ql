@@ -60,7 +60,7 @@ object ReprEntityModifier {
       valuesA: ops.record.Values.Aux[ReprA, ValuesA],
       wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionModifier, WrappedValuesA],
       zippedA: ops.hlist.ZipWithKeys.Aux[KeysA, WrappedValuesA, ZippedA],
-      filtersA: ops.hlist.FlatMapper.Aux[extractModifier.type, ReprMA, ModifierMA],
+      modifiersA: ops.hlist.FlatMapper.Aux[extractModifier.type, ReprMA, ModifierMA],
       namedFragmentsMA: ops.hlist.Mapper.Aux[modifierToNamedOptionFragment.type, ModifierMA, NamedFragmentMA],
       toListNamedFragmentsMA: ops.hlist.ToList[NamedFragmentMA, (String, Option[Fragment])],
       alignedMA: ops.record.AlignByKeys.Aux[ModifierMA, KeysA, AlignedModifierMA],
