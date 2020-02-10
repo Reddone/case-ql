@@ -179,6 +179,10 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   // WHERE
 
+  // TODO: move this inside TableFilter and the other one inside the Builders
+  // TODO: for testing purposes, it's better to not create a dependency between TableFunction and
+  // TODO: TableQuery, because TableFunction is already highly dependant from Syntax and TableFilter
+
   final def byFilterFragment[FT <: EntityFilter[FT]](
       filter: FT,
       alias: Option[String]

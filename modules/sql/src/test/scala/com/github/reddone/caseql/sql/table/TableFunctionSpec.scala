@@ -30,12 +30,11 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
       field1: String,
       field2: Option[StringFilter],
       field3: Option[Int],
-      field4: Option[IntFilterOption]
-  ) extends EntityFilter[TestFilter] {
-    override def AND: Option[Seq[TestFilter]] = None
-    override def OR: Option[Seq[TestFilter]]  = None
-    override def NOT: Option[TestFilter]      = None
-  }
+      field4: Option[IntFilterOption],
+      AND: Option[Seq[TestFilter]],
+      OR: Option[Seq[TestFilter]],
+      NOT: Option[TestFilter]
+  ) extends EntityFilter[TestFilter]
   // modifier with other fields
   case class TestModifier(
       field1: String,
@@ -47,12 +46,11 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
   case class TestRelationFilter(
       field: Long,
       field2: Option[LongFilter],
-      field3: Option[RelationFilter[Unit, Unit, TestFilter]]
-  ) extends EntityFilter[TestRelationFilter] {
-    override def AND: Option[Seq[TestRelationFilter]] = None
-    override def OR: Option[Seq[TestRelationFilter]]  = None
-    override def NOT: Option[TestRelationFilter]      = None
-  }
+      field3: Option[RelationFilter[Unit, Unit, TestFilter]],
+      AND: Option[Seq[TestRelationFilter]],
+      OR: Option[Seq[TestRelationFilter]],
+      NOT: Option[TestRelationFilter]
+  ) extends EntityFilter[TestRelationFilter]
 
   "TableFunction extract" should "extract a generic type" in {
     object wrapperExtractor extends TableFunction.extract[Wrapper[_]]
@@ -78,7 +76,10 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
       "1",
       Some(StringFilter.empty),
       Some(3),
-      Some(IntFilterOption.empty)
+      Some(IntFilterOption.empty),
+      None,
+      None,
+      None
     )
 
     type Correct = Option[Filter[_]] :: Option[Filter[_]] :: HNil
@@ -114,12 +115,18 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
       "1",
       Some(StringFilter.empty),
       Some(3),
-      Some(IntFilterOption.empty)
+      Some(IntFilterOption.empty),
+      None,
+      None,
+      None
     )
     val relationFilter1 = TestRelationFilter(
       1L,
       Some(LongFilter.empty),
-      Some(RelationFilter[Unit, Unit, TestFilter](Some(filter1), None, None))
+      Some(RelationFilter[Unit, Unit, TestFilter](Some(filter1), None, None)),
+      None,
+      None,
+      None
     )
 
     val result = LabelledGeneric[TestRelationFilter].to(relationFilter1).flatMap(TableFunction.extractRelationFilter)

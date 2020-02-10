@@ -47,5 +47,6 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
     """implicitly[TableLink[TestRight, TestLeft]]""" shouldNot compile
   }
 
+  // TODO: write these
   "TableLink methods" should "work correctly" in {}
 }
