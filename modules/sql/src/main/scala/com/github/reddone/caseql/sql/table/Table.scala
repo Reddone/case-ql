@@ -34,9 +34,11 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
   implicit def keyWrite: Write[K]
 
-  private[table] final def syntax(alias: String): TableSyntax[T] = TableSyntax(alias, self)
+  //private[table] final def syntax(alias: String): TableSyntax[T] = TableSyntax(alias, self)
 
-  private[table] final lazy val internalSyntax: TableSyntax[T] = TableSyntax(shortenedName, self)
+  //final lazy val internalSyntax: TableSyntax[T] = TableSyntax(shortenedName, self)
+
+  def syntax: TableSyntax[T]
 }
 
 object Table {
@@ -64,7 +66,8 @@ object Table {
           aName: Option[String] = None,
           aSchema: Option[String] = None,
           aFieldConverter: Map[String, String] = Map.empty[String, String],
-          aFieldMapper: String => String = StringUtils.camelToSnake
+          aFieldMapper: String => String = StringUtils.camelToSnake,
+          useTableAlias: Boolean = true
       )(
           implicit
           tag: TypeTag[T],
@@ -79,7 +82,7 @@ object Table {
           keysK: ops.record.Keys.Aux[ReprK, KeysK],
           toListKeysK: Lazy[ops.hlist.ToList[KeysK, Symbol]],
           extractorTK: ops.record.Extractor[ReprT, ReprK]
-      ): Table[T, K] = new Table[T, K] { table =>
+      ): Table[T, K] = new Table[T, K] { self =>
 
         override val name: String = aName.getOrElse(StringUtils.camelToSnake(typeOf[T](tag).typeSymbol.name.toString))
 
@@ -112,6 +115,10 @@ object Table {
         override implicit val keyRead: Read[K] = readK
 
         override implicit val keyWrite: Write[K] = writeK
+
+        override val syntax: TableSyntax[T] = {
+          if (useTableAlias) TableSyntax(shortenedName, self) else TableSyntax("", self)
+        }
       }
     }
   }

@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.table.query.Query._
-import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableSyntax}
+import com.github.reddone.caseql.sql.table.{Table, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{From, Select, Where}
 import doobie._
 import Fragment._
@@ -16,15 +16,12 @@ sealed trait SelectHasKey    extends SelectBuilderState
 private[table] class SelectBuilder[S, T, K](
     table: Table[T, K],
     alias: Option[String]
-) { self =>
+) extends QueryBuilder[T, K](table, alias) { self =>
 
-  private[this] var fragment: Fragment = {
-    val syntax         = table.internalSyntax // TODO: use alias to change syntax
-    val selectFragment = const(s"$Select ${syntax.columns.mkString(", ")} $From ${syntax.name}")
-    selectFragment
-  }
-
-  private val syntax: TableSyntax[T] = table.internalSyntax
+  private[this] var fragment: Fragment = const(
+    s"$Select ${querySyntax.columns.mkString(", ")} " +
+      s"$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}"
+  )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(
       implicit
@@ -52,7 +49,7 @@ private[table] class SelectBuilder[S, T, K](
   ): SQLStreamingAction[T] =
     new SQLStreamingAction[T] {
       override def toFragment: Fragment             = fragment
-      override def execute: Stream[ConnectionIO, T] = fragment.query[T].stream
+      override def execute: Stream[ConnectionIO, T] = fragment.query[T](table.read).stream
     }
 
   def buildSelectByKey(
@@ -60,7 +57,7 @@ private[table] class SelectBuilder[S, T, K](
   ): SQLAction[Option[T]] =
     new SQLAction[Option[T]] {
       override def toFragment: Fragment             = fragment
-      override def execute: ConnectionIO[Option[T]] = fragment.query[T].option
+      override def execute: ConnectionIO[Option[T]] = fragment.query[T](table.read).option
     }
 }
 

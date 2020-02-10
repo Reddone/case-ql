@@ -2,7 +2,7 @@ package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.table.query.Query._
-import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableSyntax}
+import com.github.reddone.caseql.sql.table.{Table, TableFilter}
 import com.github.reddone.caseql.sql.tokens.{Delete, From, Where}
 import doobie._
 import Fragment._
@@ -16,15 +16,12 @@ sealed trait DeleteHasKey    extends DeleteBuilderState
 private[table] class DeleteBuilder[S, T, K](
     table: Table[T, K],
     alias: Option[String]
-) { self =>
+) extends QueryBuilder[T, K](table, alias) { self =>
 
-  private[this] var fragment: Fragment = {
-    val name           = table.internalSyntax.name // TODO: use alias
-    val deleteFragment = const(s"$Delete $From $name")
-    deleteFragment
-  }
-
-  private val syntax: TableSyntax[T] = table.internalSyntax
+  private[this] var fragment: Fragment = const(
+    s"$Delete ${if (querySyntax.alias.isEmpty) "" else querySyntax.alias + " "}" +
+      s"$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}"
+  )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(
       implicit
@@ -57,8 +54,9 @@ private[table] class DeleteBuilder[S, T, K](
   def buildDeleteReturningKeys(
       implicit ev: S =:= DeleteHasTable with DeleteHasFilter
   ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
-    override def toFragment: Fragment             = fragment
-    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+    override def toFragment: Fragment = fragment
+    override def execute: Stream[ConnectionIO, K] =
+      fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
   }
 
   def buildDeleteByKey(
@@ -71,8 +69,9 @@ private[table] class DeleteBuilder[S, T, K](
   def buildDeleteByKeyReturningKeys(
       implicit ev: S =:= DeleteHasTable with DeleteHasKey
   ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
-    override def toFragment: Fragment             = fragment
-    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+    override def toFragment: Fragment = fragment
+    override def execute: Stream[ConnectionIO, K] =
+      fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
   }
 }
 

@@ -38,7 +38,9 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   // INSERT
 
-  final def insertOne[MT <: EntityModifier[MT]](modifier: MT)(
+  final def insertOne[MT <: EntityModifier[MT]](
+      modifier: MT
+  )(
       implicit tableModifier: TableModifier[T, MT]
   ): SQLAction[Int] = {
     val builder = InsertBuilder
@@ -48,7 +50,9 @@ trait TableQuery[T, K] { table: Table[T, K] =>
     builder.buildInsertOne
   }
 
-  final def insertOneReturningKey[MT <: EntityModifier[MT]](modifier: MT)(
+  final def insertOneReturningKey[MT <: EntityModifier[MT]](
+      modifier: MT
+  )(
       implicit tableModifier: TableModifier[T, MT]
   ): SQLAction[K] = {
     val builder = InsertBuilder
@@ -126,9 +130,12 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   // DELETE
 
-  final def delete[FT <: EntityFilter[FT]](filter: FT, alias: Option[String] = None)(
+  final def delete[FT <: EntityFilter[FT]](
+      filter: FT,
+      alias: Option[String] = None
+  )(
       implicit tableFilter: TableFilter[T, FT]
-  ) = {
+  ): SQLAction[Int] = {
     val builder = DeleteBuilder
       .forTable(table, alias)
       .withFilter(filter)
@@ -136,23 +143,47 @@ trait TableQuery[T, K] { table: Table[T, K] =>
     builder.buildDelete
   }
 
-  final def deleteReturningKeys[FT <: EntityFilter[FT]](filter: FT, alias: Option[String] = None)(
+  final def deleteReturningKeys[FT <: EntityFilter[FT]](
+      filter: FT,
+      alias: Option[String] = None
+  )(
       implicit tableFilter: TableFilter[T, FT]
-  ): DeleteQuery.ByFilterReturningKeys[T, K, FT] = {
-    DeleteQuery.ByFilterReturningKeys(table, filter, alias)
+  ): SQLStreamingAction[K] = {
+    val builder = DeleteBuilder
+      .forTable(table, alias)
+      .withFilter(filter)
+
+    builder.buildDeleteReturningKeys
   }
 
-  final def deleteByKey(key: K, alias: Option[String] = None): DeleteQuery.ByKey[T, K] = {
-    DeleteQuery.ByKey(table, key, alias)
+  final def deleteByKey(
+      key: K,
+      alias: Option[String] = None
+  ): SQLAction[Int] = {
+    val builder = DeleteBuilder
+      .forTable(table, alias)
+      .withKey(key)
+
+    builder.buildDeleteByKey
   }
 
-  final def deleteByKeyReturningKeys(key: K, alias: Option[String] = None): DeleteQuery.ByKeyReturningKeys[T, K] = {
-    DeleteQuery.ByKeyReturningKeys(table, key, alias)
+  final def deleteByKeyReturningKeys(
+      key: K,
+      alias: Option[String] = None
+  ): SQLStreamingAction[K] = {
+    val builder = DeleteBuilder
+      .forTable(table, alias)
+      .withKey(key)
+
+    builder.buildDeleteByKeyReturningKeys
   }
 
   // WHERE
 
-  final def byFilterFragment[FT <: EntityFilter[FT]](filter: FT, alias: Option[String])(
+  final def byFilterFragment[FT <: EntityFilter[FT]](
+      filter: FT,
+      alias: Option[String]
+  )(
       implicit tableFilter: TableFilter[T, FT]
   ): Option[Fragment] = {
     // AND between all possible filters
@@ -179,7 +210,11 @@ trait TableQuery[T, K] { table: Table[T, K] =>
     )
   }
 
-  final def byKeyFragment(key: K, alias: Option[String]): Fragment = {
-    keyWrite.toFragment(key, internalSyntax.keyColumns.map(col => s"$col = $Placeholder").mkString(s" $And "))
+  final def byKeyFragment(
+      key: K,
+      alias: Option[String]
+  ): Fragment = {
+    val aliasedSyntax = syntax.withAlias(alias)
+    keyWrite.toFragment(key, aliasedSyntax.keyColumns.map(col => s"$col = $Placeholder").mkString(s" $And "))
   }
 }

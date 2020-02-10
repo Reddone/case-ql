@@ -5,33 +5,28 @@ import com.github.reddone.caseql.sql.util.StringUtils
 import scala.language.dynamics
 
 // Syntax decouples a table from its key
-final case class TableSyntax[T](alias: String, support: Table[T, _]) extends Dynamic {
+final case class TableSyntax[T](alias: String, support: Table[T, _]) extends Dynamic { self =>
 
   private val aliasO = if (alias.isEmpty) None else Some(alias)
 
-  lazy val name: String = {
-    val fullName        = StringUtils.addPrefix(support.name, support.schema)
-    val aliasedFullName = StringUtils.addSuffix(fullName, aliasO, " ")
-    if (alias == support.name) fullName else aliasedFullName
-  }
+  val name: String = StringUtils.addPrefix(support.name, support.schema)
 
-  lazy val columns: List[String] = support.fields.map(c).map(StringUtils.addPrefix(_, aliasO))
+  val aliasedName: String = StringUtils.addSuffix(name, aliasO, " ")
 
-  lazy val keyColumns: List[String] = support.keyFields.map(c).map(StringUtils.addPrefix(_, aliasO))
+  val columns: List[String] = support.fields.map(c).map(StringUtils.addPrefix(_, aliasO))
+
+  val keyColumns: List[String] = support.keyFields.map(c).map(StringUtils.addPrefix(_, aliasO))
 
   def column(field: String): String = StringUtils.addPrefix(c(field), aliasO)
 
-  def selectDynamic(field: String): String = StringUtils.addPrefix(c(field), aliasO)
+  def selectDynamic(field: String): String = column(field)
 
   private def c(field: String): String = support.fieldConverter.getOrElse(field, support.fieldMapper(field))
+
+  def withAlias(newAlias: Option[String]): TableSyntax[T] = newAlias.map(a => copy(alias = a, support)).getOrElse(self)
 }
 
 object TableSyntax {
 
-  // TODO: rewrite
-  private def aliasedSyntax[T, K](table: Table[T, K], alias: Option[String]): TableSyntax[T] = {
-    alias.map(_ => table.internalSyntax).getOrElse(table.internalSyntax)
-  }
-
-  implicit def derive[T, K](implicit table: Table[T, K]): TableSyntax[T] = table.internalSyntax
+  implicit def derive[T, K](implicit table: Table[T, K]): TableSyntax[T] = table.syntax
 }

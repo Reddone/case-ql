@@ -1,9 +1,15 @@
 package com.github.reddone.caseql.sql.table.query
 
+import com.github.reddone.caseql.sql.table.{Table, TableSyntax}
 import doobie._
 import fs2.Stream
 
 object Query {
+
+  abstract class QueryBuilder[T, K](table: Table[T, K], alias: Option[String]) {
+
+    protected val querySyntax: TableSyntax[T] = table.syntax.withAlias(alias)
+  }
 
   trait SQLFragment {
     def toFragment: Fragment

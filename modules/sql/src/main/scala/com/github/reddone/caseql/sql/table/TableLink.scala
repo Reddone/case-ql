@@ -25,9 +25,9 @@ object TableLink {
   ): Aux[A, A, Unit] = new TableLink[A, A] {
     override type Junction = Unit
 
-    override def leftSyntax: TableSyntax[A]            = left.internalSyntax
-    override def rightSyntax: TableSyntax[A]           = left.internalSyntax
-    override def junctionSyntax: TableSyntax[Junction] = Table.unit.internalSyntax
+    override def leftSyntax: TableSyntax[A]            = left.syntax
+    override def rightSyntax: TableSyntax[A]           = left.syntax
+    override def junctionSyntax: TableSyntax[Junction] = Table.unit.syntax
     override def leftJoinFields: List[(String, String)] =
       condition(leftSyntax).toList.zip(condition(leftSyntax).toList)
     override def rightJoinFields: List[(String, String)] = List.empty
@@ -39,9 +39,9 @@ object TableLink {
   ): Aux[A, B, Unit] = new TableLink[A, B] {
     override type Junction = Unit
 
-    override def leftSyntax: TableSyntax[A]              = left.internalSyntax
-    override def rightSyntax: TableSyntax[B]             = right.internalSyntax
-    override def junctionSyntax: TableSyntax[Junction]   = Table.unit.internalSyntax
+    override def leftSyntax: TableSyntax[A]              = left.syntax
+    override def rightSyntax: TableSyntax[B]             = right.syntax
+    override def junctionSyntax: TableSyntax[Junction]   = Table.unit.syntax
     override def leftJoinFields: List[(String, String)]  = condition(leftSyntax, rightSyntax).toList
     override def rightJoinFields: List[(String, String)] = List.empty
     override def isJunction: Boolean                     = false
@@ -53,9 +53,9 @@ object TableLink {
   ): Aux[A, B, C] = new TableLink[A, B] {
     override type Junction = C
 
-    override def leftSyntax: TableSyntax[A]              = left.internalSyntax
-    override def rightSyntax: TableSyntax[B]             = right.internalSyntax
-    override def junctionSyntax: TableSyntax[Junction]   = junction.internalSyntax
+    override def leftSyntax: TableSyntax[A]              = left.syntax
+    override def rightSyntax: TableSyntax[B]             = right.syntax
+    override def junctionSyntax: TableSyntax[Junction]   = junction.syntax
     override def leftJoinFields: List[(String, String)]  = leftCondition(leftSyntax, junctionSyntax).toList
     override def rightJoinFields: List[(String, String)] = rightCondition(rightSyntax, junctionSyntax).toList
     override def isJunction: Boolean                     = true

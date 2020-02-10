@@ -48,7 +48,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
   ) extends EntityModifier[TestModifier]
 
   implicit val table: Table[Test, TestKey]                      = Table.derive[Test, TestKey]()
-  val syntax: TableSyntax[Test]                                 = table.syntax("t")
+  val syntax: TableSyntax[Test]                                 = table.syntax.withAlias(Some("t"))
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 

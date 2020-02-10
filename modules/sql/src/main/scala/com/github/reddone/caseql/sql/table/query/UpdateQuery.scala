@@ -3,8 +3,8 @@ package com.github.reddone.caseql.sql.table.query
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.query.Query._
-import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier, TableSyntax}
-import com.github.reddone.caseql.sql.tokens.Where
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
+import com.github.reddone.caseql.sql.tokens.{From, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
@@ -18,14 +18,11 @@ sealed trait UpdateHasKey      extends UpdateBuilderState
 private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
     table: Table[T, K],
     alias: Option[String]
-) { self =>
+) extends QueryBuilder[T, K](table, alias) { self =>
 
-  private[this] var fragment: Fragment = {
-    // TODO: use alias
-    const(s"$Update ${table.internalSyntax.name}")
-  }
-
-  private val syntax: TableSyntax[T] = table.internalSyntax
+  private[this] var fragment: Fragment = const(
+    s"$Update ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.alias}"
+  )
 
   def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
       implicit
@@ -38,11 +35,14 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
       .map {
         case (column, modifier) => (column, modifier.get)
       }
-    // TODO: handle empty modifier case
+    // TODO: handle empty modifier case, because all Option[Modifier[_] are empty
     val setFragment = Fragments.set(namedFragments.map {
       case (col, parameter) => const(col + " =") ++ parameter
     }: _*) // love scala emojis
-    fragment = fragment ++ setFragment
+    val fromFragment = const(
+      s"$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}"
+    )
+    fragment = fragment ++ setFragment ++ fromFragment
     self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, T, K]]
   }
 
@@ -77,8 +77,9 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
   def buildUpdateReturningKeys(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasFilter
   ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
-    override def toFragment: Fragment             = fragment
-    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+    override def toFragment: Fragment = fragment
+    override def execute: Stream[ConnectionIO, K] =
+      fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
   }
 
   def buildUpdateByKey(
@@ -91,8 +92,9 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
   def buildUpdateByKeyReturningKeys(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasKey
   ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
-    override def toFragment: Fragment             = fragment
-    override def execute: Stream[ConnectionIO, K] = fragment.update.withGeneratedKeys[K](syntax.keyColumns: _*)
+    override def toFragment: Fragment = fragment
+    override def execute: Stream[ConnectionIO, K] =
+      fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
   }
 }
 
