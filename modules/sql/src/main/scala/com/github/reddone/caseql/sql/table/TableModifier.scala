@@ -68,15 +68,14 @@ object ReprEntityModifier {
   ): ReprEntityModifier[A, ReprA, ReprMA] = new ReprEntityModifier[A, ReprA, ReprMA] {
     override def entityModifierNamedFragments(
         modifierRepr: ReprMA
-    ): Option[String] => List[(String, Option[Fragment])] = { alias: Option[String] =>
-      {
-        val syntax = tableSyntaxA // TODO: use alias to derive new syntax
+    ): Option[String] => List[(String, Option[Fragment])] =
+      (alias: Option[String]) => {
+        val modifierSyntax = tableSyntaxA.withAlias(alias)
         modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
           case (name, fragment) =>
-            val column = syntax.column(name)
+            val column = modifierSyntax.column(name)
             (column, fragment)
         }
       }
-    }
   }
 }

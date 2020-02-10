@@ -66,7 +66,7 @@ object TableFunction {
             // use TableFilterFB to derive a where condition for right inside a subquery
             if (link.isJunction) {
               // Single relation is implemented using a junction table
-              val left      = link.leftSyntax // TODO: use alias to derive new syntax
+              val left      = link.leftSyntax.withAlias(alias)
               val right     = link.rightSyntax
               val middle    = link.junctionSyntax
               val leftCond  = link.leftJoinFields
@@ -128,7 +128,7 @@ object TableFunction {
               // We can use the same syntax inside filters by wrapping everything inside a sub query
 
               // Single relation is implemented using a direct table
-              val left     = link.leftSyntax // TODO: use alias to derive new syntax
+              val left     = link.leftSyntax.withAlias(alias)
               val right    = link.rightSyntax //.syntax("r")
               val leftCond = link.leftJoinFields
               val leftCondSql = leftCond

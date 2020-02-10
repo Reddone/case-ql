@@ -14,8 +14,6 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
   def name: String
 
-  def shortenedName: String
-
   def schema: Option[String]
 
   def fieldConverter: Map[String, String]
@@ -34,20 +32,18 @@ trait Table[T, K] extends TableQuery[T, K] { self =>
 
   implicit def keyWrite: Write[K]
 
-  //private[table] final def syntax(alias: String): TableSyntax[T] = TableSyntax(alias, self)
-
-  //final lazy val internalSyntax: TableSyntax[T] = TableSyntax(shortenedName, self)
+  def alias: String
 
   def syntax: TableSyntax[T]
 }
 
 object Table {
 
+  // TODO: write a proper TableRegistrar class to handle table aliases
+
   private val counter = new AtomicLong(0L)
 
   private val tableRegister = new TrieMap[String, String]()
-
-  // TODO: move register in a TableRegistrar
 
   def apply[T, K](implicit table: Table[T, K]): Table[T, K] = table
 
@@ -88,18 +84,6 @@ object Table {
 
         override val schema: Option[String] = aSchema
 
-        // TODO: write a proper shortener inside TableRegistrar
-
-        override val shortenedName: String = {
-          val a = StringUtils.shorten(name) + counter.getAndIncrement().toString
-          tableRegister.put(name, a)
-          a
-        }
-        //tableRegister.getOrElseUpdate(
-        //name,
-        //StringUtils.shorten(name) + counter.getAndIncrement().toString
-        //)
-
         override val fieldConverter: Map[String, String] = aFieldConverter
 
         override def fieldMapper(field: String): String = aFieldMapper(field)
@@ -116,8 +100,15 @@ object Table {
 
         override implicit val keyWrite: Write[K] = writeK
 
+        // TODO: write a proper TableRegistrar class to handle table aliases
+
+        override val alias: String = tableRegister.getOrElseUpdate(
+          name,
+          StringUtils.shorten(name) + counter.getAndIncrement().toString
+        )
+
         override val syntax: TableSyntax[T] = {
-          if (useTableAlias) TableSyntax(shortenedName, self) else TableSyntax("", self)
+          if (useTableAlias) TableSyntax(alias, self) else TableSyntax("", self)
         }
       }
     }

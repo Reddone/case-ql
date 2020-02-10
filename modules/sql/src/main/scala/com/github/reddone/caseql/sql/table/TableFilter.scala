@@ -71,19 +71,20 @@ object ReprEntityFilter {
       alignedFA: ops.record.AlignByKeys.Aux[FilterFA, KeysA, AlignedFilterFA],
       isSubtypeFA: <:<[AlignedFilterFA, ZippedA]
   ): ReprEntityFilter[A, ReprA, ReprFA] = new ReprEntityFilter[A, ReprA, ReprFA] {
-    override def entityFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] = {
-      alias: Option[String] =>
+    override def entityFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] =
+      (alias: Option[String]) => {
+        val filterSyntax = tableSyntaxA.withAlias(alias)
         filterRepr
           .flatMap(extractFilter)
           .map(filterToNamedOptionFragment)
           .toList
           .map {
             case (field, makeFragment) =>
-              val column   = tableSyntaxA.column(field) // TODO: use alias to derive new syntax
+              val column   = filterSyntax.column(field)
               val fragment = makeFragment(column)
               fragment
           }
-    }
+      }
   }
 }
 
@@ -103,18 +104,15 @@ object ReprRelationFilter {
       relationFiltersFA: ops.hlist.FlatMapper.Aux[extractRelationFilter.type, ReprFA, RelationFilterFA],
       // TODO: use A to check that every RelationFilter is in the form RelationFilter[A, _, _]
       // TODO: B and FB inside RelationFilter can be anything, the mapper will validate them later
-      //belongsToT: ops.record.Values.Aux[RelationFilterFA, OUT],
-      //aaaa: ops.hlist.Comapped[OUT, Option[RelationFilter[A, _, _]],
       fragmentsFA: ops.hlist.Mapper.Aux[relationFilterToOptionFragment.type, RelationFilterFA, FragmentFA],
       toListFragmentsFA: ops.hlist.ToList[FragmentFA, Option[String] => Option[Fragment]]
   ): ReprRelationFilter[A, ReprFA] = new ReprRelationFilter[A, ReprFA] {
-    override def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] = {
-      alias: Option[String] =>
+    override def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] =
+      (alias: Option[String]) =>
         filterRepr
           .flatMap(extractRelationFilter)
           .map(relationFilterToOptionFragment)
           .toList
           .map(_.apply(alias))
-    }
   }
 }
