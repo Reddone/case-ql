@@ -1,7 +1,7 @@
 *.class
 *.log
 
-# sbt specific
+# sbt
 .cache/
 .history/
 .lib/
@@ -12,8 +12,9 @@ src_managed/
 project/boot/
 project/plugins/project/
 project/hydra.sbt
+assembly/
 
-# Scala-IDE specific
+# Scala-IDE
 .scala_dependencies
 .cache
 .classpath

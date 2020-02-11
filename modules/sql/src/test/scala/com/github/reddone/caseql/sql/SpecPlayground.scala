@@ -1,55 +1,74 @@
 package com.github.reddone.caseql.sql
 
-import java.sql.Timestamp
-
-import com.github.reddone.caseql.sql.filter.FilterWrapper
-import com.github.reddone.caseql.sql.filter.models._
-import com.github.reddone.caseql.sql.generic.{Table, TableFilter, TableModifier}
-import com.github.reddone.caseql.sql.modifier.models._
+import cats.data.NonEmptyList
+import com.github.reddone.caseql.sql.TestModel._
+import com.github.reddone.caseql.sql.filter.models.{IntFilter, LongFilter, StringFilter}
+import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
+import com.github.reddone.caseql.sql.table.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableLink, TableModifier}
 import doobie._
 import doobie.implicits._
-import Fragment._
 import javasql._
 import javatime._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import shapeless.LabelledGeneric
 
 class SpecPlayground extends AnyFlatSpec with Matchers {
 
-  // test model
-  case class Test(
-      field1: Int,
-      field2: Option[String],
-      field3: Long,
-      field4: Option[Timestamp]
-  )
-  // test key
-  case class TestKey(
-      field1: Int,
-      field3: Long
-  )
-  // test filter
-  case class TestFilter(
-      field1: Option[IntFilter],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      field4: Option[TimestampFilterOption],
-      AND: Option[Seq[TestFilter]],
-      OR: Option[Seq[TestFilter]],
-      NOT: Option[TestFilter]
-  ) extends FilterWrapper[TestFilter]
-  // test modifier
-  case class TestModifier(
-      field1: Option[IntModifier],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier],
-      field4: Option[TimestampModifierOption]
-  )
-
-  val table: Table[Test, TestKey]                               = Table.derive[Test, TestKey]()
-  val syntax: table.Syntax                                      = table.syntax("t")
+  implicit val table: Table[Test, TestKey]                      = Table.derive[Test, TestKey]()
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 
-  "SpecPlayground" should "do anything" in {}
+  case class A(field1: String, field2: Int)
+  case class AKey(field1: String)
+  case class B(field1: Long, field2: String)
+  case class BKey(field1: Long)
+  case class AFilter(
+      field1: Option[StringFilter],
+      field2: Option[IntFilter],
+      bRelation: Option[RelationFilter[A, B, BFilter]]
+  ) extends EntityFilter[AFilter] {
+    override def AND: Option[Seq[AFilter]] = None
+    override def OR: Option[Seq[AFilter]]  = None
+    override def NOT: Option[AFilter]      = None
+  }
+
+  case class BFilter(
+      field1: Option[LongFilter],
+      field2: Option[StringFilter]
+  ) extends EntityFilter[BFilter] {
+    override def AND: Option[Seq[BFilter]] = None
+    override def OR: Option[Seq[BFilter]]  = None
+    override def NOT: Option[BFilter]      = None
+  }
+
+  "SpecPlayground" should "do anything" in {
+    implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
+    implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
+    implicit val relAB: TableLink[A, B] = TableLink.direct(tableA, tableB) { (a, b) =>
+      NonEmptyList.of(("field1", "field2"))
+    }
+    implicit val filterB: TableFilter[B, BFilter] = TableFilter.derive[B, BFilter]()
+    implicit val filterA: TableFilter[A, AFilter] = TableFilter.derive[A, AFilter]()
+
+    val bFilter = BFilter(
+      Some(LongFilter.empty.copy(EQ = Some(1L))),
+      Some(StringFilter.empty)
+    )
+    val aFilter = AFilter(
+      None,
+      None,
+      Some(RelationFilter[A, B, BFilter](Some(bFilter), None, None))
+    )
+
+    println(
+      LabelledGeneric[AFilter]
+        .to(aFilter)
+        .flatMap(extractRelationFilter)
+        .map(relationFilterToOptionFragment)
+        .toList[Option[String] => Option[Fragment]]
+        .map(_.apply(None))
+    )
+  }
 }

@@ -5,6 +5,7 @@ import sangria.schema.{EnumType, EnumValue}
 
 object EnumDefinition {
 
+  // action field names
   private val DefaultName = "DEFAULT"
   private val SetName     = "SET"
   private val NullName    = "NULL"

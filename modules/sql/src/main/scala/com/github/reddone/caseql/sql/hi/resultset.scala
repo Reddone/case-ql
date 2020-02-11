@@ -7,7 +7,7 @@ import doobie.hi.{FRS, ResultSetIO}
 
 import scala.collection.mutable
 
-// Taken from doobie examples, because using Read[Row] with stream results in many metadata calls. It is not
+// Taken from doobie examples, because using Read[Row] results in many metadata calls with stream. It is not
 // a problem on medium sized tables, so you can use Row provided in this project with the normal doobie api.
 // This implementation calls getMetadata just one time instead of always calling it on unsafeGet:
 // https://github.com/tpolecat/doobie/blob/master/modules/example/src/main/scala/example/GenericStream.scala
@@ -18,10 +18,10 @@ object resultset {
 
   def getNextChunkRawV(chunkSize: Int): ResultSetIO[Vector[Row]] =
     FRS.raw { rs =>
-      val rsMeta     = rs.getMetaData
-      val colMetaSeq = (1 to rsMeta.getColumnCount).map(i => (rsMeta.getColumnLabel(i), rsMeta.isNullable(i)))
-      var n          = chunkSize
-      val builder    = Vector.newBuilder[Row]
+      val rsMeta        = rs.getMetaData
+      val colMetaSeq    = (1 to rsMeta.getColumnCount).map(i => (rsMeta.getColumnLabel(i), rsMeta.isNullable(i)))
+      var n             = chunkSize
+      val rsAccumulator = Vector.newBuilder[Row]
       while (n > 0 && rs.next) {
         val mutableBuilder = mutable.LinkedHashMap.newBuilder[String, Any]
         colMetaSeq.foreach({
@@ -40,9 +40,9 @@ object resultset {
             }
             mutableBuilder += (label -> value)
         })
-        builder += mutableBuilder.result()
+        rsAccumulator += mutableBuilder.result()
         n -= 1
       }
-      builder.result()
+      rsAccumulator.result()
     }
 }

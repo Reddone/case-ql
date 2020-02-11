@@ -1,5 +1,8 @@
 package com.github.reddone.caseql.gql
 
+import java.time.temporal.Temporal
+
+import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.modifier.models._
 import ByteTypeDefinition._
@@ -7,9 +10,11 @@ import EnumDefinition._
 import JavaSqlTypeDefinition._
 import JavaTimeTypeDefinition._
 import sangria.schema._
+import scala.reflect.runtime.universe.{Symbol => _, _}
 
 object InputDefinition {
 
+  // filter field names
   private val EqName            = "EQ"
   private val NotEqName         = "NOT_EQ"
   private val InName            = "IN"
@@ -23,8 +28,141 @@ object InputDefinition {
   private val ContainsSomeName  = "CONTAINS_SOME"
   private val ContainsNoneName  = "CONTAINS_NONE"
   private val IsNullName        = "IS_NULL"
-  private val ActionName        = "action"
-  private val ValueName         = "value"
+  private val EveryName         = "EVERY"
+  private val SomeName          = "SOME"
+  private val NoneName          = "NONE"
+  // modifier field names
+  private val ActionName = "action"
+  private val ValueName  = "value"
+
+  // Filter[T: Numeric]
+  def makeAbstractNumericFilterType[T: Numeric, R <: AbstractNumericFilter[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(EqName, OptionInputType(baseType)),
+        InputField(NotEqName, OptionInputType(baseType)),
+        InputField(InName, OptionInputType(ListInputType(baseType))),
+        InputField(NotInName, OptionInputType(ListInputType(baseType))),
+        InputField(LtName, OptionInputType(baseType)),
+        InputField(LteName, OptionInputType(baseType)),
+        InputField(GtName, OptionInputType(baseType)),
+        InputField(GteName, OptionInputType(baseType))
+      )
+  )
+
+  // FilterOption[T: Numeric]
+  def makeAbstractNumericFilterOptionType[T: Numeric, R <: AbstractNumericFilterOption[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(EqName, OptionInputType(baseType)),
+        InputField(NotEqName, OptionInputType(baseType)),
+        InputField(InName, OptionInputType(ListInputType(baseType))),
+        InputField(NotInName, OptionInputType(ListInputType(baseType))),
+        InputField(LtName, OptionInputType(baseType)),
+        InputField(LteName, OptionInputType(baseType)),
+        InputField(GtName, OptionInputType(baseType)),
+        InputField(GteName, OptionInputType(baseType)),
+        InputField(IsNullName, OptionInputType(BooleanType))
+      )
+  )
+
+  // Filter[T <: Temporal]
+  def makeAbstractTemporalFilterType[T <: Temporal, R <: AbstractTemporalFilter[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(EqName, OptionInputType(baseType)),
+        InputField(NotEqName, OptionInputType(baseType)),
+        InputField(InName, OptionInputType(ListInputType(baseType))),
+        InputField(NotInName, OptionInputType(ListInputType(baseType))),
+        InputField(LtName, OptionInputType(baseType)),
+        InputField(LteName, OptionInputType(baseType)),
+        InputField(GtName, OptionInputType(baseType)),
+        InputField(GteName, OptionInputType(baseType))
+      )
+  )
+
+  // FilterOption[T <: Temporal]
+  def makeAbstractTemporalFilterOptionType[T <: Temporal, R <: AbstractTemporalFilterOption[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(EqName, OptionInputType(baseType)),
+        InputField(NotEqName, OptionInputType(baseType)),
+        InputField(InName, OptionInputType(ListInputType(baseType))),
+        InputField(NotInName, OptionInputType(ListInputType(baseType))),
+        InputField(LtName, OptionInputType(baseType)),
+        InputField(LteName, OptionInputType(baseType)),
+        InputField(GtName, OptionInputType(baseType)),
+        InputField(GteName, OptionInputType(baseType)),
+        InputField(IsNullName, OptionInputType(BooleanType))
+      )
+  )
+
+  // Filter[T <: java.util.Date]
+  def makeAbstractDateFilterType[T <: java.util.Date, R <: AbstractDateFilter[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(EqName, OptionInputType(baseType)),
+        InputField(NotEqName, OptionInputType(baseType)),
+        InputField(InName, OptionInputType(ListInputType(baseType))),
+        InputField(NotInName, OptionInputType(ListInputType(baseType))),
+        InputField(LtName, OptionInputType(baseType)),
+        InputField(LteName, OptionInputType(baseType)),
+        InputField(GtName, OptionInputType(baseType)),
+        InputField(GteName, OptionInputType(baseType))
+      )
+  )
+
+  // FilterOption[T <: java.util.Date]
+  def makeAbstractDateFilterOptionType[T <: java.util.Date, R <: AbstractDateFilterOption[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(EqName, OptionInputType(baseType)),
+        InputField(NotEqName, OptionInputType(baseType)),
+        InputField(InName, OptionInputType(ListInputType(baseType))),
+        InputField(NotInName, OptionInputType(ListInputType(baseType))),
+        InputField(LtName, OptionInputType(baseType)),
+        InputField(LteName, OptionInputType(baseType)),
+        InputField(GtName, OptionInputType(baseType)),
+        InputField(GteName, OptionInputType(baseType)),
+        InputField(IsNullName, OptionInputType(BooleanType))
+      )
+  )
 
   // Filter[Boolean]
   implicit val BooleanFilterType: InputObjectType[BooleanFilter] =
@@ -101,151 +239,191 @@ object InputDefinition {
 
   // Filter[Int]
   implicit val IntFilterType: InputObjectType[IntFilter] =
-    InputObjectType[IntFilter](
+    makeAbstractNumericFilterType(
       "IntFilter",
       "Filter for an Int value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(IntType)),
-          InputField(NotEqName, OptionInputType(IntType)),
-          InputField(InName, OptionInputType(ListInputType(IntType))),
-          InputField(NotInName, OptionInputType(ListInputType(IntType))),
-          InputField(LtName, OptionInputType(IntType)),
-          InputField(LteName, OptionInputType(IntType)),
-          InputField(GtName, OptionInputType(IntType)),
-          InputField(GteName, OptionInputType(IntType))
-        )
+      IntType
     )
+//    InputObjectType[IntFilter](
+//      "IntFilter",
+//      "Filter for an Int value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(IntType)),
+//          InputField(NotEqName, OptionInputType(IntType)),
+//          InputField(InName, OptionInputType(ListInputType(IntType))),
+//          InputField(NotInName, OptionInputType(ListInputType(IntType))),
+//          InputField(LtName, OptionInputType(IntType)),
+//          InputField(LteName, OptionInputType(IntType)),
+//          InputField(GtName, OptionInputType(IntType)),
+//          InputField(GteName, OptionInputType(IntType))
+//        )
+//    )
 
   // FilterOption[Int]
   implicit val IntFilterOptionType: InputObjectType[IntFilterOption] =
-    InputObjectType[IntFilterOption](
+    makeAbstractNumericFilterOptionType(
       "IntFilterOption",
       "Filter for an Option[Int] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(IntType)),
-          InputField(NotEqName, OptionInputType(IntType)),
-          InputField(InName, OptionInputType(ListInputType(IntType))),
-          InputField(NotInName, OptionInputType(ListInputType(IntType))),
-          InputField(LtName, OptionInputType(IntType)),
-          InputField(LteName, OptionInputType(IntType)),
-          InputField(GtName, OptionInputType(IntType)),
-          InputField(GteName, OptionInputType(IntType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      IntType
     )
+//    InputObjectType[IntFilterOption](
+//      "IntFilterOption",
+//      "Filter for an Option[Int] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(IntType)),
+//          InputField(NotEqName, OptionInputType(IntType)),
+//          InputField(InName, OptionInputType(ListInputType(IntType))),
+//          InputField(NotInName, OptionInputType(ListInputType(IntType))),
+//          InputField(LtName, OptionInputType(IntType)),
+//          InputField(LteName, OptionInputType(IntType)),
+//          InputField(GtName, OptionInputType(IntType)),
+//          InputField(GteName, OptionInputType(IntType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[Long]
   implicit val LongFilterType: InputObjectType[LongFilter] =
-    InputObjectType[LongFilter](
+    makeAbstractNumericFilterType(
       "LongFilter",
       "Filter for a Long value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LongType)),
-          InputField(NotEqName, OptionInputType(LongType)),
-          InputField(InName, OptionInputType(ListInputType(LongType))),
-          InputField(NotInName, OptionInputType(ListInputType(LongType))),
-          InputField(LtName, OptionInputType(LongType)),
-          InputField(LteName, OptionInputType(LongType)),
-          InputField(GtName, OptionInputType(LongType)),
-          InputField(GteName, OptionInputType(LongType))
-        )
+      LongType
     )
+//    InputObjectType[LongFilter](
+//      "LongFilter",
+//      "Filter for a Long value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LongType)),
+//          InputField(NotEqName, OptionInputType(LongType)),
+//          InputField(InName, OptionInputType(ListInputType(LongType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LongType))),
+//          InputField(LtName, OptionInputType(LongType)),
+//          InputField(LteName, OptionInputType(LongType)),
+//          InputField(GtName, OptionInputType(LongType)),
+//          InputField(GteName, OptionInputType(LongType))
+//        )
+//    )
 
   // FilterOption[Long]
   implicit val LongFilterOptionType: InputObjectType[LongFilterOption] =
-    InputObjectType[LongFilterOption](
+    makeAbstractNumericFilterOptionType(
       "LongFilterOption",
       "Filter for an Option[Long] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LongType)),
-          InputField(NotEqName, OptionInputType(LongType)),
-          InputField(InName, OptionInputType(ListInputType(LongType))),
-          InputField(NotInName, OptionInputType(ListInputType(LongType))),
-          InputField(LtName, OptionInputType(LongType)),
-          InputField(LteName, OptionInputType(LongType)),
-          InputField(GtName, OptionInputType(LongType)),
-          InputField(GteName, OptionInputType(LongType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      LongType
     )
+//    InputObjectType[LongFilterOption](
+//      "LongFilterOption",
+//      "Filter for an Option[Long] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LongType)),
+//          InputField(NotEqName, OptionInputType(LongType)),
+//          InputField(InName, OptionInputType(ListInputType(LongType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LongType))),
+//          InputField(LtName, OptionInputType(LongType)),
+//          InputField(LteName, OptionInputType(LongType)),
+//          InputField(GtName, OptionInputType(LongType)),
+//          InputField(GteName, OptionInputType(LongType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[Double]
   implicit val DoubleFilterType: InputObjectType[DoubleFilter] =
-    InputObjectType[DoubleFilter](
+    makeAbstractNumericFilterType(
       "DoubleFilter",
       "Filter for a Double value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(FloatType)),
-          InputField(NotEqName, OptionInputType(FloatType)),
-          InputField(InName, OptionInputType(ListInputType(FloatType))),
-          InputField(NotInName, OptionInputType(ListInputType(FloatType))),
-          InputField(LtName, OptionInputType(FloatType)),
-          InputField(LteName, OptionInputType(FloatType)),
-          InputField(GtName, OptionInputType(FloatType)),
-          InputField(GteName, OptionInputType(FloatType))
-        )
+      FloatType
     )
+//    InputObjectType[DoubleFilter](
+//      "DoubleFilter",
+//      "Filter for a Double value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(FloatType)),
+//          InputField(NotEqName, OptionInputType(FloatType)),
+//          InputField(InName, OptionInputType(ListInputType(FloatType))),
+//          InputField(NotInName, OptionInputType(ListInputType(FloatType))),
+//          InputField(LtName, OptionInputType(FloatType)),
+//          InputField(LteName, OptionInputType(FloatType)),
+//          InputField(GtName, OptionInputType(FloatType)),
+//          InputField(GteName, OptionInputType(FloatType))
+//        )
+//    )
 
   // FilterOption[Double]
   implicit val DoubleFilterOptionType: InputObjectType[DoubleFilterOption] =
-    InputObjectType[DoubleFilterOption](
+    makeAbstractNumericFilterOptionType(
       "DoubleFilterOption",
       "Filter for an Option[Double] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(FloatType)),
-          InputField(NotEqName, OptionInputType(FloatType)),
-          InputField(InName, OptionInputType(ListInputType(FloatType))),
-          InputField(NotInName, OptionInputType(ListInputType(FloatType))),
-          InputField(LtName, OptionInputType(FloatType)),
-          InputField(LteName, OptionInputType(FloatType)),
-          InputField(GtName, OptionInputType(FloatType)),
-          InputField(GteName, OptionInputType(FloatType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      FloatType
     )
+//    InputObjectType[DoubleFilterOption](
+//      "DoubleFilterOption",
+//      "Filter for an Option[Double] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(FloatType)),
+//          InputField(NotEqName, OptionInputType(FloatType)),
+//          InputField(InName, OptionInputType(ListInputType(FloatType))),
+//          InputField(NotInName, OptionInputType(ListInputType(FloatType))),
+//          InputField(LtName, OptionInputType(FloatType)),
+//          InputField(LteName, OptionInputType(FloatType)),
+//          InputField(GtName, OptionInputType(FloatType)),
+//          InputField(GteName, OptionInputType(FloatType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[BigDecimal]
   implicit val BigDecimalFilterType: InputObjectType[BigDecimalFilter] =
-    InputObjectType[BigDecimalFilter](
+    makeAbstractNumericFilterType(
       "BigDecimalFilter",
       "Filter for a BigDecimal value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(BigDecimalType)),
-          InputField(NotEqName, OptionInputType(BigDecimalType)),
-          InputField(InName, OptionInputType(ListInputType(BigDecimalType))),
-          InputField(NotInName, OptionInputType(ListInputType(BigDecimalType))),
-          InputField(LtName, OptionInputType(BigDecimalType)),
-          InputField(LteName, OptionInputType(BigDecimalType)),
-          InputField(GtName, OptionInputType(BigDecimalType)),
-          InputField(GteName, OptionInputType(BigDecimalType))
-        )
+      BigDecimalType
     )
+//    InputObjectType[BigDecimalFilter](
+//      "BigDecimalFilter",
+//      "Filter for a BigDecimal value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(BigDecimalType)),
+//          InputField(NotEqName, OptionInputType(BigDecimalType)),
+//          InputField(InName, OptionInputType(ListInputType(BigDecimalType))),
+//          InputField(NotInName, OptionInputType(ListInputType(BigDecimalType))),
+//          InputField(LtName, OptionInputType(BigDecimalType)),
+//          InputField(LteName, OptionInputType(BigDecimalType)),
+//          InputField(GtName, OptionInputType(BigDecimalType)),
+//          InputField(GteName, OptionInputType(BigDecimalType))
+//        )
+//    )
 
   // FilterOption[BigDecimal]
   implicit val BigDecimalFilterOptionType: InputObjectType[BigDecimalFilterOption] =
-    InputObjectType[BigDecimalFilterOption](
+    makeAbstractNumericFilterOptionType(
       "BigDecimalFilterOption",
       "Filter for an Option[BigDecimal] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(BigDecimalType)),
-          InputField(NotEqName, OptionInputType(BigDecimalType)),
-          InputField(InName, OptionInputType(ListInputType(BigDecimalType))),
-          InputField(NotInName, OptionInputType(ListInputType(BigDecimalType))),
-          InputField(LtName, OptionInputType(BigDecimalType)),
-          InputField(LteName, OptionInputType(BigDecimalType)),
-          InputField(GtName, OptionInputType(BigDecimalType)),
-          InputField(GteName, OptionInputType(BigDecimalType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      BigDecimalType
     )
+//  InputObjectType[BigDecimalFilterOption](
+//      "BigDecimalFilterOption",
+//      "Filter for an Option[BigDecimal] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(BigDecimalType)),
+//          InputField(NotEqName, OptionInputType(BigDecimalType)),
+//          InputField(InName, OptionInputType(ListInputType(BigDecimalType))),
+//          InputField(NotInName, OptionInputType(ListInputType(BigDecimalType))),
+//          InputField(LtName, OptionInputType(BigDecimalType)),
+//          InputField(LteName, OptionInputType(BigDecimalType)),
+//          InputField(GtName, OptionInputType(BigDecimalType)),
+//          InputField(GteName, OptionInputType(BigDecimalType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[String]
   implicit val StringFilterType: InputObjectType[StringFilter] =
@@ -286,360 +464,490 @@ object InputDefinition {
 
   // Filter[Instant]
   implicit val InstantFilterType: InputObjectType[InstantFilter] =
-    InputObjectType[InstantFilter](
+    makeAbstractTemporalFilterType(
       "InstantFilter",
       "Filter for a Instant value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(InstantType)),
-          InputField(NotEqName, OptionInputType(InstantType)),
-          InputField(InName, OptionInputType(ListInputType(InstantType))),
-          InputField(NotInName, OptionInputType(ListInputType(InstantType))),
-          InputField(LtName, OptionInputType(InstantType)),
-          InputField(LteName, OptionInputType(InstantType)),
-          InputField(GtName, OptionInputType(InstantType)),
-          InputField(GteName, OptionInputType(InstantType))
-        )
+      InstantType
     )
+//    InputObjectType[InstantFilter](
+//      "InstantFilter",
+//      "Filter for a Instant value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(InstantType)),
+//          InputField(NotEqName, OptionInputType(InstantType)),
+//          InputField(InName, OptionInputType(ListInputType(InstantType))),
+//          InputField(NotInName, OptionInputType(ListInputType(InstantType))),
+//          InputField(LtName, OptionInputType(InstantType)),
+//          InputField(LteName, OptionInputType(InstantType)),
+//          InputField(GtName, OptionInputType(InstantType)),
+//          InputField(GteName, OptionInputType(InstantType))
+//        )
+//    )
 
   // FilterOption[Instant]
   implicit val InstantFilterOptionType: InputObjectType[InstantFilterOption] =
-    InputObjectType[InstantFilterOption](
+    makeAbstractTemporalFilterOptionType(
       "InstantFilterOption",
       "Filter for an Option[Instant] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(InstantType)),
-          InputField(NotEqName, OptionInputType(InstantType)),
-          InputField(InName, OptionInputType(ListInputType(InstantType))),
-          InputField(NotInName, OptionInputType(ListInputType(InstantType))),
-          InputField(LtName, OptionInputType(InstantType)),
-          InputField(LteName, OptionInputType(InstantType)),
-          InputField(GtName, OptionInputType(InstantType)),
-          InputField(GteName, OptionInputType(InstantType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      InstantType
     )
+//    InputObjectType[InstantFilterOption](
+//      "InstantFilterOption",
+//      "Filter for an Option[Instant] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(InstantType)),
+//          InputField(NotEqName, OptionInputType(InstantType)),
+//          InputField(InName, OptionInputType(ListInputType(InstantType))),
+//          InputField(NotInName, OptionInputType(ListInputType(InstantType))),
+//          InputField(LtName, OptionInputType(InstantType)),
+//          InputField(LteName, OptionInputType(InstantType)),
+//          InputField(GtName, OptionInputType(InstantType)),
+//          InputField(GteName, OptionInputType(InstantType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[LocalDate]
   implicit val LocalDateFilterType: InputObjectType[LocalDateFilter] =
-    InputObjectType[LocalDateFilter](
+    makeAbstractTemporalFilterType(
       "LocalDateFilter",
       "Filter for a LocalDate value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LocalDateType)),
-          InputField(NotEqName, OptionInputType(LocalDateType)),
-          InputField(InName, OptionInputType(ListInputType(LocalDateType))),
-          InputField(NotInName, OptionInputType(ListInputType(LocalDateType))),
-          InputField(LtName, OptionInputType(LocalDateType)),
-          InputField(LteName, OptionInputType(LocalDateType)),
-          InputField(GtName, OptionInputType(LocalDateType)),
-          InputField(GteName, OptionInputType(LocalDateType))
-        )
+      LocalDateType
     )
+//    InputObjectType[LocalDateFilter](
+//      "LocalDateFilter",
+//      "Filter for a LocalDate value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LocalDateType)),
+//          InputField(NotEqName, OptionInputType(LocalDateType)),
+//          InputField(InName, OptionInputType(ListInputType(LocalDateType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LocalDateType))),
+//          InputField(LtName, OptionInputType(LocalDateType)),
+//          InputField(LteName, OptionInputType(LocalDateType)),
+//          InputField(GtName, OptionInputType(LocalDateType)),
+//          InputField(GteName, OptionInputType(LocalDateType))
+//        )
+//    )
 
   // FilterOption[LocalDate]
   implicit val LocalDateFilterOptionType: InputObjectType[LocalDateFilterOption] =
-    InputObjectType[LocalDateFilterOption](
+    makeAbstractTemporalFilterOptionType(
       "LocalDateFilterOption",
       "Filter for an Option[LocalDate] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LocalDateType)),
-          InputField(NotEqName, OptionInputType(LocalDateType)),
-          InputField(InName, OptionInputType(ListInputType(LocalDateType))),
-          InputField(NotInName, OptionInputType(ListInputType(LocalDateType))),
-          InputField(LtName, OptionInputType(LocalDateType)),
-          InputField(LteName, OptionInputType(LocalDateType)),
-          InputField(GtName, OptionInputType(LocalDateType)),
-          InputField(GteName, OptionInputType(LocalDateType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      LocalDateType
     )
+//    InputObjectType[LocalDateFilterOption](
+//      "LocalDateFilterOption",
+//      "Filter for an Option[LocalDate] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LocalDateType)),
+//          InputField(NotEqName, OptionInputType(LocalDateType)),
+//          InputField(InName, OptionInputType(ListInputType(LocalDateType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LocalDateType))),
+//          InputField(LtName, OptionInputType(LocalDateType)),
+//          InputField(LteName, OptionInputType(LocalDateType)),
+//          InputField(GtName, OptionInputType(LocalDateType)),
+//          InputField(GteName, OptionInputType(LocalDateType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[LocalTime]
   implicit val LocalTimeFilterType: InputObjectType[LocalTimeFilter] =
-    InputObjectType[LocalTimeFilter](
+    makeAbstractTemporalFilterType(
       "LocalTimeFilter",
       "Filter for a LocalTime value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LocalTimeType)),
-          InputField(NotEqName, OptionInputType(LocalTimeType)),
-          InputField(InName, OptionInputType(ListInputType(LocalTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(LocalTimeType))),
-          InputField(LtName, OptionInputType(LocalTimeType)),
-          InputField(LteName, OptionInputType(LocalTimeType)),
-          InputField(GtName, OptionInputType(LocalTimeType)),
-          InputField(GteName, OptionInputType(LocalTimeType))
-        )
+      LocalTimeType
     )
+//    InputObjectType[LocalTimeFilter](
+//      "LocalTimeFilter",
+//      "Filter for a LocalTime value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LocalTimeType)),
+//          InputField(NotEqName, OptionInputType(LocalTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(LocalTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LocalTimeType))),
+//          InputField(LtName, OptionInputType(LocalTimeType)),
+//          InputField(LteName, OptionInputType(LocalTimeType)),
+//          InputField(GtName, OptionInputType(LocalTimeType)),
+//          InputField(GteName, OptionInputType(LocalTimeType))
+//        )
+//    )
 
   // FilterOption[LocalTime]
   implicit val LocalTimeFilterOptionType: InputObjectType[LocalTimeFilterOption] =
-    InputObjectType[LocalTimeFilterOption](
+    makeAbstractTemporalFilterOptionType(
       "LocalTimeFilterOption",
       "Filter for an Option[LocalTime] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LocalTimeType)),
-          InputField(NotEqName, OptionInputType(LocalTimeType)),
-          InputField(InName, OptionInputType(ListInputType(LocalTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(LocalTimeType))),
-          InputField(LtName, OptionInputType(LocalTimeType)),
-          InputField(LteName, OptionInputType(LocalTimeType)),
-          InputField(GtName, OptionInputType(LocalTimeType)),
-          InputField(GteName, OptionInputType(LocalTimeType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      LocalTimeType
     )
+//    InputObjectType[LocalTimeFilterOption](
+//      "LocalTimeFilterOption",
+//      "Filter for an Option[LocalTime] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LocalTimeType)),
+//          InputField(NotEqName, OptionInputType(LocalTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(LocalTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LocalTimeType))),
+//          InputField(LtName, OptionInputType(LocalTimeType)),
+//          InputField(LteName, OptionInputType(LocalTimeType)),
+//          InputField(GtName, OptionInputType(LocalTimeType)),
+//          InputField(GteName, OptionInputType(LocalTimeType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[LocalDateTime]
   implicit val LocalDateTimeFilterType: InputObjectType[LocalDateTimeFilter] =
-    InputObjectType[LocalDateTimeFilter](
+    makeAbstractTemporalFilterType(
       "LocalDateTimeFilter",
       "Filter for a LocalDateTime value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LocalDateTimeType)),
-          InputField(NotEqName, OptionInputType(LocalDateTimeType)),
-          InputField(InName, OptionInputType(ListInputType(LocalDateTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(LocalDateTimeType))),
-          InputField(LtName, OptionInputType(LocalDateTimeType)),
-          InputField(LteName, OptionInputType(LocalDateTimeType)),
-          InputField(GtName, OptionInputType(LocalDateTimeType)),
-          InputField(GteName, OptionInputType(LocalDateTimeType))
-        )
+      LocalDateTimeType
     )
+//    InputObjectType[LocalDateTimeFilter](
+//      "LocalDateTimeFilter",
+//      "Filter for a LocalDateTime value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LocalDateTimeType)),
+//          InputField(NotEqName, OptionInputType(LocalDateTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(LocalDateTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LocalDateTimeType))),
+//          InputField(LtName, OptionInputType(LocalDateTimeType)),
+//          InputField(LteName, OptionInputType(LocalDateTimeType)),
+//          InputField(GtName, OptionInputType(LocalDateTimeType)),
+//          InputField(GteName, OptionInputType(LocalDateTimeType))
+//        )
+//    )
 
   // FilterOption[LocalDateTime]
   implicit val LocalDateTimeFilterOptionType: InputObjectType[LocalDateTimeFilterOption] =
-    InputObjectType[LocalDateTimeFilterOption](
+    makeAbstractTemporalFilterOptionType(
       "LocalDateTimeFilterOption",
       "Filter for an Option[LocalDateTime] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(LocalDateTimeType)),
-          InputField(NotEqName, OptionInputType(LocalDateTimeType)),
-          InputField(InName, OptionInputType(ListInputType(LocalDateTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(LocalDateTimeType))),
-          InputField(LtName, OptionInputType(LocalDateTimeType)),
-          InputField(LteName, OptionInputType(LocalDateTimeType)),
-          InputField(GtName, OptionInputType(LocalDateTimeType)),
-          InputField(GteName, OptionInputType(LocalDateTimeType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      LocalDateTimeType
     )
+//    InputObjectType[LocalDateTimeFilterOption](
+//      "LocalDateTimeFilterOption",
+//      "Filter for an Option[LocalDateTime] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(LocalDateTimeType)),
+//          InputField(NotEqName, OptionInputType(LocalDateTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(LocalDateTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(LocalDateTimeType))),
+//          InputField(LtName, OptionInputType(LocalDateTimeType)),
+//          InputField(LteName, OptionInputType(LocalDateTimeType)),
+//          InputField(GtName, OptionInputType(LocalDateTimeType)),
+//          InputField(GteName, OptionInputType(LocalDateTimeType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[OffsetTime]
   implicit val OffsetTimeFilterType: InputObjectType[OffsetTimeFilter] =
-    InputObjectType[OffsetTimeFilter](
+    makeAbstractTemporalFilterType(
       "OffsetTimeFilter",
       "Filter for a OffsetTime value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(OffsetTimeType)),
-          InputField(NotEqName, OptionInputType(OffsetTimeType)),
-          InputField(InName, OptionInputType(ListInputType(OffsetTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(OffsetTimeType))),
-          InputField(LtName, OptionInputType(OffsetTimeType)),
-          InputField(LteName, OptionInputType(OffsetTimeType)),
-          InputField(GtName, OptionInputType(OffsetTimeType)),
-          InputField(GteName, OptionInputType(OffsetTimeType))
-        )
+      OffsetTimeType
     )
+//    InputObjectType[OffsetTimeFilter](
+//      "OffsetTimeFilter",
+//      "Filter for a OffsetTime value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(OffsetTimeType)),
+//          InputField(NotEqName, OptionInputType(OffsetTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(OffsetTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(OffsetTimeType))),
+//          InputField(LtName, OptionInputType(OffsetTimeType)),
+//          InputField(LteName, OptionInputType(OffsetTimeType)),
+//          InputField(GtName, OptionInputType(OffsetTimeType)),
+//          InputField(GteName, OptionInputType(OffsetTimeType))
+//        )
+//    )
 
   // FilterOption[OffsetTime]
   implicit val OffsetTimeFilterOptionType: InputObjectType[OffsetTimeFilterOption] =
-    InputObjectType[OffsetTimeFilterOption](
+    makeAbstractTemporalFilterOptionType(
       "OffsetTimeFilterOption",
       "Filter for an Option[OffsetTime] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(OffsetTimeType)),
-          InputField(NotEqName, OptionInputType(OffsetTimeType)),
-          InputField(InName, OptionInputType(ListInputType(OffsetTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(OffsetTimeType))),
-          InputField(LtName, OptionInputType(OffsetTimeType)),
-          InputField(LteName, OptionInputType(OffsetTimeType)),
-          InputField(GtName, OptionInputType(OffsetTimeType)),
-          InputField(GteName, OptionInputType(OffsetTimeType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      OffsetTimeType
     )
+//    InputObjectType[OffsetTimeFilterOption](
+//      "OffsetTimeFilterOption",
+//      "Filter for an Option[OffsetTime] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(OffsetTimeType)),
+//          InputField(NotEqName, OptionInputType(OffsetTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(OffsetTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(OffsetTimeType))),
+//          InputField(LtName, OptionInputType(OffsetTimeType)),
+//          InputField(LteName, OptionInputType(OffsetTimeType)),
+//          InputField(GtName, OptionInputType(OffsetTimeType)),
+//          InputField(GteName, OptionInputType(OffsetTimeType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[OffsetDateTime]
   implicit val OffsetDateTimeFilterType: InputObjectType[OffsetDateTimeFilter] =
-    InputObjectType[OffsetDateTimeFilter](
+    makeAbstractTemporalFilterType(
       "OffsetDateTimeFilter",
       "Filter for a OffsetDateTime value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(OffsetDateTimeType)),
-          InputField(NotEqName, OptionInputType(OffsetDateTimeType)),
-          InputField(InName, OptionInputType(ListInputType(OffsetDateTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(OffsetDateTimeType))),
-          InputField(LtName, OptionInputType(OffsetDateTimeType)),
-          InputField(LteName, OptionInputType(OffsetDateTimeType)),
-          InputField(GtName, OptionInputType(OffsetDateTimeType)),
-          InputField(GteName, OptionInputType(OffsetDateTimeType))
-        )
+      OffsetDateTimeType
     )
+//    InputObjectType[OffsetDateTimeFilter](
+//      "OffsetDateTimeFilter",
+//      "Filter for a OffsetDateTime value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(OffsetDateTimeType)),
+//          InputField(NotEqName, OptionInputType(OffsetDateTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(OffsetDateTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(OffsetDateTimeType))),
+//          InputField(LtName, OptionInputType(OffsetDateTimeType)),
+//          InputField(LteName, OptionInputType(OffsetDateTimeType)),
+//          InputField(GtName, OptionInputType(OffsetDateTimeType)),
+//          InputField(GteName, OptionInputType(OffsetDateTimeType))
+//        )
+//    )
 
   // FilterOption[OffsetDateTime]
   implicit val OffsetDateTimeFilterOptionType: InputObjectType[OffsetDateTimeFilterOption] =
-    InputObjectType[OffsetDateTimeFilterOption](
+    makeAbstractTemporalFilterOptionType(
       "OffsetDateTimeFilterOption",
       "Filter for an Option[OffsetDateTime] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(OffsetDateTimeType)),
-          InputField(NotEqName, OptionInputType(OffsetDateTimeType)),
-          InputField(InName, OptionInputType(ListInputType(OffsetDateTimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(OffsetDateTimeType))),
-          InputField(LtName, OptionInputType(OffsetDateTimeType)),
-          InputField(LteName, OptionInputType(OffsetDateTimeType)),
-          InputField(GtName, OptionInputType(OffsetDateTimeType)),
-          InputField(GteName, OptionInputType(OffsetDateTimeType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      OffsetDateTimeType
     )
+//    InputObjectType[OffsetDateTimeFilterOption](
+//      "OffsetDateTimeFilterOption",
+//      "Filter for an Option[OffsetDateTime] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(OffsetDateTimeType)),
+//          InputField(NotEqName, OptionInputType(OffsetDateTimeType)),
+//          InputField(InName, OptionInputType(ListInputType(OffsetDateTimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(OffsetDateTimeType))),
+//          InputField(LtName, OptionInputType(OffsetDateTimeType)),
+//          InputField(LteName, OptionInputType(OffsetDateTimeType)),
+//          InputField(GtName, OptionInputType(OffsetDateTimeType)),
+//          InputField(GteName, OptionInputType(OffsetDateTimeType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[Date]
   implicit val DateFilterType: InputObjectType[DateFilter] =
-    InputObjectType[DateFilter](
+    makeAbstractDateFilterType(
       "DateFilter",
       "Filter for a Date value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(DateType)),
-          InputField(NotEqName, OptionInputType(DateType)),
-          InputField(InName, OptionInputType(ListInputType(DateType))),
-          InputField(NotInName, OptionInputType(ListInputType(DateType))),
-          InputField(LtName, OptionInputType(DateType)),
-          InputField(LteName, OptionInputType(DateType)),
-          InputField(GtName, OptionInputType(DateType)),
-          InputField(GteName, OptionInputType(DateType))
-        )
+      DateType
     )
+//    InputObjectType[DateFilter](
+//      "DateFilter",
+//      "Filter for a Date value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(DateType)),
+//          InputField(NotEqName, OptionInputType(DateType)),
+//          InputField(InName, OptionInputType(ListInputType(DateType))),
+//          InputField(NotInName, OptionInputType(ListInputType(DateType))),
+//          InputField(LtName, OptionInputType(DateType)),
+//          InputField(LteName, OptionInputType(DateType)),
+//          InputField(GtName, OptionInputType(DateType)),
+//          InputField(GteName, OptionInputType(DateType))
+//        )
+//    )
 
   // FilterOption[Date]
   implicit val DateFilterOptionType: InputObjectType[DateFilterOption] =
-    InputObjectType[DateFilterOption](
+    makeAbstractDateFilterOptionType(
       "DateFilterOption",
       "Filter for an Option[Date] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(DateType)),
-          InputField(NotEqName, OptionInputType(DateType)),
-          InputField(InName, OptionInputType(ListInputType(DateType))),
-          InputField(NotInName, OptionInputType(ListInputType(DateType))),
-          InputField(LtName, OptionInputType(DateType)),
-          InputField(LteName, OptionInputType(DateType)),
-          InputField(GtName, OptionInputType(DateType)),
-          InputField(GteName, OptionInputType(DateType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      DateType
     )
+//    InputObjectType[DateFilterOption](
+//      "DateFilterOption",
+//      "Filter for an Option[Date] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(DateType)),
+//          InputField(NotEqName, OptionInputType(DateType)),
+//          InputField(InName, OptionInputType(ListInputType(DateType))),
+//          InputField(NotInName, OptionInputType(ListInputType(DateType))),
+//          InputField(LtName, OptionInputType(DateType)),
+//          InputField(LteName, OptionInputType(DateType)),
+//          InputField(GtName, OptionInputType(DateType)),
+//          InputField(GteName, OptionInputType(DateType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[Time]
   implicit val TimeFilterType: InputObjectType[TimeFilter] =
-    InputObjectType[TimeFilter](
+    makeAbstractDateFilterType(
       "TimeFilter",
       "Filter for a Time value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(TimeType)),
-          InputField(NotEqName, OptionInputType(TimeType)),
-          InputField(InName, OptionInputType(ListInputType(TimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(TimeType))),
-          InputField(LtName, OptionInputType(TimeType)),
-          InputField(LteName, OptionInputType(TimeType)),
-          InputField(GtName, OptionInputType(TimeType)),
-          InputField(GteName, OptionInputType(TimeType))
-        )
+      TimeType
     )
+//    InputObjectType[TimeFilter](
+//      "TimeFilter",
+//      "Filter for a Time value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(TimeType)),
+//          InputField(NotEqName, OptionInputType(TimeType)),
+//          InputField(InName, OptionInputType(ListInputType(TimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(TimeType))),
+//          InputField(LtName, OptionInputType(TimeType)),
+//          InputField(LteName, OptionInputType(TimeType)),
+//          InputField(GtName, OptionInputType(TimeType)),
+//          InputField(GteName, OptionInputType(TimeType))
+//        )
+//    )
 
   // FilterOption[Time]
   implicit val TimeFilterOptionType: InputObjectType[TimeFilterOption] =
-    InputObjectType[TimeFilterOption](
+    makeAbstractDateFilterOptionType(
       "TimeFilterOption",
       "Filter for an Option[Time] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(TimeType)),
-          InputField(NotEqName, OptionInputType(TimeType)),
-          InputField(InName, OptionInputType(ListInputType(TimeType))),
-          InputField(NotInName, OptionInputType(ListInputType(TimeType))),
-          InputField(LtName, OptionInputType(TimeType)),
-          InputField(LteName, OptionInputType(TimeType)),
-          InputField(GtName, OptionInputType(TimeType)),
-          InputField(GteName, OptionInputType(TimeType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      TimeType
     )
+//    InputObjectType[TimeFilterOption](
+//      "TimeFilterOption",
+//      "Filter for an Option[Time] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(TimeType)),
+//          InputField(NotEqName, OptionInputType(TimeType)),
+//          InputField(InName, OptionInputType(ListInputType(TimeType))),
+//          InputField(NotInName, OptionInputType(ListInputType(TimeType))),
+//          InputField(LtName, OptionInputType(TimeType)),
+//          InputField(LteName, OptionInputType(TimeType)),
+//          InputField(GtName, OptionInputType(TimeType)),
+//          InputField(GteName, OptionInputType(TimeType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Filter[Timestamp]
   implicit val TimestampFilterType: InputObjectType[TimestampFilter] =
-    InputObjectType[TimestampFilter](
+    makeAbstractDateFilterType(
       "TimestampFilter",
       "Filter for a Timestamp value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(TimestampType)),
-          InputField(NotEqName, OptionInputType(TimestampType)),
-          InputField(InName, OptionInputType(ListInputType(TimestampType))),
-          InputField(NotInName, OptionInputType(ListInputType(TimestampType))),
-          InputField(LtName, OptionInputType(TimestampType)),
-          InputField(LteName, OptionInputType(TimestampType)),
-          InputField(GtName, OptionInputType(TimestampType)),
-          InputField(GteName, OptionInputType(TimestampType))
-        )
+      TimestampType
     )
+//    InputObjectType[TimestampFilter](
+//      "TimestampFilter",
+//      "Filter for a Timestamp value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(TimestampType)),
+//          InputField(NotEqName, OptionInputType(TimestampType)),
+//          InputField(InName, OptionInputType(ListInputType(TimestampType))),
+//          InputField(NotInName, OptionInputType(ListInputType(TimestampType))),
+//          InputField(LtName, OptionInputType(TimestampType)),
+//          InputField(LteName, OptionInputType(TimestampType)),
+//          InputField(GtName, OptionInputType(TimestampType)),
+//          InputField(GteName, OptionInputType(TimestampType))
+//        )
+//    )
 
   // FilterOption[Timestamp]
   implicit val TimestampFilterOptionType: InputObjectType[TimestampFilterOption] =
-    InputObjectType[TimestampFilterOption](
+    makeAbstractDateFilterOptionType(
       "TimestampFilterOption",
       "Filter for an Option[Timestamp] value",
-      () =>
-        List(
-          InputField(EqName, OptionInputType(TimestampType)),
-          InputField(NotEqName, OptionInputType(TimestampType)),
-          InputField(InName, OptionInputType(ListInputType(TimestampType))),
-          InputField(NotInName, OptionInputType(ListInputType(TimestampType))),
-          InputField(LtName, OptionInputType(TimestampType)),
-          InputField(LteName, OptionInputType(TimestampType)),
-          InputField(GtName, OptionInputType(TimestampType)),
-          InputField(GteName, OptionInputType(TimestampType)),
-          InputField(IsNullName, OptionInputType(BooleanType))
-        )
+      TimestampType
     )
+//    InputObjectType[TimestampFilterOption](
+//      "TimestampFilterOption",
+//      "Filter for an Option[Timestamp] value",
+//      () =>
+//        List(
+//          InputField(EqName, OptionInputType(TimestampType)),
+//          InputField(NotEqName, OptionInputType(TimestampType)),
+//          InputField(InName, OptionInputType(ListInputType(TimestampType))),
+//          InputField(NotInName, OptionInputType(ListInputType(TimestampType))),
+//          InputField(LtName, OptionInputType(TimestampType)),
+//          InputField(LteName, OptionInputType(TimestampType)),
+//          InputField(GtName, OptionInputType(TimestampType)),
+//          InputField(GteName, OptionInputType(TimestampType)),
+//          InputField(IsNullName, OptionInputType(BooleanType))
+//        )
+//    )
+
+  // TODO: rewrite modifiers using these utilities
+
+  def makeModifierType[T, R <: AbstractGenericModifier[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(ActionName, ModifierActionType),
+        InputField(ValueName, OptionInputType(baseType))
+      )
+  )
+
+  def makeModifierOptionType[T, R <: AbstractGenericModifierOption[T]](
+      name: String,
+      description: String,
+      baseType: ScalarType[T]
+  ): InputObjectType[R] = InputObjectType[R](
+    name,
+    description,
+    () =>
+      List(
+        InputField(ActionName, ModifierOptionActionType),
+        InputField(ValueName, OptionInputType(baseType))
+      )
+  )
 
   // Modifier[Boolean]
   implicit val BooleanModifierType: InputObjectType[BooleanModifier] =
-    InputObjectType[BooleanModifier](
+    makeModifierType(
       "BooleanModifier",
       "Modifier for a Boolean value",
-      () =>
-        List(
-          InputField(ActionName, ModifierActionType),
-          InputField(ValueName, OptionInputType(BooleanType))
-        )
+      BooleanType
     )
+//    InputObjectType[BooleanModifier](
+//      "BooleanModifier",
+//      "Modifier for a Boolean value",
+//      () =>
+//        List(
+//          InputField(ActionName, ModifierActionType),
+//          InputField(ValueName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // ModifierOption[Boolean]
   implicit val BooleanModifierOptionType: InputObjectType[BooleanModifierOption] =
-    InputObjectType[BooleanModifierOption](
+    makeModifierOptionType(
       "BooleanModifierOption",
       "Modifier for an Option[Boolean] value",
-      () =>
-        List(
-          InputField(ActionName, ModifierOptionActionType),
-          InputField(ValueName, OptionInputType(BooleanType))
-        )
+      BooleanType
     )
+//    InputObjectType[BooleanModifierOption](
+//      "BooleanModifierOption",
+//      "Modifier for an Option[Boolean] value",
+//      () =>
+//        List(
+//          InputField(ActionName, ModifierOptionActionType),
+//          InputField(ValueName, OptionInputType(BooleanType))
+//        )
+//    )
 
   // Modifier[Byte]
   implicit val ByteModifierType: InputObjectType[ByteModifier] =
@@ -1046,6 +1354,20 @@ object InputDefinition {
         List(
           InputField(ActionName, ModifierOptionActionType),
           InputField(ValueName, OptionInputType(TimestampType))
+        )
+    )
+
+  def makeRelationFilterInputType[A, B, FB <: EntityFilter[FB]: TypeTag](
+      inputType: InputObjectType[FB]
+  ): InputObjectType[RelationFilter[A, B, FB]] =
+    InputObjectType[RelationFilter[A, B, FB]](
+      s"RelationFilter for ${typeOf[FB].typeSymbol.name.toString}",
+      s"RelationFilter for a ${typeOf[FB].typeSymbol.name.toString} entity filter",
+      () =>
+        List(
+          InputField(EveryName, OptionInputType(inputType)),
+          InputField(SomeName, OptionInputType(inputType)),
+          InputField(NoneName, OptionInputType(inputType))
         )
     )
 }

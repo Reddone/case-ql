@@ -72,6 +72,6 @@ object gql {
       PageInfo(info._1, info._2, total)
     }
 
-    val empty: PageInfo = PageInfo.of(0, 0, 0)
+    val empty: PageInfo = PageInfo(hasPrevious = false, hasNext = false, 0)
   }
 }

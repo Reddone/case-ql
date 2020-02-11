@@ -12,15 +12,15 @@ object TransactorResource {
     val doobieConfig = DoobieConfig.valueOf(config)
 
     for {
-      tec <- ExecutionContexts.cachedThreadPool[F]
-      cec <- ExecutionContexts.fixedThreadPool[F](doobieConfig.numThreads)
+      ce <- ExecutionContexts.fixedThreadPool[F](doobieConfig.numThreads)
+      be <- Blocker[F]
       xa <- HikariTransactor.newHikariTransactor[F](
         doobieConfig.driverClassName,
         doobieConfig.url,
         doobieConfig.user,
         doobieConfig.password,
-        tec,
-        Blocker.liftExecutionContext(cec)
+        ce,
+        be
       )
     } yield xa
   }

@@ -30,11 +30,11 @@ object models {
     implicit val decoder: Decoder[ModifierOptionAction.Value] = Decoder.decodeEnumeration(ModifierOptionAction)
   }
 
-  trait Modifier[+T] {
+  trait Modifier[T] {
     def toFragment: Fragment
   }
 
-  type ModifierOption[+T] = Modifier[Option[T]]
+  type ModifierOption[T] = Modifier[Option[T]]
 
   // Abstract
 

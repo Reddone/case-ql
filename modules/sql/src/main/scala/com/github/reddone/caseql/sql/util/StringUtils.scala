@@ -21,4 +21,11 @@ object StringUtils {
 
   def addSuffix(str: String, suffix: Option[String], sep: String = "."): String =
     str + suffix.map(sep + _).getOrElse("")
+
+  def shorten(s: String): String = toAlphabetOnly(s).split("_").map(word => word.take(1)).mkString
+
+  def toAlphabetOnly(str: String): String = {
+    val filtered = str.filter(c => c.isLetter && c <= 'z' || c == '_')
+    if (filtered.isEmpty) "x" else filtered
+  }
 }
