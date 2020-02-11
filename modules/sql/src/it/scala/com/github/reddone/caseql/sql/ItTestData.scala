@@ -3,10 +3,10 @@ package com.github.reddone.caseql.sql
 import java.sql.Timestamp
 import java.time.Instant
 
-import com.github.reddone.caseql.sql.entity.models._
+import com.github.reddone.caseql.sql.ItTestModel._
 import shapeless._
 
-object TestData {
+object ItTestData {
 
   val testSchema: String = "test"
 

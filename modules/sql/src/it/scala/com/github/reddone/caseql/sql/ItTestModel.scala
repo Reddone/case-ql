@@ -1,4 +1,4 @@
-package com.github.reddone.caseql.sql.entity
+package com.github.reddone.caseql.sql
 
 import java.sql.Timestamp
 
@@ -15,7 +15,7 @@ import javatime._
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 
-object models {
+object ItTestModel {
 
   // developer entity, filter, modifier
 

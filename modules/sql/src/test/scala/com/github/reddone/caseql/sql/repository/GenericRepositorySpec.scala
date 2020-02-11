@@ -61,7 +61,7 @@ class GenericRepositorySpec extends AnyFlatSpec with Matchers {
   }
 
   it should "produce the correct fragment when creating a sequence" in {
-    val definition = "START WITH 1 INCREMENT BY 1 NOCYCLE"
+    val definition = "START WITH 1 INCREMENT BY 1 NO CYCLE"
     val expected1  = s"CREATE SEQUENCE IF NOT EXISTS $schemaName.$sequenceName " + definition + " "
     val expected2  = s"CREATE SEQUENCE $schemaName.$sequenceName " + definition + " "
 

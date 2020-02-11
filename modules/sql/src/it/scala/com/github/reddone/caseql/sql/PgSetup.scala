@@ -12,7 +12,7 @@ import javasql._
 import javatime._
 import cats.implicits._
 import org.scalatest.Suite
-import TestData._
+import ItTestData._
 
 import scala.concurrent.ExecutionContext
 
@@ -44,6 +44,7 @@ trait PgSetup { self: Suite with ForAllTestContainer =>
     val y = _xa.yolo
     import y._
 
+    // TODO: do not use GenericRepository here because it breaks testing rules
     val testRepository: GenericRepository = GenericRepository.forSchema(testSchema)
 
     val initPg = testRepository.createSchema() *>
