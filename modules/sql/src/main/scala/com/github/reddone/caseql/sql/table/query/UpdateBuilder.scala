@@ -14,7 +14,7 @@ sealed trait UpdateHasModifier extends UpdateBuilderState
 sealed trait UpdateHasFilter   extends UpdateBuilderState
 sealed trait UpdateHasKey      extends UpdateBuilderState
 
-private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
+final class UpdateBuilder[S <: UpdateBuilderState, T, K](
     table: Table[T, K],
     alias: Option[String]
 ) extends QueryBuilder[T, K](table, alias) { self =>
@@ -50,7 +50,7 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
       ev: S =:= UpdateHasTable with UpdateHasModifier,
       tableFilter: TableFilter[T, FT]
   ): UpdateBuilder[S with UpdateHasFilter, T, K] = {
-    val whereFragment = table
+    val whereFragment = tableFilter
       .byFilterFragment(filter, alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
@@ -61,7 +61,7 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
   def withKey(key: K)(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier
   ): UpdateBuilder[S with UpdateHasKey, T, K] = {
-    val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
+    val whereFragment = const(Where) ++ byKeyFragment(key, alias)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[UpdateBuilder[S with UpdateHasKey, T, K]]
   }
@@ -99,5 +99,9 @@ private[table] class UpdateBuilder[S <: UpdateBuilderState, T, K](
 
 private[table] object UpdateBuilder {
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) = new UpdateBuilder[UpdateHasTable, T, K](table, alias)
+  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
+    new UpdateBuilder[UpdateHasTable, T, K](table, alias)
+
+  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
+    new UpdateBuilder[UpdateHasTable, T, K](table, alias)
 }

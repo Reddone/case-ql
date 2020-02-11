@@ -11,7 +11,7 @@ sealed trait InsertBuilderState
 sealed trait InsertHasTable    extends InsertBuilderState
 sealed trait InsertHasModifier extends InsertBuilderState
 
-private[table] class InsertBuilder[S <: InsertBuilderState, T, K](
+final class InsertBuilder[S <: InsertBuilderState, T, K](
     table: Table[T, K]
 ) extends QueryBuilder[T, K](table, None) { self =>
 
@@ -55,7 +55,9 @@ private[table] class InsertBuilder[S <: InsertBuilderState, T, K](
     }
 }
 
-private[table] object InsertBuilder {
+object InsertBuilder {
+
+  def apply[T, K](implicit table: Table[T, K]) = new InsertBuilder[InsertHasTable, T, K](table)
 
   def forTable[T, K](table: Table[T, K]) = new InsertBuilder[InsertHasTable, T, K](table)
 }

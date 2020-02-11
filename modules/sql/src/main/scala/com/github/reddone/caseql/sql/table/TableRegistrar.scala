@@ -12,10 +12,9 @@ object TableRegistrar {
 
   private val aliasMap = {
     val map = new TrieMap[String, String]()
-    map.put("Unit", s"${prefix}0")
+    map.put("Unit", s"${prefix}0") // ensure that Table[Unit, Unit] is loaded first
     map
   }
 
-  def aliasFor(tpeName: String): String =
-    aliasMap.getOrElseUpdate(tpeName, s"${prefix}${counter.incrementAndGet().toString}")
+  def aliasFor(tpeName: String): String = aliasMap.getOrElseUpdate(tpeName, s"${prefix}${counter.incrementAndGet()}")
 }

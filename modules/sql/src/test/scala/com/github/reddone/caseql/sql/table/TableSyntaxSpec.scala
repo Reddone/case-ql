@@ -2,6 +2,7 @@ package com.github.reddone.caseql.sql.table
 
 import java.sql.Timestamp
 
+import com.github.reddone.caseql.sql.TestModel.{Test, TestKey}
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -10,17 +11,6 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class TableSyntaxSpec extends AnyFlatSpec with Matchers {
-
-  case class Test(
-      field1: Int,
-      field2: Option[String],
-      field3: Long,
-      field4: Option[Timestamp]
-  )
-  case class TestKey(
-      field1: Int,
-      field3: Long
-  )
 
   val table1: Table[Test, TestKey] = Table.derive[Test, TestKey]()
   val table2: Table[Test, TestKey] = Table.derive[Test, TestKey](

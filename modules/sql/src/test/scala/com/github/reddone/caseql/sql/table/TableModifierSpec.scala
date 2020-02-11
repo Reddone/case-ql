@@ -2,8 +2,8 @@ package com.github.reddone.caseql.sql.table
 
 import java.sql.Timestamp
 
+import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.modifier.models._
-import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -13,78 +13,6 @@ import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 
 class TableModifierSpec extends AnyFlatSpec with Matchers {
-
-  // test model
-  case class Test(
-      field1: Int,
-      field2: Option[String],
-      field3: Long,
-      field4: Option[Timestamp]
-  )
-  case class TestKey(
-      field1: Int,
-      field3: Long
-  )
-  // simple case, should compile
-  case class TestModifier(
-      field1: Option[IntModifier],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier],
-      field4: Option[TimestampModifierOption]
-  ) extends EntityModifier[TestModifier]
-  // simple case but unordered, should compile
-  case class TestModifierUnordered(
-      field4: Option[TimestampModifierOption],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier],
-      field1: Option[IntModifier]
-  ) extends EntityModifier[TestModifierUnordered]
-  // with other fields, should compile
-  case class TestModifierOther(
-      field1: Option[IntModifier],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier],
-      field4: Option[TimestampModifierOption],
-      otherField1: String,
-      otherField2: Seq[Int]
-  ) extends EntityModifier[TestModifierOther]
-  // with other fields and unordered, should compile
-  case class TestModifierOtherUnordered(
-      otherField2: Seq[Int],
-      field4: Option[TimestampModifierOption],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier],
-      otherField1: String,
-      field1: Option[IntModifier]
-  ) extends EntityModifier[TestModifierOtherUnordered]
-  // one more field, should not compile
-  case class TestModifierPlus(
-      field1: Option[IntModifier],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier],
-      field4: Option[TimestampModifierOption],
-      field5: Option[StringModifier]
-  ) extends EntityModifier[TestModifierPlus]
-  // one more field and unordered, should not compile
-  case class TestModifierPlusUnordered(
-      field1: Option[IntModifier],
-      field5: Option[StringModifier],
-      field4: Option[TimestampModifierOption],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier]
-  ) extends EntityModifier[TestModifierPlusUnordered]
-  // one less field, should not compile
-  case class TestModifierLess(
-      field1: Option[IntModifier],
-      field2: Option[StringModifierOption],
-      field3: Option[LongModifier]
-  ) extends EntityModifier[TestModifierLess]
-  // one less field and unordered, should not compile
-  case class TestModifierLessUnordered(
-      field2: Option[StringModifierOption],
-      field1: Option[IntModifier],
-      field3: Option[LongModifier]
-  ) extends EntityModifier[TestModifierLessUnordered]
 
   implicit val table: Table[Test, TestKey] = Table.derive[Test, TestKey]()
 
@@ -124,7 +52,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     illTyped { """TableModifier.derive[Test, TestModifierLessUnordered]()""" }
   }
 
-  "TableModifier typeclass" should "work correctly" in {
+  "TableModifier typeclass" should "work correctly with EntityModifier[_]" in {
     val tableModifier1: TableModifier[Test, TestModifier] =
       TableModifier.derive[Test, TestModifier]()
     val modifier1 = TestModifier(

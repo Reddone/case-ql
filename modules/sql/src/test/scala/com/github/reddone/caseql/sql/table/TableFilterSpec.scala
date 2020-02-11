@@ -1,9 +1,10 @@
 package com.github.reddone.caseql.sql.table
 
 import java.sql.Timestamp
+import java.time.Instant
 
+import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.filter.models._
-import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -13,127 +14,6 @@ import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 
 class TableFilterSpec extends AnyFlatSpec with Matchers {
-
-  // test model
-  case class Test(
-      field1: Int,
-      field2: Option[String],
-      field3: Long,
-      field4: Option[Timestamp]
-  )
-  case class TestKey(
-      field1: Int,
-      field3: Long
-  )
-  // simple case, should compile
-  case class TestFilter(
-      field1: Option[IntFilter],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      field4: Option[TimestampFilterOption],
-      AND: Option[Seq[TestFilter]],
-      OR: Option[Seq[TestFilter]],
-      NOT: Option[TestFilter]
-  ) extends EntityFilter[TestFilter]
-  object TestFilter {
-    val empty: TestFilter = TestFilter(None, None, None, None, None, None, None)
-  }
-  // simple case but unordered, should compile
-  case class TestFilterUnordered(
-      field4: Option[TimestampFilterOption],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      field1: Option[IntFilter],
-      AND: Option[Seq[TestFilterUnordered]],
-      OR: Option[Seq[TestFilterUnordered]],
-      NOT: Option[TestFilterUnordered]
-  ) extends EntityFilter[TestFilterUnordered]
-  object TestFilterUnordered {
-    val empty: TestFilterUnordered = TestFilterUnordered(None, None, None, None, None, None, None)
-  }
-  // with other fields, should compile
-  case class TestFilterOther(
-      field1: Option[IntFilter],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      field4: Option[TimestampFilterOption],
-      otherField1: String,
-      otherField2: Seq[Int],
-      AND: Option[Seq[TestFilterOther]],
-      OR: Option[Seq[TestFilterOther]],
-      NOT: Option[TestFilterOther]
-  ) extends EntityFilter[TestFilterOther]
-  object TestFilterOther {
-    val empty: TestFilterOther = TestFilterOther(None, None, None, None, "", Seq.empty, None, None, None)
-  }
-  // with other fields and unordered, should compile
-  case class TestFilterOtherUnordered(
-      otherField2: Seq[Int],
-      field4: Option[TimestampFilterOption],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      otherField1: String,
-      field1: Option[IntFilter],
-      AND: Option[Seq[TestFilterOtherUnordered]],
-      OR: Option[Seq[TestFilterOtherUnordered]],
-      NOT: Option[TestFilterOtherUnordered]
-  ) extends EntityFilter[TestFilterOtherUnordered]
-  object TestFilterOtherUnordered {
-    val empty: TestFilterOtherUnordered =
-      TestFilterOtherUnordered(Seq.empty, None, None, None, "", None, None, None, None)
-  }
-  // one more field, should not compile
-  case class TestFilterPlus(
-      field1: Option[IntFilter],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      field4: Option[TimestampFilterOption],
-      field5: Option[StringFilter],
-      AND: Option[Seq[TestFilterPlus]],
-      OR: Option[Seq[TestFilterPlus]],
-      NOT: Option[TestFilterPlus]
-  ) extends EntityFilter[TestFilterPlus]
-  object TestFilterPlus {
-    val empty: TestFilterPlus = TestFilterPlus(None, None, None, None, None, None, None, None)
-  }
-  // one more field and unordered, should not compile
-  case class TestFilterPlusUnordered(
-      field1: Option[IntFilter],
-      field5: Option[StringFilter],
-      field4: Option[TimestampFilterOption],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      AND: Option[Seq[TestFilterPlusUnordered]],
-      OR: Option[Seq[TestFilterPlusUnordered]],
-      NOT: Option[TestFilterPlusUnordered]
-  ) extends EntityFilter[TestFilterPlusUnordered]
-  object TestFilterPlusUnordered {
-    val empty: TestFilterPlusUnordered = TestFilterPlusUnordered(None, None, None, None, None, None, None, None)
-  }
-  // one less field, should not compile
-  case class TestFilterLess(
-      field1: Option[IntFilter],
-      field2: Option[StringFilterOption],
-      field3: Option[LongFilter],
-      AND: Option[Seq[TestFilterLess]],
-      OR: Option[Seq[TestFilterLess]],
-      NOT: Option[TestFilterLess]
-  ) extends EntityFilter[TestFilterLess]
-  object TestFilterLess {
-    val empty: TestFilterLess = TestFilterLess(None, None, None, None, None, None)
-  }
-  // one less field and unordered, should not compile
-  case class TestFilterLessUnordered(
-      field2: Option[StringFilterOption],
-      field1: Option[IntFilter],
-      field3: Option[LongFilter],
-      AND: Option[Seq[TestFilterLessUnordered]],
-      OR: Option[Seq[TestFilterLessUnordered]],
-      NOT: Option[TestFilterLessUnordered]
-  ) extends EntityFilter[TestFilterLessUnordered]
-  object TestFilterLessUnordered {
-    val empty: TestFilterLessUnordered = TestFilterLessUnordered(None, None, None, None, None, None)
-  }
 
   implicit val table: Table[Test, TestKey] = Table.derive[Test, TestKey]()
 
@@ -173,7 +53,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     illTyped { """TableFilter.derive[Test, TestFilterLessUnordered]()""" }
   }
 
-  "TableFilter typeclass" should "work correctly" in {
+  "TableFilter typeclass" should "work correctly with EntityFilter[_]" in {
     val tableFilter1: TableFilter[Test, TestFilter] =
       TableFilter.derive[Test, TestFilter]()
     val filter1 = TestFilter.empty.copy(
@@ -181,54 +61,243 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A")))
     )
     val alias1  = "a1"
-    val syntax1 = table.syntax.withAlias(Some(alias1))
     val result1 = tableFilter1.entityFilterFragments(filter1)
 
-    result1(Some(alias1)).map(_.toString) shouldBe List(
-
+    result1(Some(alias1)).map(_.map(_.toString)) shouldBe List(
+      Some("Fragment(\"(a1.field1 = ? ) AND (a1.field1 IN (?, ?) ) \")"),
+      Some("Fragment(\"(a1.field2 LIKE %?% ) \")"),
+      None,
+      None
     )
 
+    val tableFilter2: TableFilter[Test, TestFilterUnordered] =
+      TableFilter.derive[Test, TestFilterUnordered]()
+    val filter2 = TestFilterUnordered.empty.copy(
+      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3))))
+    )
+    val alias2  = "a2"
+    val result2 = tableFilter2.entityFilterFragments(filter2)
 
-//    val tableFilter2: TableFilter[Test, TestFilterUnordered] =
-//      TableFilter.derive[Test, TestFilterUnordered]()
-//    val filter2 = TestFilterUnordered(
-//      None,
-//      Some(StringFilterOption.empty),
-//      None,
-//      Some(IntFilter.empty)
-//    )
-//
-//    tableFilter2.keys() shouldBe List('field4, 'field2, 'field3, 'field1)
-//    tableFilter2.values(filter2) shouldBe List(filter2.field4, filter2.field2, filter2.field3, filter2.field1)
-//
-//    val tableFilter3: TableFilter[Test, TestFilterOther] =
-//      TableFilter.derive[Test, TestFilterOther]()
-//    val filter3 = TestFilterOther(
-//      Some(IntFilter.empty),
-//      Some(StringFilterOption.empty),
-//      None,
-//      None,
-//      "5",
-//      Seq(6)
-//    )
-//
-//    tableFilter3.keys() shouldBe List('field1, 'field2, 'field3, 'field4)
-//    tableFilter3.values(filter3) shouldBe List(filter3.field1, filter3.field2, filter3.field3, filter3.field4)
-//
-//    val tableFilter4: TableFilter[Test, TestFilterOtherUnordered] =
-//      TableFilter.derive[Test, TestFilterOtherUnordered]()
-//    val filter4 = TestFilterOtherUnordered(
-//      Seq(6),
-//      None,
-//      Some(StringFilterOption.empty),
-//      None,
-//      "5",
-//      Some(IntFilter.empty)
-//    )
-//
-//    tableFilter4.keys() shouldBe List('field4, 'field2, 'field3, 'field1)
-//    tableFilter4.values(filter4) shouldBe List(filter4.field4, filter4.field2, filter4.field3, filter4.field1)
+    result2(Some(alias2)).map(_.map(_.toString)) shouldBe List(
+      None,
+      Some("Fragment(\"(a2.field2 LIKE %?% ) \")"),
+      None,
+      Some("Fragment(\"(a2.field1 = ? ) AND (a2.field1 IN (?, ?) ) \")")
+    )
+
+    val tableFilter3: TableFilter[Test, TestFilterOther] =
+      TableFilter.derive[Test, TestFilterOther]()
+    val filter3 = TestFilterOther.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3)))),
+      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
+      otherField1 = "5",
+      otherField2 = Seq(6)
+    )
+    val alias3  = "a3"
+    val result3 = tableFilter3.entityFilterFragments(filter3)
+
+    result3(Some(alias3)).map(_.map(_.toString)) shouldBe List(
+      Some("Fragment(\"(a3.field1 = ? ) AND (a3.field1 IN (?, ?) ) \")"),
+      Some("Fragment(\"(a3.field2 LIKE %?% ) \")"),
+      None,
+      None
+    )
+
+    val tableFilter4: TableFilter[Test, TestFilterOtherUnordered] =
+      TableFilter.derive[Test, TestFilterOtherUnordered]()
+    val filter4 = TestFilterOtherUnordered.empty.copy(
+      otherField2 = Seq(6),
+      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
+      otherField1 = "5",
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3))))
+    )
+    val alias4  = "a4"
+    val result4 = tableFilter4.entityFilterFragments(filter4)
+
+    result4(Some(alias4)).map(_.map(_.toString)) shouldBe List(
+      None,
+      Some("Fragment(\"(a4.field2 LIKE %?% ) \")"),
+      None,
+      Some("Fragment(\"(a4.field1 = ? ) AND (a4.field1 IN (?, ?) ) \")")
+    )
   }
 
-  // TODO: test relation filters
+  // TODO: test relation filter
+  it should "work correctly with RelationFilter[_, _, _]" in {}
+
+  "TableFilter combinator" should "work correctly with an empty EntityFilter[_]" in {
+    val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
+
+    val filter1 = TestFilter.empty
+    val alias1  = "a1"
+    val result1 = tableFilter.byFilterFragment(filter1, Some(alias1))
+
+    result1 shouldBe None
+
+    val filter2 = TestFilter(
+      Some(IntFilter.empty),
+      Some(StringFilterOption.empty),
+      Some(LongFilter.empty),
+      Some(TimestampFilterOption.empty),
+      None,
+      None,
+      None
+    )
+    val alias2  = "a2"
+    val result2 = tableFilter.byFilterFragment(filter2, Some(alias2))
+
+    result2 shouldBe None
+  }
+
+  it should "work correctly with a flat EntityFilter[_]" in {
+    val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
+
+    val filter1 = TestFilter(
+      Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(1, 1, 1)))),
+      Some(StringFilterOption.empty.copy(EQ = Some("2"), CONTAINS = Some("2"))),
+      Some(LongFilter.empty.copy(EQ = Some(3L), IN = Some(Seq(3L, 3L, 3L)))),
+      Some(TimestampFilterOption.empty.copy(EQ = Some(Timestamp.from(Instant.EPOCH)))),
+      None,
+      None,
+      None
+    )
+    val alias1  = "a1"
+    val result1 = tableFilter.byFilterFragment(filter1, Some(alias1))
+
+    result1 shouldBe defined
+    result1.get.toString shouldBe "Fragment(\"" +
+      "(" +
+      "((a1.field1 = ? ) AND (a1.field1 IN (?, ?, ?) ) ) AND " +
+      "((a1.field2 = ? ) AND (a1.field2 LIKE %?% ) ) AND " +
+      "((a1.field3 = ? ) AND (a1.field3 IN (?, ?, ?) ) ) AND " +
+      "((a1.field4 = ? ) ) " +
+      ") " +
+      "\")"
+  }
+
+  it should "work correctly with a nested EntityFilter[_]" in {
+    val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
+
+    val filter1 = TestFilter(
+      Some(IntFilter.empty.copy(EQ = Some(11))),
+      Some(StringFilterOption.empty.copy(EQ = Some("22"))),
+      None,
+      None,
+      None,
+      None,
+      None
+    )
+    val nestedFilter1 = TestFilter(
+      Some(IntFilter.empty.copy(EQ = Some(1))),
+      Some(StringFilterOption.empty.copy(EQ = Some("2"))),
+      None,
+      None,
+      AND = Some(Seq(filter1, filter1)),
+      OR = Some(Seq(filter1, filter1)),
+      NOT = Some(filter1)
+    )
+    val alias1  = "a1"
+    val result1 = tableFilter.byFilterFragment(nestedFilter1, Some(alias1))
+
+    result1 shouldBe defined
+    result1.get.toString shouldBe "Fragment(\"" +
+      "(" +
+      "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
+      ") " +
+      "AND " +
+      "((" +
+      "(" +
+      "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
+      ") " +
+      ") AND (" +
+      "(" +
+      "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
+      ") " +
+      ") ) " +
+      "AND " +
+      "((" +
+      "(" +
+      "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
+      ") " +
+      ") OR (" +
+      "(" +
+      "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
+      ") " +
+      ") ) " +
+      "AND " +
+      "(NOT (" +
+      "(" +
+      "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
+      ") " +
+      ") ) " +
+      "\")"
+  }
+
+  it should "work correctly with a deeply nested EntityFilter[_]" in {
+    val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
+
+    val deepFilter1 = TestFilter.empty.copy(OR = Some(
+      Seq(
+        TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(11)))),
+        TestFilter.empty.copy(field2 = Some(StringFilterOption.empty.copy(EQ = Some("22")))),
+        TestFilter.empty.copy(AND = Some(
+          Seq(
+            TestFilter.empty.copy(
+              field3 = Some(LongFilter.empty.copy(EQ = Some(333L), IN = Some(Seq(333L, 333L, 333L)))),
+              field4 = Some(TimestampFilterOption.empty.copy(EQ = Some(Timestamp.from(Instant.EPOCH))))
+            ),
+            TestFilter.empty.copy(NOT =
+              Some(TestFilter.empty.copy(field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("2222")))))
+            ),
+            TestFilter.empty.copy(NOT = Some(
+              TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(IN = Some(Seq(1111, 1111)))))
+            )
+            )
+          )
+        )
+        )
+      )
+    )
+    )
+    val alias1  = "a1"
+    val result1 = tableFilter.byFilterFragment(deepFilter1, Some(alias1))
+
+    result1 shouldBe defined
+    result1.get.toString shouldBe "Fragment(\"" +
+      "((" + // OR BEGIN
+      "(" +
+      "((a1.field1 = ? ) ) " + // FIRST FILTER INSIDE OR
+      ") " +
+      ") OR (" +
+      "(" +
+      "((a1.field2 = ? ) ) " + // SECOND FILTER INSIDE OR
+      ") " +
+      ") OR (" +
+      "((" + // THIRD FILTER INSIDE OR, AND BEGIN
+      "(" +
+      "((a1.field3 = ? ) AND (a1.field3 IN (?, ?, ?) ) ) AND ((a1.field4 = ? ) ) " + // FIRST FILTER INSIDE AND
+      ") " +
+      ") AND (" +
+      "(NOT (" + // SECOND FILTER INSIDE AND, NOT BEGIN
+      "(" +
+      "((a1.field2 LIKE %?% ) ) " +
+      ") " +
+      ") ) " + // NOT END
+      ") AND (" +
+      "(NOT (" + // THIRD FILTER INSIDE AND, NOT BEGIN
+      "(" +
+      "((a1.field1 IN (?, ?) ) ) " +
+      ") " +
+      ") ) " + // NOT END
+      ") ) " + // AND END
+      ") ) " + // OR END
+      "\")"
+  }
+
+  // TODO: test nested relation filter
+  it should "work correctly with a nested RelationFilter[_, _, _]" in {}
+
+  // TODO: test deeply nested relation filter
+  it should "work correctly with a deeply nested RelationFilter[_, _, _]" in {}
 }

@@ -12,7 +12,7 @@ sealed trait DeleteHasTable  extends DeleteBuilderState
 sealed trait DeleteHasFilter extends DeleteBuilderState
 sealed trait DeleteHasKey    extends DeleteBuilderState
 
-private[table] class DeleteBuilder[S, T, K](
+final class DeleteBuilder[S, T, K](
     table: Table[T, K],
     alias: Option[String]
 ) extends QueryBuilder[T, K](table, alias) { self =>
@@ -29,7 +29,7 @@ private[table] class DeleteBuilder[S, T, K](
       ev: S =:= DeleteHasTable,
       tableFilter: TableFilter[T, FT]
   ): DeleteBuilder[S with DeleteHasFilter, T, K] = {
-    val whereFragment = table
+    val whereFragment = tableFilter
       .byFilterFragment(filter, alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
@@ -40,7 +40,7 @@ private[table] class DeleteBuilder[S, T, K](
   def withKey(key: K)(
       implicit ev: S =:= DeleteHasTable
   ): DeleteBuilder[S with DeleteHasKey, T, K] = {
-    val whereFragment = const(Where) ++ table.byKeyFragment(key, alias)
+    val whereFragment = const(Where) ++ byKeyFragment(key, alias)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[DeleteBuilder[S with DeleteHasKey, T, K]]
   }
@@ -76,7 +76,11 @@ private[table] class DeleteBuilder[S, T, K](
   }
 }
 
-private[table] object DeleteBuilder {
+object DeleteBuilder {
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) = new DeleteBuilder[DeleteHasTable, T, K](table, alias)
+  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
+    new DeleteBuilder[DeleteHasTable, T, K](table, alias)
+
+  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
+    new DeleteBuilder[DeleteHasTable, T, K](table, alias)
 }

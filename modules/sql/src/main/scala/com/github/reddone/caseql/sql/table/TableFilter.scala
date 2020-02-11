@@ -3,12 +3,38 @@ package com.github.reddone.caseql.sql.table
 import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.table.TableFunction._
+import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableFilter[A, FA <: EntityFilter[FA]] {
   def entityFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
   def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
+
+  final def byFilterFragment(filter: FA, alias: Option[String]): Option[Fragment] = {
+    // AND between all possible filters
+    FragmentUtils.optionalAndOpt(
+      // AND between all Option[Filter[_]]
+      FragmentUtils.optionalAndOpt(entityFilterFragments(filter)(alias): _*),
+      // AND between all Option[RelationFilter[T, _, _]]
+      FragmentUtils.optionalAndOpt(relationFilterFragments(filter)(alias): _*),
+      // AND between all Option[EntityFilter[T]] using self recursive type
+      filter.AND.flatMap { and =>
+        val recs = and.map(byFilterFragment(_, alias))
+        FragmentUtils.optionalAndOpt(recs: _*)
+      },
+      // OR between all Option[EntityFilter[T]] using self recursive type
+      filter.OR.flatMap { or =>
+        val recs = or.map(byFilterFragment(_, alias))
+        FragmentUtils.optionalOrOpt(recs: _*)
+      },
+      // NOT for one Option[EntityFilter[T]] using self recursive type
+      filter.NOT.flatMap { not =>
+        val rec = byFilterFragment(not, alias)
+        FragmentUtils.optionalNot(rec)
+      }
+    )
+  }
 }
 
 object TableFilter {

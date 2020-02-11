@@ -98,7 +98,7 @@ object TableFunction {
                                   |$Where ${leftCondSql} $And $rightIsNull $And
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
-              val every = f.EVERY.flatMap(ff => rightQuerySyntax.support.byFilterFragment(ff, None)).map(sqlStringEvery)
+              val every = f.EVERY.flatMap(ff => tableFilter.byFilterFragment(ff, None)).map(sqlStringEvery)
               // JUNCTION LINK - SOME (contrary of NONE)
               // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id")
               // EXISTS(
@@ -117,7 +117,7 @@ object TableFunction {
                                   |$Where ${leftCondSql} $And
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
-              val some = f.SOME.flatMap(ff => rightQuerySyntax.support.byFilterFragment(ff, None)).map(sqlStringSome)
+              val some = f.SOME.flatMap(ff => tableFilter.byFilterFragment(ff, None)).map(sqlStringSome)
               // JUNCTION LINK - NONE (contrary of SOME)
               // (YOU CAN USE LEFT JOIN AND ADD "IS NOT NULL rightTable.id")
               // NOT EXISTS(
@@ -136,7 +136,7 @@ object TableFunction {
                                   |$Where ${leftCondSql} $And
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
-              val none = f.NONE.flatMap(ff => rightQuerySyntax.support.byFilterFragment(ff, None)).map(sqlStringNone)
+              val none = f.NONE.flatMap(ff => tableFilter.byFilterFragment(ff, None)).map(sqlStringNone)
               // combine everything together
               FragmentUtils.optionalAndOpt(every, some, none)
             } else {
@@ -168,7 +168,7 @@ object TableFunction {
                                   |$Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $leftCondSql)
                                   |)
                                   |""".stripMargin)
-              val every = f.EVERY.flatMap(ff => rightQuerySyntax.support.byFilterFragment(ff, None)).map(sqlStringEvery)
+              val every = f.EVERY.flatMap(ff => tableFilter.byFilterFragment(ff, None)).map(sqlStringEvery)
               // DIRECT LINK - SOME (contrary of NONE)
               // EXISTS(
               //   SELECT ONE
@@ -183,7 +183,7 @@ object TableFunction {
                                   |$Where ${leftCondSql} $And
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
-              val some = f.SOME.flatMap(ff => rightQuerySyntax.support.byFilterFragment(ff, None)).map(sqlStringSome)
+              val some = f.SOME.flatMap(ff => tableFilter.byFilterFragment(ff, None)).map(sqlStringSome)
               // DIRECT LINK -  NONE (contrary of SOME)
               // NOT EXISTS(
               //   SELECT ONE
@@ -198,7 +198,7 @@ object TableFunction {
                                   |$Where ${leftCondSql} $And
                                   |""".stripMargin) ++ filterFrag ++
                   Fragment.const(")")
-              val none = f.NONE.flatMap(ff => rightQuerySyntax.support.byFilterFragment(ff, None)).map(sqlStringNone)
+              val none = f.NONE.flatMap(ff => tableFilter.byFilterFragment(ff, None)).map(sqlStringNone)
               // combine everything together
               FragmentUtils.optionalAndOpt(every, some, none)
             }

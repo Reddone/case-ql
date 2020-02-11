@@ -3,9 +3,6 @@ package com.github.reddone.caseql.sql.table
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.query._
-import com.github.reddone.caseql.sql.tokens.{And, Placeholder}
-import com.github.reddone.caseql.sql.util.FragmentUtils
-import doobie.Fragment
 
 trait TableQuery[T, K] { table: Table[T, K] =>
 
@@ -37,7 +34,7 @@ trait TableQuery[T, K] { table: Table[T, K] =>
 
   // INSERT
 
-  final def insertOne[MT <: EntityModifier[MT]](
+  final def insert[MT <: EntityModifier[MT]](
       modifier: MT
   )(
       implicit tableModifier: TableModifier[T, MT]
@@ -49,7 +46,7 @@ trait TableQuery[T, K] { table: Table[T, K] =>
     builder.buildInsertOne
   }
 
-  final def insertOneReturningKey[MT <: EntityModifier[MT]](
+  final def insertReturningKey[MT <: EntityModifier[MT]](
       modifier: MT
   )(
       implicit tableModifier: TableModifier[T, MT]
@@ -175,49 +172,5 @@ trait TableQuery[T, K] { table: Table[T, K] =>
       .withKey(key)
 
     builder.buildDeleteByKeyReturningKeys
-  }
-
-  // WHERE
-
-  // TODO: move this inside TableFilter and the other one inside the Builders
-  // TODO: for testing purposes, it's better to not create a dependency between TableFunction and
-  // TODO: TableQuery, because TableFunction is already highly dependant from Syntax and TableFilter
-
-  final def byFilterFragment[FT <: EntityFilter[FT]](
-      filter: FT,
-      alias: Option[String]
-  )(
-      implicit tableFilter: TableFilter[T, FT]
-  ): Option[Fragment] = {
-    // AND between all possible filters
-    FragmentUtils.optionalAndOpt(
-      // AND between all Option[Filter[_]]
-      FragmentUtils.optionalAndOpt(tableFilter.entityFilterFragments(filter)(alias): _*),
-      // AND between all Option[RelationFilter[T, _, _]]
-      FragmentUtils.optionalAndOpt(tableFilter.relationFilterFragments(filter)(alias): _*),
-      // AND between all Option[EntityFilter[T]] using self recursive type
-      filter.AND.flatMap { and =>
-        val recs = and.map(byFilterFragment(_, alias))
-        FragmentUtils.optionalAndOpt(recs: _*)
-      },
-      // OR between all Option[EntityFilter[T]] using self recursive type
-      filter.OR.flatMap { or =>
-        val recs = or.map(byFilterFragment(_, alias))
-        FragmentUtils.optionalOrOpt(recs: _*)
-      },
-      // NOT for one Option[EntityFilter[T]] using self recursive type
-      filter.NOT.flatMap { not =>
-        val rec = byFilterFragment(not, alias)
-        FragmentUtils.optionalNot(rec)
-      }
-    )
-  }
-
-  final def byKeyFragment(
-      key: K,
-      alias: Option[String]
-  ): Fragment = {
-    val aliasedSyntax = syntax.withAlias(alias)
-    keyWrite.toFragment(key, aliasedSyntax.keyColumns.map(col => s"$col = $Placeholder").mkString(s" $And "))
   }
 }

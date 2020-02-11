@@ -2,6 +2,7 @@ package com.github.reddone.caseql.sql.table
 
 import java.sql.Timestamp
 
+import com.github.reddone.caseql.sql.TestModel._
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -11,36 +12,6 @@ import org.scalatest.matchers.should.Matchers
 import shapeless.test.illTyped
 
 class TableSpec extends AnyFlatSpec with Matchers {
-
-  // test model
-  case class Test(
-      field1: Int,
-      field2: Option[String],
-      field3: Long,
-      field4: Option[Timestamp]
-  )
-  // simple case, should compile
-  case class TestKey(
-      field1: Int,
-      field3: Long
-  )
-  // simple case but unordered, should compile
-  case class TestKeyUnordered(
-      field3: Long,
-      field1: Int
-  )
-  // with other field, should not compile
-  case class TestKeyOther(
-      field1: Int,
-      field3: Long,
-      field5: Option[String]
-  )
-  // with other field and unordered, should not compile
-  case class TestKeyOtherUnordered(
-      field5: Option[String],
-      field3: Long,
-      field1: Int
-  )
 
   "Table derivation" should "compile in the simple case" in {
     """Table.derive[Test, TestKey]()""" should compile
@@ -69,7 +40,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
     table1.fieldMapper("CamelCase") shouldBe "camel_case"
     table1.fields shouldBe List("field1", "field2", "field3", "field4")
     table1.keyFields shouldBe List("field1", "field3")
-    table1.alias shouldBe "x1"
+    table1.alias shouldBe TableRegistrar.aliasFor("Test")
 
     val table2: Table[Test, TestKey] = Table.derive[Test, TestKey](
       Some("test_name"),
@@ -84,7 +55,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
     table2.fieldMapper("lower") shouldBe "LOWER"
     table2.fields shouldBe List("field1", "field2", "field3", "field4")
     table2.keyFields shouldBe List("field1", "field3")
-    table2.alias shouldBe "x1"
+    table2.alias shouldBe TableRegistrar.aliasFor("Test")
   }
 
   it should "provide a valid Unit instance" in {
