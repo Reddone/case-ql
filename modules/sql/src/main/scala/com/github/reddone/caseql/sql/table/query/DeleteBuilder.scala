@@ -18,10 +18,7 @@ final class DeleteBuilder[S, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"""
-       |$Delete ${if (querySyntax.alias.isEmpty) "" else querySyntax.alias + " "}
-       |$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}
-       |""".stripMargin
+    s"$Delete ${querySyntax.alias.getOrElse(querySyntax.name)} $From ${querySyntax.aliasedName}"
   )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(
@@ -30,7 +27,7 @@ final class DeleteBuilder[S, T, K](
       tableFilter: TableFilter[T, FT]
   ): DeleteBuilder[S with DeleteHasFilter, T, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, alias)
+      .byFilterFragment(filter, querySyntax.alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
@@ -40,7 +37,7 @@ final class DeleteBuilder[S, T, K](
   def withKey(key: K)(
       implicit ev: S =:= DeleteHasTable
   ): DeleteBuilder[S with DeleteHasKey, T, K] = {
-    val whereFragment = const(Where) ++ byKeyFragment(key, alias)
+    val whereFragment = const(Where) ++ byKeyFragment(key)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[DeleteBuilder[S with DeleteHasKey, T, K]]
   }

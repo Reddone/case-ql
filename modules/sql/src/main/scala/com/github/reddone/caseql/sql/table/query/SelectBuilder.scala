@@ -18,10 +18,7 @@ final class SelectBuilder[S, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"""
-       |$Select ${querySyntax.columns.mkString(", ")} 
-       |$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}
-       |""".stripMargin
+    s"$Select ${querySyntax.columns.mkString(", ")} $From ${querySyntax.aliasedName}"
   )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(
@@ -30,7 +27,7 @@ final class SelectBuilder[S, T, K](
       tableFilter: TableFilter[T, FT]
   ): SelectBuilder[S with SelectHasFilter, T, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, alias)
+      .byFilterFragment(filter, querySyntax.alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
@@ -40,7 +37,7 @@ final class SelectBuilder[S, T, K](
   def withKey(key: K)(
       implicit ev: S =:= SelectHasTable
   ): SelectBuilder[S with SelectHasKey, T, K] = {
-    val whereFragment = const(Where) ++ byKeyFragment(key, alias)
+    val whereFragment = const(Where) ++ byKeyFragment(key)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[SelectBuilder[S with SelectHasKey, T, K]]
   }

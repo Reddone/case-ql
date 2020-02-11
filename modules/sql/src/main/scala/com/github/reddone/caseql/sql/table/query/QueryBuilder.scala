@@ -9,10 +9,7 @@ abstract class QueryBuilder[T, K](table: Table[T, K], alias: Option[String]) {
 
   protected val querySyntax: TableSyntax[T] = table.syntax.withAlias(alias)
 
-  final def byKeyFragment(
-      key: K,
-      alias: Option[String]
-  ): Fragment = {
+  final def byKeyFragment(key: K): Fragment = {
     table.keyWrite.toFragment(key, querySyntax.keyColumns.map(col => s"$col = $Placeholder").mkString(s" $And "))
   }
 }

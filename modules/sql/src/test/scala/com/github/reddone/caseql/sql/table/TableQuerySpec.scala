@@ -1,8 +1,5 @@
 package com.github.reddone.caseql.sql.table
 
-import java.sql.Timestamp
-import java.time.Instant
-
 import com.github.reddone.caseql.sql.TestModel.{Test, TestKey, TestFilter, TestModifier}
 import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.modifier.models._
@@ -20,130 +17,274 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 
   "TableQuery" should "produce a correct fragment on select" in {
-    val filter1 = TestFilter(
-      Some(IntFilter.empty.copy(EQ = Some(1))),
-      None,
-      None,
-      None,
-      None,
-      None,
-      None
+    val filter = TestFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
     )
-    val alias1 = "a1"
-    val result1 = table.select(filter1, Some(alias1))
+
+    val result1 = table.select(filter, Some("a1"))
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "SELECT t.field1, t.field2, t.field3, t.field4 " +
-      "FROM test t " +
-      "WHERE (((t.field1 = ? ) ) ) " +
+      "SELECT a1.field1, a1.field2, a1.field3, a1.field4 " +
+      "FROM test a1 " +
+      "WHERE (((a1.field1 = ? ) ) ) " +
+      "\")"
+
+    val result2 = table.select(filter, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "SELECT field1, field2, field3, field4 " +
+      "FROM test " +
+      "WHERE (((field1 = ? ) ) ) " +
       "\")"
   }
 
   it should "produce a correct fragment on selectByKey" in {
+    val key = TestKey(1, 2L)
 
+    val result1 = table.selectByKey(key, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "SELECT a1.field1, a1.field2, a1.field3, a1.field4 " +
+      "FROM test a1 " +
+      "WHERE a1.field1 = ? AND a1.field3 = ?" +
+      "\")"
+
+    val result2 = table.selectByKey(key, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "SELECT field1, field2, field3, field4 " +
+      "FROM test " +
+      "WHERE field1 = ? AND field3 = ?" +
+      "\")"
   }
 
   it should "produce a correct fragment in insert" in {
+    val modifier = TestModifier(
+      Some(IntModifier(ModifierAction.Set, Some(1))),
+      Some(StringModifierOption(ModifierOptionAction.Null, None)),
+      Some(LongModifier(ModifierAction.Default, None)),
+      None
+    )
+    val result1 = table.insert(modifier)
 
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "INSERT INTO test (field1, field2, field3) " +
+      "VALUES (? , ? , DEFAULT ) " +
+      "\")"
   }
 
   it should "produce a correct fragment in insertReturningKey" in {
+    val modifier = TestModifier(
+      Some(IntModifier(ModifierAction.Set, Some(1))),
+      Some(StringModifierOption(ModifierOptionAction.Null, None)),
+      Some(LongModifier(ModifierAction.Default, None)),
+      None
+    )
+    val result1 = table.insertReturningKey(modifier)
 
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "INSERT INTO test (field1, field2, field3) " +
+      "VALUES (? , ? , DEFAULT ) " +
+      "\")"
   }
 
   it should "produce a correct fragment in update" in {
+    val modifier = TestModifier(
+      Some(IntModifier(ModifierAction.Set, Some(1))),
+      Some(StringModifierOption(ModifierOptionAction.Null, None)),
+      Some(LongModifier(ModifierAction.Default, None)),
+      None
+    )
+    val filter = TestFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
+    )
 
+    val result1 = table.update(modifier, filter, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE a1 " +
+      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
+      "FROM test a1 " +
+      "WHERE (((a1.field1 = ? ) ) ) " +
+      "\")"
+
+    val result2 = table.update(modifier, filter, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE test " +
+      "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
+      "FROM test " +
+      "WHERE (((field1 = ? ) ) ) " +
+      "\")"
   }
 
   it should "produce a correct fragment in updateReturningKeys" in {
+    val modifier = TestModifier(
+      Some(IntModifier(ModifierAction.Set, Some(1))),
+      Some(StringModifierOption(ModifierOptionAction.Null, None)),
+      Some(LongModifier(ModifierAction.Default, None)),
+      None
+    )
+    val filter = TestFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
+    )
 
+    val result1 = table.updateReturningKeys(modifier, filter, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE a1 " +
+      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
+      "FROM test a1 " +
+      "WHERE (((a1.field1 = ? ) ) ) " +
+      "\")"
+
+    val result2 = table.update(modifier, filter, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE test " +
+      "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
+      "FROM test " +
+      "WHERE (((field1 = ? ) ) ) " +
+      "\")"
   }
 
   it should "produce a correct fragment in updateByKey" in {
+    val modifier = TestModifier(
+      Some(IntModifier(ModifierAction.Set, Some(1))),
+      Some(StringModifierOption(ModifierOptionAction.Null, None)),
+      Some(LongModifier(ModifierAction.Default, None)),
+      None
+    )
+    val key = TestKey(1, 2L)
 
+    val result1 = table.updateByKey(modifier, key, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE a1 " +
+      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
+      "FROM test a1 " +
+      "WHERE a1.field1 = ? AND a1.field3 = ?" +
+      "\")"
+
+    val result2 = table.updateByKey(modifier, key, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE test " +
+      "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
+      "FROM test " +
+      "WHERE field1 = ? AND field3 = ?" +
+      "\")"
   }
 
   it should "produce a correct fragment in updateByKeyReturningKeys" in {
+    val modifier = TestModifier(
+      Some(IntModifier(ModifierAction.Set, Some(1))),
+      Some(StringModifierOption(ModifierOptionAction.Null, None)),
+      Some(LongModifier(ModifierAction.Default, None)),
+      None
+    )
+    val key = TestKey(1, 2L)
 
+    val result1 = table.updateByKeyReturningKeys(modifier, key, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE a1 " +
+      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
+      "FROM test a1 " +
+      "WHERE a1.field1 = ? AND a1.field3 = ?" +
+      "\")"
+
+    val result2 = table.updateByKey(modifier, key, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "UPDATE test " +
+      "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
+      "FROM test " +
+      "WHERE field1 = ? AND field3 = ?" +
+      "\")"
   }
 
   it should "produce a correct fragment in delete" in {
+    val filter = TestFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
+    )
 
+    val result1 = table.delete(filter, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE a1 " +
+      "FROM test a1 " +
+      "WHERE (((a1.field1 = ? ) ) ) " +
+      "\")"
+
+    val result2 = table.delete(filter, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE test " +
+      "FROM test " +
+      "WHERE (((field1 = ? ) ) ) " +
+      "\")"
   }
 
   it should "produce a correct fragment in deleteReturningKeys" in {
+    val filter = TestFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
+    )
 
+    val result1 = table.deleteReturningKeys(filter, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE a1 " +
+      "FROM test a1 " +
+      "WHERE (((a1.field1 = ? ) ) ) " +
+      "\")"
+
+    val result2 = table.delete(filter, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE test " +
+      "FROM test " +
+      "WHERE (((field1 = ? ) ) ) " +
+      "\")"
   }
 
   it should "produce a correct fragment in deleteByKey" in {
+    val key = TestKey(1, 2L)
 
+    val result1 = table.deleteByKey(key, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE a1 " +
+      "FROM test a1 " +
+      "WHERE a1.field1 = ? AND a1.field3 = ?" +
+      "\")"
+
+    val result2 = table.deleteByKey(key, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE test " +
+      "FROM test " +
+      "WHERE field1 = ? AND field3 = ?" +
+      "\")"
   }
 
   it should "produce a correct fragment in deleteByKeyReturningKeys" in {
+    val key = TestKey(1, 2L)
 
+    val result1 = table.deleteByKeyReturningKeys(key, Some("a1"))
+
+    result1.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE a1 " +
+      "FROM test a1 " +
+      "WHERE a1.field1 = ? AND a1.field3 = ?" +
+      "\")"
+
+    val result2 = table.deleteByKey(key, None)
+
+    result2.toFragment.toString shouldBe "Fragment(\"" +
+      "DELETE test " +
+      "FROM test " +
+      "WHERE field1 = ? AND field3 = ?" +
+      "\")"
   }
-
-//  "TableQuery insertFragment" should "work correctly" in {
-//    val modifier1 = TestModifier(
-//      Some(IntModifier(ModifierAction.Set, Some(1))),
-//      Some(StringModifierOption(ModifierOptionAction.Null, None)),
-//      Some(LongModifier(ModifierAction.Default, None)),
-//      None
-//    )
-//
-//    val expected = "Fragment(\"" +
-//      "INSERT INTO test (field1, field2, field3) " +
-//      "VALUES (? , ? , DEFAULT ) " +
-//      "\")"
-//    val result = table.insertOne(modifier1).toFragment
-//
-//    result.toString shouldBe expected
-//  }
-//
-//  "TableQuery updateFragment" should "work correctly" in {
-//    val modifier1 = TestModifier(
-//      Some(IntModifier(ModifierAction.Set, Some(1))),
-//      Some(StringModifierOption(ModifierOptionAction.Null, None)),
-//      Some(LongModifier(ModifierAction.Default, None)),
-//      None
-//    )
-//    val filter1 = TestFilter(
-//      Some(IntFilter.empty.copy(EQ = Some(1))),
-//      None,
-//      None,
-//      None,
-//      None,
-//      None,
-//      None
-//    )
-//
-//    val expected = "Fragment(\"" +
-//      "UPDATE test " +
-//      "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-//      "WHERE (((field1 = ? ) ) ) " +
-//      "\")"
-//    val result = table.update(modifier1, filter1).toFragment
-//
-//    result.toString shouldBe expected
-//  }
-//
-//  "TableQuery deleteFragment" should "work correctly" in {
-//    val filter1 = TestFilter(
-//      Some(IntFilter.empty.copy(EQ = Some(1))),
-//      None,
-//      None,
-//      None,
-//      None,
-//      None,
-//      None
-//    )
-//
-//    val expected = "Fragment(\"" +
-//      "DELETE FROM test " +
-//      "WHERE (((field1 = ? ) ) ) " +
-//      "\")"
-//    val result = table.delete(filter1).toFragment
-//
-//    result.toString shouldBe expected
-//  }
 }

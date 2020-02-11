@@ -3,7 +3,7 @@ package com.github.reddone.caseql.sql.table.query
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
-import com.github.reddone.caseql.sql.tokens.{From, Where}
+import com.github.reddone.caseql.sql.tokens.{From, Update => Upd, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
@@ -20,7 +20,7 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Update ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.alias}\n"
+    s"$Upd ${querySyntax.alias.getOrElse(querySyntax.name)}"
   )
 
   def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
@@ -29,8 +29,8 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
       tableModifier: TableModifier[T, MT]
   ): UpdateBuilder[S with UpdateHasModifier, T, K] = {
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)(alias)
-      .filter(_._2.isEmpty)
+      .entityModifierNamedFragments(modifier)(querySyntax.alias)
+      .filter(_._2.nonEmpty)
       .map {
         case (column, modifier) => (column, modifier.get)
       }
@@ -38,9 +38,7 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
     val setFragment = Fragments.set(namedFragments.map {
       case (col, parameter) => const(col + " =") ++ parameter
     }: _*) // love scala emojis
-    val fromFragment = const(
-      s"\n$From ${if (querySyntax.alias.isEmpty) querySyntax.name else querySyntax.aliasedName}\n"
-    )
+    val fromFragment = const(s"$From ${querySyntax.aliasedName}")
     fragment = fragment ++ setFragment ++ fromFragment
     self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, T, K]]
   }
@@ -51,7 +49,7 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
       tableFilter: TableFilter[T, FT]
   ): UpdateBuilder[S with UpdateHasFilter, T, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, alias)
+      .byFilterFragment(filter, querySyntax.alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
@@ -61,7 +59,7 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
   def withKey(key: K)(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier
   ): UpdateBuilder[S with UpdateHasKey, T, K] = {
-    val whereFragment = const(Where) ++ byKeyFragment(key, alias)
+    val whereFragment = const(Where) ++ byKeyFragment(key)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[UpdateBuilder[S with UpdateHasKey, T, K]]
   }
