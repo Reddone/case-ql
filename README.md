@@ -105,6 +105,8 @@ This project was inspired by [prisma](https://www.prisma.io/docs) and [scarm](ht
 even if the approach I have chosen is totally different. I don't want to deal with DDL, indices and other SQL stuff,
 my goal is to leave schema related tasks to SQL, because they are better solved using pure SQL (I only used the
 concept of primary keys because byKey queries are quite common).
+Special thanks to the [doobie](https://github.com/tpolecat/doobie) project for providing an awesome JDBC library for
+Scala.
 
 ## License
 
