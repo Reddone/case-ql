@@ -14,11 +14,11 @@ planning to add [slick](https://github.com/slick/slick) and [quill](https://gith
 they are not based or they not provide good support for the fragment approach (I strongly believe that we should write 
 SQL and not try to port SQL inside Scala).
 
-[Full documentation]<!--(./docs/intro.md)-->
+[Full documentation](./docs/intro.md)
 
 See the "example" sub project to see it in action! It is still an experiment but it helped me a lot!!!
-<b>I am writing examples along with tests and documentation these month, so please wait a little. If you want you can 
-explore the source code, the core is located inside the "table" package of the "sql" module. </b>
+**I am writing examples along with tests and documentation these month, so please wait a little. If you want you can 
+explore the source code, the core is located inside the "table" package of the "sql" module.**
 
 ## Motivation
 
@@ -52,8 +52,8 @@ and I wanted to write a Scala library for doing similar things using JSON object
 of using code generation from a supplied schema, I wanted the code to dictate the rules on what we can do on an entity.
 So the entire project can be summarized with: 
 
-<b>"You write the code, and the code itself will tell you if you can do
-certain operations, with the promise that everything will be serializable."</b>
+**"You write the code, and the code itself will tell you if you can do
+certain operations, with the promise that everything will be serializable."**
 
 You are responsible for writing case classes for entities, filters, modifiers and links; in exchange, you get a compile 
 time checking on your case classes and you get a runtime query generation mechanism which let you traduce a JSON like
@@ -87,7 +87,7 @@ nested filters and write practically any kind of condition. You can perform inse
 There are also some interesting utilities for working with doobie, for example you can work with raw data in the form 
 Map[String, Any].
 
-For a full explanation read the [documentation] <!--(./docs/intro.md).-->
+For a full explanation read the [documentation](./docs/intro.md).
 
 ## TODO
 

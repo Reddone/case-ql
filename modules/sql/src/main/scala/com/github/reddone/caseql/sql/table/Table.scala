@@ -38,7 +38,7 @@ object Table {
 
   implicit val unit: Table[Unit, Unit] = derive[Unit, Unit]()
 
-  def apply[T, K](implicit table: Table[T, K]): Table[T, K] = table
+  def apply[T, K](implicit ev: Table[T, K]): Table[T, K] = ev
 
   object derive {
 

@@ -4,7 +4,6 @@ import com.github.reddone.caseql.sql.util.StringUtils
 
 import scala.language.dynamics
 
-// Syntax decouples a table from its key
 final case class TableSyntax[T](alias: Option[String], support: Table[T, _]) extends Dynamic { self =>
 
   val name: String = StringUtils.addPrefix(support.name, support.schema)

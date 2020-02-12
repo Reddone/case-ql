@@ -9,7 +9,9 @@ https://tpolecat.github.io/doobie/. Since at the moment this library is heavily 
 to become familiar with concepts such as Read, Write, Query, Update and Transactor. There are also nice examples
 at https://github.com/tpolecat/doobie/tree/master/modules/example/src/main/scala/example.
 
-## Table
+## SQL Doobie Module
+
+### Table
 
 A Table[T, K] is a wrapper for a type T having a key K. Both T and K are case classes. Scala fields are converted to
 SQL columns using a camel case to snake case converter; if you want to override the mapping, you can provide a 
@@ -27,7 +29,7 @@ compliant filter to query a table.
 
 [Table documentation](./table.md)
 
-## Filter
+### Filter
 
 A Filter[+A] is a wrapper for a type A on which it's possible to express filter expressions. The library provides
 instances of various Filter, for A and Option[A]: they only differ in the is nullable condition. For example, on an
@@ -42,7 +44,7 @@ efficient SQL query. Filters can be used inside select, update and delete statem
 
 [Filter documentation](./filter.md) :hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
 
-## Modifier
+### Modifier
 
 A Modifier[+A] is a wrapper for a type A on which it's possible to set values. The library provides instances of
 various Modifier, for A and Option[A]: they only differ in the possibility to set a NULL value. For example, on an
@@ -58,7 +60,7 @@ performing multiple inserts or updates is left to the user.
 
 [Modifier documentation](./modifier.md) :hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
 
-## Query
+### Query
 
 Once you have a Table[T, K], you can execute elementary SQL queries. At the moment, these are the supported ones:
 
@@ -91,9 +93,9 @@ returning Stream[ConnectionIO, K].
 At the moment joins are not supported, but since we have links I think that it will be possible to express type-safe
 joins in the future. If you need joins, you can use the generated fragment and enrich it as you like.
 
-[Query documentation](./modifier.md) :hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
+[Query documentation](./modifier.md)
 
-## Util
+### Util
 
 There are some interesting utilities, which can be useful depending on the scenario:
 
@@ -117,3 +119,6 @@ result to a case class before the final mapping step with the GraphQL object.
 - SQL tokens and functions used inside the project to avoid repetitions. Maybe you can use them too.
 
 [Util documentation](./util.md)
+
+## GraphQL Sangria Module
+:hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:

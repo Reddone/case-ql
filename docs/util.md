@@ -127,9 +127,10 @@ TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Fixed)
 TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Sync)
 ```
 
+The three are transactors backed by a cached thread pool, a fixed thread pool and no thread pool (sync) respectively.
+Note that the cached thread pool is the doobie default.
 
-
-## Utils
+## Others
 
 I have included other utilities which don't need a deep explanation: CirceDecoders, ExecutorServices, JsonUtils, 
 StringUtils. The only one which is worth an example is FragmentUtils: it contains methods to interact with doobie
