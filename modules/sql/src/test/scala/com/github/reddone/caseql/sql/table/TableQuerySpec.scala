@@ -99,21 +99,11 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
     )
 
-    val result1 = table.update(modifier, filter, Some("a1"))
+    val result1 = table.update(modifier, filter)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "UPDATE a1 " +
-      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
-      "FROM test a1 " +
-      "WHERE (((a1.field1 = ? ) ) ) " +
-      "\")"
-
-    val result2 = table.update(modifier, filter, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "FROM test " +
       "WHERE (((field1 = ? ) ) ) " +
       "\")"
   }
@@ -129,21 +119,11 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
     )
 
-    val result1 = table.updateReturningKeys(modifier, filter, Some("a1"))
+    val result1 = table.update(modifier, filter)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "UPDATE a1 " +
-      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
-      "FROM test a1 " +
-      "WHERE (((a1.field1 = ? ) ) ) " +
-      "\")"
-
-    val result2 = table.update(modifier, filter, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "FROM test " +
       "WHERE (((field1 = ? ) ) ) " +
       "\")"
   }
@@ -157,21 +137,11 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     )
     val key = TestKey(1, 2L)
 
-    val result1 = table.updateByKey(modifier, key, Some("a1"))
+    val result1 = table.updateByKey(modifier, key)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "UPDATE a1 " +
-      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
-      "FROM test a1 " +
-      "WHERE a1.field1 = ? AND a1.field3 = ?" +
-      "\")"
-
-    val result2 = table.updateByKey(modifier, key, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "FROM test " +
       "WHERE field1 = ? AND field3 = ?" +
       "\")"
   }
@@ -185,21 +155,11 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     )
     val key = TestKey(1, 2L)
 
-    val result1 = table.updateByKeyReturningKeys(modifier, key, Some("a1"))
+    val result1 = table.updateByKey(modifier, key)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "UPDATE a1 " +
-      "SET a1.field1 = ? , a1.field2 = ? , a1.field3 = DEFAULT " +
-      "FROM test a1 " +
-      "WHERE a1.field1 = ? AND a1.field3 = ?" +
-      "\")"
-
-    val result2 = table.updateByKey(modifier, key, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "FROM test " +
       "WHERE field1 = ? AND field3 = ?" +
       "\")"
   }
@@ -209,19 +169,10 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
     )
 
-    val result1 = table.delete(filter, Some("a1"))
+    val result1 = table.delete(filter)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE a1 " +
-      "FROM test a1 " +
-      "WHERE (((a1.field1 = ? ) ) ) " +
-      "\")"
-
-    val result2 = table.delete(filter, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE test " +
-      "FROM test " +
+      "DELETE FROM test " +
       "WHERE (((field1 = ? ) ) ) " +
       "\")"
   }
@@ -231,19 +182,10 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
       field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
     )
 
-    val result1 = table.deleteReturningKeys(filter, Some("a1"))
+    val result1 = table.delete(filter)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE a1 " +
-      "FROM test a1 " +
-      "WHERE (((a1.field1 = ? ) ) ) " +
-      "\")"
-
-    val result2 = table.delete(filter, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE test " +
-      "FROM test " +
+      "DELETE FROM test " +
       "WHERE (((field1 = ? ) ) ) " +
       "\")"
   }
@@ -251,19 +193,10 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
   it should "produce a correct fragment in deleteByKey" in {
     val key = TestKey(1, 2L)
 
-    val result1 = table.deleteByKey(key, Some("a1"))
+    val result1 = table.deleteByKey(key)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE a1 " +
-      "FROM test a1 " +
-      "WHERE a1.field1 = ? AND a1.field3 = ?" +
-      "\")"
-
-    val result2 = table.deleteByKey(key, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE test " +
-      "FROM test " +
+      "DELETE FROM test " +
       "WHERE field1 = ? AND field3 = ?" +
       "\")"
   }
@@ -271,19 +204,10 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
   it should "produce a correct fragment in deleteByKeyReturningKeys" in {
     val key = TestKey(1, 2L)
 
-    val result1 = table.deleteByKeyReturningKeys(key, Some("a1"))
+    val result1 = table.deleteByKey(key)
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE a1 " +
-      "FROM test a1 " +
-      "WHERE a1.field1 = ? AND a1.field3 = ?" +
-      "\")"
-
-    val result2 = table.deleteByKey(key, None)
-
-    result2.toFragment.toString shouldBe "Fragment(\"" +
-      "DELETE test " +
-      "FROM test " +
+      "DELETE FROM test " +
       "WHERE field1 = ? AND field3 = ?" +
       "\")"
   }

@@ -86,11 +86,12 @@ instance of TestModifier:
 
 ```scala
 val testModifier = TestModifier.empty.copy( 
-  field2 = StringModifierOption(ModifierAction.Set, Some("2")),
-  field3 = LongModifier(ModifierAction.Set, Some(3))
+  field2 = StringModifierOption(ModifierOptionAction.Set, Some("2")),
+  field3 = LongModifier(ModifierAction.Set, Some(3)),
+  field4 = TimestampModifierOption(ModifierOptionAction.Null, None)
 )
-
 ``` 
 
+This will produce a statement like "INSERT INTO test (field1, field2, field3, field4) VALUES"
 
 ## TableModifier
