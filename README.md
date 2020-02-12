@@ -5,12 +5,12 @@ It provides basic CRUD operations for entities and it offers a powerful filter m
 entity and its relations.
 
 Considering that everything is serializable, this library is a good fit if you work with GraphQL. There is a module
-dedicated to [sangria](https://github.com/sangria-graphql/sangria) and I plan to add support in the future for 
-[caliban](https://github.com/ghostdogpr/caliban). This library uses [doobie](https://github.com/tpolecat/doobie) 
-to deal with SQL queries but since it relies only on the possibility to combine sql strings, it is possible to add 
-support for any SQL library which support interpolation and concatenation of sql strings. For example, it will be 
-possible to support [scalikejdbc](https://github.com/scalikejdbc/scalikejdbc) with little modifications. I am not 
-planning to add [slick](https://github.com/slick/slick) and [quill](https://github.com/getquill/quill) support because 
+dedicated to [Sangria](https://github.com/sangria-graphql/sangria) and I plan to add support in the future for 
+[Caliban](https://github.com/ghostdogpr/caliban). This library uses [Doobie](https://github.com/tpolecat/doobie) 
+to deal with SQL queries but since it relies only on the possibility to combine SQL strings, it is possible to add 
+support for any SQL library which support interpolation and concatenation of such strings. For example, it will be 
+possible to support [Scalikejdbc](https://github.com/scalikejdbc/scalikejdbc) with little modifications. I am not 
+planning to add [Slick](https://github.com/slick/slick) and [Quill](https://github.com/getquill/quill) support because 
 they are not based or they not provide good support for the fragment approach (I strongly believe that we should write 
 SQL and not try to port SQL inside Scala).
 
@@ -22,7 +22,7 @@ explore the source code, the core is located inside the "table" package of the "
 
 ## Motivation
 
-When I first saw GraphQL and the ecosystem around it ([prisma](https://www.prisma.io/docs) in particular) I was
+When I first saw GraphQL and the ecosystem around it ([Prisma](https://www.prisma.io/docs) in particular) I was
 immediately caught up by the possibility of using filters like this:
 
 ```
@@ -53,7 +53,7 @@ of using code generation from a supplied schema, I wanted the code to dictate th
 So the entire project can be summarized with: 
 
 **"You write the code, and the code itself will tell you if you can do
-certain operations, with the promise that everything will be serializable."**
+certain operations, with the promise that everything will be serializable"**
 
 You are responsible for writing case classes for entities, filters, modifiers and links; in exchange, you get a compile 
 time checking on your case classes and you get a runtime query generation mechanism which let you traduce a JSON like
@@ -85,7 +85,7 @@ and who have at least one pet which is older than three years
 knowing that they will work 100% with target entities. And there's much more! You can also query entities using deep 
 nested filters and write practically any kind of condition. You can perform insert, update and delete operations.
 There are also some interesting utilities for working with doobie, for example you can work with raw data in the form 
-Map[String, Any].
+*Map[String, Any]*.
 
 For a full explanation read the [documentation](./docs/intro.md).
 
@@ -101,11 +101,11 @@ For a full explanation read the [documentation](./docs/intro.md).
 
 ## Inspiration
 
-This project was inspired by [prisma](https://www.prisma.io/docs) and [scarm](https://github.com/bacota-github/scarm) 
+This project was inspired by [Prisma](https://www.prisma.io/docs) and [Scarm](https://github.com/bacota-github/scarm) 
 even if the approach I have chosen is totally different. I don't want to deal with DDL, indices and other SQL stuff,
 my goal is to leave schema related tasks to SQL, because they are better solved using pure SQL (I only used the
 concept of primary keys because byKey queries are quite common).
-Special thanks to the [doobie](https://github.com/tpolecat/doobie) project for providing an awesome JDBC library for
+Special thanks to the [Doobie](https://github.com/tpolecat/doobie) project for providing an awesome JDBC library for
 Scala.
 
 ## License

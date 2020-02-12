@@ -15,12 +15,11 @@ sealed trait UpdateHasFilter   extends UpdateBuilderState
 sealed trait UpdateHasKey      extends UpdateBuilderState
 
 final class UpdateBuilder[S <: UpdateBuilderState, T, K](
-    table: Table[T, K],
-    alias: Option[String]
-) extends QueryBuilder[T, K](table, alias) { self =>
+    table: Table[T, K]
+) extends QueryBuilder[T, K](table, None) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$UpdateToken ${querySyntax.alias.getOrElse(querySyntax.name)}"
+    s"$UpdateToken ${querySyntax.name}"
   )
 
   def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
@@ -34,12 +33,10 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
       .map {
         case (column, modifier) => (column, modifier.get)
       }
-    // TODO: handle empty modifier case, because all Option[Modifier[_] are empty
     val setFragment = Fragments.set(namedFragments.map {
-      case (col, parameter) => const(col + " =") ++ parameter
+      case (col, param) => const(col + " =") ++ param
     }: _*) // love scala emojis
-    val fromFragment = const(s"$From ${querySyntax.aliasedName}")
-    fragment = fragment ++ setFragment ++ fromFragment
+    fragment = fragment ++ setFragment
     self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, T, K]]
   }
 
@@ -97,9 +94,7 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
 
 private[table] object UpdateBuilder {
 
-  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
-    new UpdateBuilder[UpdateHasTable, T, K](table, alias)
+  def apply[T, K](implicit table: Table[T, K]) = new UpdateBuilder[UpdateHasTable, T, K](table)
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
-    new UpdateBuilder[UpdateHasTable, T, K](table, alias)
+  def forTable[T, K](table: Table[T, K]) = new UpdateBuilder[UpdateHasTable, T, K](table)
 }

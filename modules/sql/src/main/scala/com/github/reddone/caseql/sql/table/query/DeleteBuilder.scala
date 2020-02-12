@@ -13,12 +13,11 @@ sealed trait DeleteHasFilter extends DeleteBuilderState
 sealed trait DeleteHasKey    extends DeleteBuilderState
 
 final class DeleteBuilder[S, T, K](
-    table: Table[T, K],
-    alias: Option[String]
-) extends QueryBuilder[T, K](table, alias) { self =>
+    table: Table[T, K]
+) extends QueryBuilder[T, K](table, None) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Delete ${querySyntax.alias.getOrElse(querySyntax.name)} $From ${querySyntax.aliasedName}"
+    s"$Delete $From ${querySyntax.name}"
   )
 
   def withFilter[FT <: EntityFilter[FT]](filter: FT)(
@@ -75,9 +74,7 @@ final class DeleteBuilder[S, T, K](
 
 object DeleteBuilder {
 
-  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
-    new DeleteBuilder[DeleteHasTable, T, K](table, alias)
+  def apply[T, K](implicit table: Table[T, K]) = new DeleteBuilder[DeleteHasTable, T, K](table)
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
-    new DeleteBuilder[DeleteHasTable, T, K](table, alias)
+  def forTable[T, K](table: Table[T, K]) = new DeleteBuilder[DeleteHasTable, T, K](table)
 }

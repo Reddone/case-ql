@@ -24,13 +24,13 @@ final class InsertBuilder[S <: InsertBuilderState, T, K](
       ev: S =:= InsertHasTable,
       tableModifier: TableModifier[T, MT]
   ): InsertBuilder[S with InsertHasModifier, T, K] = {
+    // TODO: replace empty options with DEFAULT
     val namedFragments = tableModifier
       .entityModifierNamedFragments(modifier)(querySyntax.alias)
       .filter(_._2.nonEmpty)
       .map {
         case (column, modifier) => (column, modifier.get)
       }
-    // TODO: handle empty modifier case, because all Option[Modifier[_] are empty
     val columnsFragment = const(s"(${namedFragments.map(_._1).mkString(", ")}) $Values")
     val valuesFragment  = Fragments.parentheses(namedFragments.map(_._2).intercalate(const(",")))
     fragment = fragment ++ columnsFragment ++ valuesFragment
