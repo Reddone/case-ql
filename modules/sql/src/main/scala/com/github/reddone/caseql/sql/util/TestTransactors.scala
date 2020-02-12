@@ -4,7 +4,6 @@ import java.util.concurrent.Executors
 
 import cats.effect.{Async, Blocker, ContextShift}
 import com.github.reddone.caseql.sql.config.DoobieConfig
-import com.typesafe.config.Config
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
@@ -19,8 +18,8 @@ object TestTransactors {
     val Sync: BlockerMode.Value   = Value("sync")
   }
 
-  def valueOf[F[_]: Async: ContextShift](config: Config, mode: BlockerMode.Value): Aux[F, Unit] = {
-    val DoobieConfig(numThreads, driverClassName, url, user, password) = DoobieConfig.valueOf(config)
+  def valueOf[F[_]: Async: ContextShift](config: DoobieConfig, mode: BlockerMode.Value): Aux[F, Unit] = {
+    val DoobieConfig(numThreads, driverClassName, url, user, password) = config
     mode match {
       case BlockerMode.Cached => cachedDriverTransactor(driverClassName, url, user, password)
       case BlockerMode.Fixed  => fixedDriverTransactor(numThreads, driverClassName, url, user, password)

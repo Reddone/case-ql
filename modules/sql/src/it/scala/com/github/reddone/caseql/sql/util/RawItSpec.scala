@@ -9,7 +9,6 @@ import doobie._
 import doobie.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
 import com.github.reddone.caseql.sql.ItTestData._
-import com.github.reddone.caseql.sql.repository.GenericRepository
 import com.github.reddone.caseql.sql.util.Raw._
 
 import scala.collection.mutable

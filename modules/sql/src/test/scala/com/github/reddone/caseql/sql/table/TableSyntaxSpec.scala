@@ -1,7 +1,5 @@
 package com.github.reddone.caseql.sql.table
 
-import java.sql.Timestamp
-
 import com.github.reddone.caseql.sql.TestModel.{Test, TestKey}
 import doobie._
 import doobie.implicits._

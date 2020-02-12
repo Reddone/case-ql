@@ -91,7 +91,7 @@ For a full explanation read the [documentation] <!--(./docs/intro.md).-->
 
 ## TODO
 
-- [x] add relations (one to one, one to many, many to many) ALMOST DONE
+- [x] add relations (ALMOST DONE)
 - [ ] add joins (help appreciated)
 - [ ] setup an easy build and release process and move to sonatype
 - [ ] abstract over Fragment in order to include scalalikejdbc support

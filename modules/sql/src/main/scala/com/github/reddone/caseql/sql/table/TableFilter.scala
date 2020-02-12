@@ -31,7 +31,7 @@ trait TableFilter[A, FA <: EntityFilter[FA]] {
       // NOT for one Option[EntityFilter[T]] using self recursive type
       filter.NOT.flatMap { not =>
         val rec = byFilterFragment(not, alias)
-        FragmentUtils.optionalNot(rec)
+        FragmentUtils.optionalNotOpt(rec)
       }
     )
   }

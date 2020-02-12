@@ -3,7 +3,7 @@ package com.github.reddone.caseql.sql.table.query
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
-import com.github.reddone.caseql.sql.tokens.{From, Update => Upd, Where}
+import com.github.reddone.caseql.sql.tokens.{From, Update => UpdateToken, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
@@ -20,7 +20,7 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
 ) extends QueryBuilder[T, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Upd ${querySyntax.alias.getOrElse(querySyntax.name)}"
+    s"$UpdateToken ${querySyntax.alias.getOrElse(querySyntax.name)}"
   )
 
   def withModifier[MT <: EntityModifier[MT]](modifier: MT)(

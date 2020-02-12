@@ -4,7 +4,12 @@ Here we report the basic concepts behind CaseQL. For an in depth explanation, pl
 at the end of each section. If you have any question which doesn't find an answer in the documentation, feel free
 to open an issue or to write an e-mail.
 
-### Table
+Before reading the documentation, I suggest you to become familiar with doobie, by reading the book of doobie at
+https://tpolecat.github.io/doobie/. Since at the moment this library is heavily based on it it's better for you
+to become familiar with concepts such as Read, Write, Query, Update and Transactor. There are also nice examples
+at https://github.com/tpolecat/doobie/tree/master/modules/example/src/main/scala/example.
+
+## Table
 
 A Table[T, K] is a wrapper for a type T having a key K. Both T and K are case classes. Scala fields are converted to
 SQL columns using a camel case to snake case converter; if you want to override the mapping, you can provide a 
@@ -22,7 +27,7 @@ compliant filter to query a table.
 
 [Table documentation](./table.md)
 
-### Filter
+## Filter
 
 A Filter[+A] is a wrapper for a type A on which it's possible to express filter expressions. The library provides
 instances of various Filter, for A and Option[A]: they only differ in the is nullable condition. For example, on an
@@ -35,9 +40,9 @@ You can build complex filters using AND, OR and NOT conditions on an entity and 
 on its relations. The implicit TableFilter[T, F] will take care of combining all these conditions, producing an
 efficient SQL query. Filters can be used inside select, update and delete statements.
 
-[Filter documentation](./filter.md)
+[Filter documentation](./filter.md) :hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
 
-### Modifier
+## Modifier
 
 A Modifier[+A] is a wrapper for a type A on which it's possible to set values. The library provides instances of
 various Modifier, for A and Option[A]: they only differ in the possibility to set a NULL value. For example, on an
@@ -51,7 +56,7 @@ Note that we don't care about auto generated keys or fields not having default v
 by SQL DDL and in my opinion there is no need to introduce such concepts in a library like this. The use case of
 performing multiple inserts or updates is left to the user.
 
-[Modifier documentation](./modifier.md)
+[Modifier documentation](./modifier.md) :hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
 
 ## Query
 
@@ -86,9 +91,9 @@ returning Stream[ConnectionIO, K].
 At the moment joins are not supported, but since we have links I think that it will be possible to express type-safe
 joins in the future. If you need joins, you can use the generated fragment and enrich it as you like.
 
-[Query documentation](./modifier.md)
+[Query documentation](./modifier.md) :hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
 
-### Util
+## Util
 
 There are some interesting utilities, which can be useful depending on the scenario:
 
