@@ -4,7 +4,7 @@ import com.github.reddone.caseql.sql.util.StringUtils
 
 import scala.language.dynamics
 
-final case class TableSyntax[T](alias: Option[String], support: Table[T, _]) extends Dynamic { self =>
+final case class TableSyntax[A](alias: Option[String], support: Table[A, _]) extends Dynamic { self =>
 
   val name: String = StringUtils.addPrefix(support.name, support.schema)
 
@@ -20,10 +20,10 @@ final case class TableSyntax[T](alias: Option[String], support: Table[T, _]) ext
 
   private def c(field: String): String = support.fieldConverter.getOrElse(field, support.fieldMapper(field))
 
-  def withAlias(newAlias: Option[String]): TableSyntax[T] = copy(alias = newAlias)
+  def withAlias(newAlias: Option[String]): TableSyntax[A] = copy(alias = newAlias)
 }
 
 object TableSyntax {
 
-  implicit def derive[T, K](implicit table: Table[T, K]): TableSyntax[T] = table.syntax
+  implicit def derive[A, K](implicit table: Table[A, K]): TableSyntax[A] = table.syntax
 }
