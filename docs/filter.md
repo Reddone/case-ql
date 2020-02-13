@@ -61,6 +61,87 @@ following modifiers are provided:
 
 ## EntityFilter
 
+Filters should be combined together inside a case class FA in order to construct an EntityFilter[FA <: EntityFilter[FA]].
+
+```scala
+case class Test(
+  field1: Int,
+  field2: Option[String],
+  field3: Long,
+  field4: Option[Timestamp]
+)
+
+case class TestFilter(
+  field1: Option[IntFilter],
+  field2: Option[StringFilterOption],
+  field3: Option[LongFilter],
+  field4: Option[TimestampFilterOption],
+  AND: Option[Seq[TestFilter]],
+  OR: Option[Seq[TestFilter]],
+  NOT: Option[TestFilter]
+) extends EntityFilter[TestFilter]
+
+object TestFilter {
+  val empty: TestFilter = TestFilter(None, None, None, None, None, None, None)
+}
+```
+
+The EntityFilter trait use a self recursive type to enable the composition of filters using AND, OR and NOT. Now, if
+we want to build a where condition for a select, update or delete statement we can create the appropriate instance
+of TestFilter:
+
+```scala
+val testFilter = TestFilter.empty.copy(
+  field1 = Some(IntFilter.empty.copy(IN = Some(11, 12, 13))),
+  field2 = Some(StringFilterOption.empty.copy(EQ = "2")),
+  OR = Some(Seq(
+    TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1)))),
+    TestFilter.empty.copy(field3 = Some(LongFilter.empty.copy(GT = Some(3))))
+  ))
+)
+```
+
+The filter can also be created by deserializing the following JSON:
+
+```json
+{
+  "field1": { "IN": [11, 12, 13] },
+  "field2": { "EQ": "2" },
+  "OR": [
+    { "EQ": 1 },
+    { "GT": 3 }
+  ] 
+}
+``` 
+
+This will produce the where condition 
+"WHERE (field1 IN (11, 12, 13)) AND (field2 = '2') AND ((field1 = 1) OR (field3 > 3))".
+You can create complex where conditions by nesting AND, OR and NOT as you like: it is possible to express any kind of
+boolean condition using this approach.
+
 ## RelationFilter
 
 ## TableFilter
+
+An EntityFilter[FA] with an arbitrary number of RelationFilter[A, _, _] can be used to produce a where condition in select, updare or delete queries on a Table[A, K] only
+if we have an implicit instance of TableFilter[T, FA] in scope. The typeclass TableFilter guarantees that:
+
+- an implicit TableSyntax[T] exists for T
+
+- the filter FA has all fields of A (it can also have extra fields)
+
+- each Filter is wrapped inside an Option
+
+- the type of each Filter field of FA is equivalent to the type of the corresponding field in A
+
+- each RelationFilter[A, B, FB] links A to an entity B having a filter FB with an implicit TableFilter[B, FB]
+
+- each RelationFilter[A, B, FB] has a corresponding implicit TableLink[A, B]
+
+These conditions are sufficient to generate a type-sage where condition. To create a table filter, use:
+
+```scala
+implicit val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
+```
+
+If the code compiles then you can be 100% sure that your filter can be used with your entity.

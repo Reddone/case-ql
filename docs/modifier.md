@@ -93,11 +93,20 @@ val testModifier = TestModifier.empty.copy(
   field3 = Some(LongModifier(ModifierAction.Set, Some(3))),
   field4 = Some(TimestampModifierOption(ModifierOptionAction.Null, None))
 )
-``` 
+```
 
+The modifier can also be created by deserializing the following JSON:
+
+```json
+{
+  "field2": { "action":  "SET", "value":  "2" },
+  "field3": { "action":  "SET", "value":  3 },
+  "field4": { "action":  "NULL" }
+}
+```
 
 In the case of INSERT, 
-this will produce a statement like "INSERT INTO test (field1, field2, field3, field4) VALUES (DEFAULT, "2", 3, NULL)". 
+this will produce the statement "INSERT INTO test (field1, field2, field3, field4) VALUES (DEFAULT, "2", 3, NULL)". 
 Empty options are converted into DEFAULT, because this statement mandates that all columns
 are provided. Please note that in standard SQL, if you don't provide a column in an insert statement then its value 
 will be DEFAULT. For example, suppose that you have a field "id" of type SERIAL inside postgres: if you create an 
@@ -108,7 +117,7 @@ inside the DDL.
 Note that fields inside an EntityModifier do not need to be aligned with the target entity; since we always specify
 all the columns and replace missing values with DEFAULT, the statement will produce a correct result.
 
-In the case of UPDATE, this will produce a statement like "UPDATE test SET field2 = "2", field3 = 3, field4 = NULL".
+In the case of UPDATE, this will produce the statement "UPDATE test SET field2 = "2", field3 = 3, field4 = NULL".
 Empty options are skipped, but if you don't provide at least one defined Option, then the query will generate an
 error, because the update statement mandates that at least one column is updated. It's perfectly fine to set a value
 to NULL or DEFAULT, but using DEFAULT for a non nullable column will generate an error, unless that column was defined
@@ -123,8 +132,18 @@ https://stackoverflow.com/questions/11862188/sql-column-definition-default-value
 An EntityModifier[MT] can be used to produce an insert or update query on a table[T, K] only if we have an implicit
 instance of TableModifier[T, MT] in scope. The typeclass TableModifier guarantees that:
 
-- the modifier has all the fields of the table
+- an implicit TableSyntax[T] exists for T
+
+- the modifier MT has all the fields of T (it can also have extra fields)
+
 - each Modifier is wrapped inside an Option
+
 - the type of each Modifier field of MT is equivalent to the type of the corresponding field in T
 
-These conditions are sufficient to generate type-sage insert and update statements.
+These conditions are sufficient to generate a type-safe insert and update statements. To create a table modifier, use:
+
+```scala
+implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
+```
+
+If the code compiles then you can be 100% sure that your modifier can be used with your entity.
