@@ -10,7 +10,6 @@ case class Test(
   field3: Long,
   field4: Option[Timestamp]
 )
-
 case class TestKey(
   field1: Int,
   field3: Long
@@ -54,10 +53,9 @@ query. If you have an implicit instance of *Table[T, K]*, then an implicit insta
 derived. You can also access the syntax directly from table: 
 
 ```scala
-implicit val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey](Some("test"), Some("public"))
-
-val syntax: TableSyntax[T]        = testTable.syntax
-val aliasedSyntax: TableSyntax[T] = testTable.syntax.withAlias(Some("t"))
+val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey](Some("test"), Some("public"))
+val syntax: TableSyntax[T]          = testTable.syntax
+val aliasedSyntax: TableSyntax[T]   = testTable.syntax.withAlias(Some("t"))
 
 syntax.name             // "public.test"
 syntax.aliasedName      // "public.test"
@@ -134,11 +132,11 @@ case class TestRightKey(
   rightField1: Int
 )
 
-implicit val testLeftTable     = Table.derive[TestLeft, TestLeftKey]()
-implicit val testMiddleTable   = Table.derive[TestMiddle, TestMiddleKey]()
-implicit val testRightTable    = Table.derive[TestRight, TestRightKey]()
+implicit val testLeftTable   = Table.derive[TestLeft, TestLeftKey]()
+implicit val testMiddleTable = Table.derive[TestMiddle, TestMiddleKey]()
+implicit val testRightTable  = Table.derive[TestRight, TestRightKey]()
 
-implicit val testTestRightLink = TableLink.junction(testLeftTable, testRightTable, testMiddleTable)( 
+implicit val testJunctionLink = TableLink.junction(testLeftTable, testRightTable, testMiddleTable)( 
   (a, c) => NonEmptyList.of(("leftField1", "middleField1")),
   (b, c) => NonEmptyList.of(("rightField1", "middleField2"))
 )

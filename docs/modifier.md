@@ -70,6 +70,10 @@ case class Test(
   field3: Long,
   field4: Option[Timestamp]
 )
+case class TestKey(
+  field1: Int,
+  field3: Long
+)
 
 case class TestModifier(
   field1: Option[IntModifier],
@@ -81,6 +85,8 @@ case class TestModifier(
 object TestModifier {
   val empty: TestModifier = TestModifier(None, None, None, None)
 }
+
+implicit val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey]()
 ```
 
 At the moment the EntityModifier trait is used only as a marker, whereas EntityFilter plays an active

@@ -70,6 +70,10 @@ case class Test(
   field3: Long,
   field4: Option[Timestamp]
 )
+case class TestKey(
+  field1: Int,
+  field3: Long
+)
 
 case class TestFilter(
   field1: Option[IntFilter],
@@ -84,6 +88,8 @@ case class TestFilter(
 object TestFilter {
   val empty: TestFilter = TestFilter(None, None, None, None, None, None, None)
 }
+
+implicit val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey]()
 ```
 
 The EntityFilter trait use a self recursive type to enable the composition of filters using AND, OR and NOT. Now, if
@@ -93,7 +99,7 @@ of TestFilter:
 ```scala
 val testFilter = TestFilter.empty.copy(
   field1 = Some(IntFilter.empty.copy(IN = Some(11, 12, 13))),
-  field2 = Some(StringFilterOption.empty.copy(EQ = "2")),
+  field2 = Some(StringFilterOption.empty.copy(EQ = Some("2"))),
   OR = Some(Seq(
     TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1)))),
     TestFilter.empty.copy(field3 = Some(LongFilter.empty.copy(GT = Some(3))))
@@ -120,6 +126,72 @@ You can create complex where conditions by nesting AND, OR and NOT as you like: 
 boolean condition using this approach.
 
 ## RelationFilter
+
+If you want to filter entities according to criteria on their relation, then you have to use a 
+RelationFilter[A, B, FB <: EntityFilter[FB]] in order to allow an EntityFilter FB to be used on entity A linked to 
+entity B. Basically, RelationFilter acts as a wrapper for an EntityFilter, allowing the latter to be used inside
+other filters.
+Consider the following example:
+
+```scala
+case class TestDirect(
+  field1: String,
+  field2: Option[Long],
+  field3: Timestamp,
+  testField1: Int
+)
+case class TestDirectKey(
+  field: String
+)
+
+case class TestDirectFilter(
+  field1: Option[StringFilter],
+  field2: Option[LongFilterOption],
+  field3: Option[TimestampFilter],
+  relationTest: Option[RelationFilter[TestDirect, Test, TestFilter]],
+  AND: Option[Seq[TestDirectFilter]],
+  OR: Option[Seq[TestDirectFilter]],
+  NOT: Option[TestDirectFilter]
+) extends EntityFilter[TestDirectFilter]
+
+object TestDirectFilter {
+  val empty = TestDirectFilter(None, None, None, None, None, None, None)
+}
+
+implicit val testDirectTable: Table[TestDirect, TestDirectKey] = Table.derive[TestDirect, TestDirectKey]()
+
+implicit val testTestDirectLink: TableLink[Test, TestDirect] = TableLink.direct(testTable, testDirectTable)(
+  (a, b) => NonEmptyList.of(("field1", "testField1"))
+)
+```
+
+Here TestFilter is wrapped by RelationFilter, which also adds a type information regarding the link between entities.
+This type information is necessary in order to help the TableFilter derivation process, so be careful to provide types
+in the right order. Note that the field holding the RelationFilter is named "relationTest", but you can give it the
+name you prefer. It makes little sense to enforce a naming convention on relations because one cannot know in advance
+which relations will be included in an EntityFilter; for example, you can opt to don't use RelationFilter at all.
+
+The RelationFilter case class has three fields: EVERY, SOME and NONE. The first one checks that every related entity
+meets the filter conditions, the second one performs the check on at least one related entity and the third one checks
+that no related entity meets the filter conditions.
+The following:
+
+```scala
+val testDirectFilter = TestDirectFilter.empty.copy(
+  field2 = Some(LongFilterOption.copy(EQ = Some(1L))),
+  relationTest = Some(
+    RelationFilter.empty[TestDirect, Test, TestFilter].copy(
+      SOME = Some(
+        TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(IN = Some(Seq(11, 12, 13)))))
+      )
+    )
+  )
+)
+```
+
+will produce the where condition 
+"WHERE (field2 = 1) AND (EXISTS (SELECT 1 FROM test_direct r WHERE field1 = r.testField1 AND r.field1 IN (11, 12, 13)))"
+
 
 ## TableFilter
 
