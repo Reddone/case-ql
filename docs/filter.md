@@ -121,9 +121,10 @@ The filter can also be created by deserializing the following JSON:
 ``` 
 
 This will produce the where condition 
-"WHERE (field1 IN (11, 12, 13)) AND (field2 = '2') AND ((field1 = 1) OR (field3 > 3))".
+"WHERE (test.field1 IN (11, 12, 13)) AND (test.field2 = '2') AND ((test.field1 = 1) OR (test.field3 > 3))".
 You can create complex where conditions by nesting AND, OR and NOT as you like: it is possible to express any kind of
-boolean condition using this approach.
+boolean condition using this approach. The NOT operator acts on a single filter, while the AND and OR operators act
+on a sequence of filters. 
 
 ## RelationFilter
 
@@ -141,7 +142,7 @@ case class TestDirect(
   testField1: Int
 )
 case class TestDirectKey(
-  field: String
+  field1: String
 )
 
 case class TestDirectFilter(
@@ -189,13 +190,28 @@ val testDirectFilter = TestDirectFilter.empty.copy(
 )
 ```
 
-will produce the where condition 
-"WHERE (field2 = 1) AND (EXISTS (SELECT 1 FROM test_direct r WHERE field1 = r.testField1 AND r.field1 IN (11, 12, 13)))"
+or its serialized form:
 
+```json
+{
+  "field2": { "EQ":  1 },
+  "relationTest": {
+    "SOME": {
+      "field1": { "IN": [11, 12, 13] }
+    }
+  }
+}
+```
+
+will produce the where condition 
+"WHERE (test_direct.field2 = 1) AND 
+(EXISTS (SELECT 1 FROM test_direct WHERE test.field1 = test_direct.testField1 AND test_direct.field1 IN (11, 12, 13)))".
+The operators EVERY, SOME and NONE accept a single filter.
 
 ## TableFilter
 
-An EntityFilter[FA] with an arbitrary number of RelationFilter[A, _, _] can be used to produce a where condition in select, updare or delete queries on a Table[A, K] only
+An EntityFilter[FA] with an arbitrary number of RelationFilter[A, _, _] can be used to produce a where condition in select, 
+update or delete queries on a Table[A, K] only
 if we have an implicit instance of TableFilter[T, FA] in scope. The typeclass TableFilter guarantees that:
 
 - an implicit TableSyntax[T] exists for T
@@ -210,7 +226,7 @@ if we have an implicit instance of TableFilter[T, FA] in scope. The typeclass Ta
 
 - each RelationFilter[A, B, FB] has a corresponding implicit TableLink[A, B]
 
-These conditions are sufficient to generate a type-sage where condition. To create a table filter, use:
+These conditions are sufficient to generate a type-safe where condition. To create a table filter, use:
 
 ```scala
 implicit val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()

@@ -93,7 +93,7 @@ object Table {
         override val alias: String = TableRegistrar.aliasFor(tpeName)
 
         override val syntax: TableSyntax[A] =
-          if (useTableAlias) TableSyntax(Some(alias), self) else TableSyntax(None, self)
+          if (useTableAlias) TableSyntax(Some(alias), self) else TableSyntax(Some(name), self)
       }
     }
   }

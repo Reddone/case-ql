@@ -124,4 +124,8 @@ result to a case class before the final mapping step with the GraphQL object.
 
 ## GraphQL Sangria Module
 
-:hammer: :hammer: :hammer: WORK IN PROGRESS :hammer: :hammer: :hammer:
+### Scalar
+
+### Input
+
+### Util

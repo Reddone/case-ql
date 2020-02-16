@@ -10,7 +10,7 @@ final case class TableSyntax[A](alias: Option[String], support: Table[A, _]) ext
 
   val aliasedName: String = StringUtils.addSuffix(name, alias, " ")
 
-  val columns: List[String] = support.fields.map(column)
+  val columns: List[String] = support.fields.map(column) // TODO: we need columns and where columns
 
   val keyColumns: List[String] = support.keyFields.map(column)
 
