@@ -126,6 +126,28 @@ result to a case class before the final mapping step with the GraphQL object.
 
 ### Scalar
 
+For every type used inside Filter and Modifier, there is a corresponding implicit ScalarType. 
+You can find these instances inside ByteTypeDefinition, JavaSqlTypeDefinition and JavaTimeTypeDefinition.
+
 ### Input
 
+For every Filter and Modifier provided by this library, there is a corresponding implicit InputObjectType.
+You can find these instances inside InputTypeDefinition. There is also an utility method *makeRelationFilterInputType*
+which you can use to create an InputObjectType for a RelationFilter.
+
 ### Util
+
+There are also some utilities for common GraphQL queries, in particular:
+
+- PageInfo, an object including hasPrevious, hasNext and total, useful when dealing with pagination. The corresponding
+ObjectType can be found under ObjectDefinition.
+
+- ListContainer[A], a container for a type A which includes a Seq[A] and a PageInfo object. It can be created from
+a QueryResultSet[A], which is the equivalent of ListContainer on the SQL side. Two different class are
+used because it's better to keep container and wrappers separate between the two worlds since entities can
+be mapped in different ways.
+
+- Identifiable, an utility trait containing an *id* method typed by Identity. Mixins for Int, Long and String
+are provided, and corresponding InterfaceType can be found under ObjectDefinition.
+
+- various Argument related to utilities described above.
