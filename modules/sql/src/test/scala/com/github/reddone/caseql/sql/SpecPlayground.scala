@@ -5,7 +5,8 @@ import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.filter.models.{IntFilter, LongFilter, StringFilter}
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.table.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
-import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableLink, TableModifier}
+import com.github.reddone.caseql.sql.table.TableLink.Aux
+import com.github.reddone.caseql.sql.table.{ColSet, Table, TableFilter, TableLink, TableModifier}
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -70,5 +71,14 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
         .toList[Option[String] => Option[Fragment]]
         .map(_.apply(None))
     )
+  }
+
+  it should "process links" in {
+    implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
+    implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
+    implicit val linkAB: Aux[A, B, Unit] =
+      TableLink.safe[A, B].apply(ColSet("field1"), ColSet("field2"))
+
+    println(linkAB.leftJoinFields)
   }
 }

@@ -1,9 +1,27 @@
 package com.github.reddone.caseql.sql.table
 
 import cats.data.NonEmptyList
+import shapeless.tag.@@
+import shapeless.{HList, LabelledGeneric, Nat, Poly1, SingletonProductArgs, Witness, ops, tag}
 
-// TODO: use type safe columns to select fields. It is expensive but it ensures
-// TODO: that both tables can be linked together
+object toSym extends Poly1 {
+  implicit def atType[K](
+      implicit wt: Witness.Aux[K]
+  ): Case.Aux[K, Symbol @@ K] =
+    at[K] { k =>
+      new tag.Tagger[K].apply(Symbol(k.toString))
+    }
+}
+
+object Col {
+
+  def apply[K <: Symbol](sym: Witness.Lt[K]): Witness.Aux[K]#T = sym.value
+}
+
+object ColSet extends SingletonProductArgs {
+
+  def applyProduct[L <: HList](l: L): L = l
+}
 
 trait TableLink[A, B] {
   type Junction
@@ -19,6 +37,49 @@ trait TableLink[A, B] {
 object TableLink {
 
   type Aux[A, B, C] = TableLink[A, B] { type Junction = C }
+
+  object safe {
+
+    def apply[A, B] = new Partial[A, B]
+
+    class Partial[A, B] {
+
+      def apply[ReprA <: HList,
+        ReprB <: HList, ReprK <: HList, ReprJ <: HList, ReprK2 <: HList, ReprJ2 <: HList, N1 <: Nat, N2 <: Nat](
+          a: ReprK,
+          b: ReprJ
+      )(
+          implicit
+          lgenA: LabelledGeneric.Aux[A, ReprA],
+          lgenB: LabelledGeneric.Aux[B, ReprB],
+          leftTableSyntax: TableSyntax[A],
+          rightTableSyntax: TableSyntax[B],
+          mappedA: ops.hlist.Mapper.Aux[toSym.type, ReprK, ReprK2],
+          mappedB: ops.hlist.Mapper.Aux[toSym.type, ReprJ, ReprJ2],
+          selA: ops.record.SelectAll[ReprA, ReprK2],
+          selB: ops.record.SelectAll[ReprB, ReprJ2],
+          toListA: ops.hlist.ToList[ReprK2, Symbol],
+          toListB: ops.hlist.ToList[ReprJ2, Symbol],
+          lenA: ops.hlist.Length.Aux[ReprK, N1],
+          lenB: ops.hlist.Length.Aux[ReprJ, N2],
+          ev: N1 =:= N2
+      ): Aux[A, B, Unit] = new TableLink[A, B] {
+        override type Junction = Unit
+
+        override def leftSyntax: TableSyntax[A] = leftTableSyntax
+
+        override def rightSyntax: TableSyntax[B] = rightTableSyntax
+
+        override def junctionSyntax: TableSyntax[Junction] = Table.unit.syntax
+
+        override def leftJoinFields: List[(String, String)] = a.map(toSym).toList.map(_.name).zip(b.map(toSym).toList.map(_.name))
+
+        override def rightJoinFields: List[(String, String)] = List.empty
+
+        override def isJunction: Boolean = false
+      }
+    }
+  }
 
   def self[A, K](left: Table[A, K])(
       condition: TableSyntax[A] => NonEmptyList[String]
