@@ -2,25 +2,18 @@ package com.github.reddone.caseql.sql.table
 
 import cats.data.NonEmptyList
 import shapeless.tag.@@
-import shapeless.{HList, LabelledGeneric, Nat, Poly1, SingletonProductArgs, Witness, ops, tag}
+import shapeless.{HList, LUBConstraint, LabelledGeneric, Nat, Poly1, SingletonProductArgs, Witness, ops, tag}
 
-object toSym extends Poly1 {
-  implicit def atType[K](
-      implicit wt: Witness.Aux[K]
-  ): Case.Aux[K, Symbol @@ K] =
+object toTaggedSymbol extends Poly1 {
+  implicit def atString[K <: String]: Case.Aux[K, Symbol @@ K] =
     at[K] { k =>
-      new tag.Tagger[K].apply(Symbol(k.toString))
+      new tag.Tagger[K].apply(Symbol(k))
     }
 }
 
-object Col {
+object FieldSet extends SingletonProductArgs {
 
-  def apply[K <: Symbol](sym: Witness.Lt[K]): Witness.Aux[K]#T = sym.value
-}
-
-object ColSet extends SingletonProductArgs {
-
-  def applyProduct[L <: HList](l: L): L = l
+  def applyProduct[L <: HList](l: L)(implicit ev: LUBConstraint[L, String]): L = l
 }
 
 trait TableLink[A, B] {
@@ -44,8 +37,16 @@ object TableLink {
 
     class Partial[A, B] {
 
-      def apply[ReprA <: HList,
-        ReprB <: HList, ReprK <: HList, ReprJ <: HList, ReprK2 <: HList, ReprJ2 <: HList, N1 <: Nat, N2 <: Nat](
+      def apply[
+          ReprA <: HList,
+          ReprB <: HList,
+          ReprK <: HList,
+          ReprJ <: HList,
+          ReprK2 <: HList,
+          ReprJ2 <: HList,
+          N1 <: Nat,
+          N2 <: Nat
+      ](
           a: ReprK,
           b: ReprJ
       )(
@@ -54,8 +55,8 @@ object TableLink {
           lgenB: LabelledGeneric.Aux[B, ReprB],
           leftTableSyntax: TableSyntax[A],
           rightTableSyntax: TableSyntax[B],
-          mappedA: ops.hlist.Mapper.Aux[toSym.type, ReprK, ReprK2],
-          mappedB: ops.hlist.Mapper.Aux[toSym.type, ReprJ, ReprJ2],
+          mappedA: ops.hlist.Mapper.Aux[toTaggedSymbol.type, ReprK, ReprK2],
+          mappedB: ops.hlist.Mapper.Aux[toTaggedSymbol.type, ReprJ, ReprJ2],
           selA: ops.record.SelectAll[ReprA, ReprK2],
           selB: ops.record.SelectAll[ReprB, ReprJ2],
           toListA: ops.hlist.ToList[ReprK2, Symbol],
@@ -72,7 +73,8 @@ object TableLink {
 
         override def junctionSyntax: TableSyntax[Junction] = Table.unit.syntax
 
-        override def leftJoinFields: List[(String, String)] = a.map(toSym).toList.map(_.name).zip(b.map(toSym).toList.map(_.name))
+        override def leftJoinFields: List[(String, String)] =
+          a.map(toTaggedSymbol).toList.map(_.name).zip(b.map(toTaggedSymbol).toList.map(_.name))
 
         override def rightJoinFields: List[(String, String)] = List.empty
 

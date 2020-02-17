@@ -6,7 +6,7 @@ import com.github.reddone.caseql.sql.filter.models.{IntFilter, LongFilter, Strin
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.table.TableFunction.{extractRelationFilter, relationFilterToOptionFragment}
 import com.github.reddone.caseql.sql.table.TableLink.Aux
-import com.github.reddone.caseql.sql.table.{ColSet, Table, TableFilter, TableLink, TableModifier}
+import com.github.reddone.caseql.sql.table.{FieldSet, Table, TableFilter, TableLink, TableModifier}
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -77,7 +77,7 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
     implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
     implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
     implicit val linkAB: Aux[A, B, Unit] =
-      TableLink.safe[A, B].apply(ColSet("field1"), ColSet("field2"))
+      TableLink.safe[A, B](FieldSet("field2", "field1"), FieldSet("field1", "field2"))
 
     println(linkAB.leftJoinFields)
   }
