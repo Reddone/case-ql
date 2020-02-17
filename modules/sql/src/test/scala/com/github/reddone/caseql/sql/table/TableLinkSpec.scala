@@ -1,6 +1,5 @@
 package com.github.reddone.caseql.sql.table
 
-import cats.data.NonEmptyList
 import com.github.reddone.caseql.sql.table.TableLink.Aux
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -36,17 +35,14 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
   implicit val rightTable: Table[TestRight, TestRightKey]          = Table.derive[TestRight, TestRightKey]()
   implicit val junctionTable: Table[TestJunction, TestJunctionKey] = Table.derive[TestJunction, TestJunctionKey]()
 
+  implicit val leftRightLink: Aux[TestLeft, TestRight, Unit] =
+    TableLink.direct[TestLeft, TestRight](FieldSet("field1"), FieldSet("field3"))
+
+  //val b: TableLink[TestRight, TestLeft] = implicitly[TableLink[TestRight, TestLeft]]
+
   "TableLink implicit resolution" should "compile" in {
-    implicit val leftRightLink: Aux[TestLeft, TestRight, Unit] = TableLink.direct(leftTable, rightTable) { (_, _) =>
-      NonEmptyList.of(("field1", "field3"))
-    }
     """implicitly[TableLink[TestRight, TestLeft]]""" should compile
   }
 
-  it should "not compile" in {
-    """implicitly[TableLink[TestRight, TestLeft]]""" shouldNot compile
-  }
-
-  // TODO: write these
   "TableLink methods" should "work correctly" in {}
 }

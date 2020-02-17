@@ -45,11 +45,10 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
   }
 
   "SpecPlayground" should "do anything" in {
-    implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
-    implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
-    implicit val relAB: TableLink[A, B] = TableLink.direct(tableA, tableB) { (a, b) =>
-      NonEmptyList.of(("field1", "field2"))
-    }
+    implicit val tableA: Table[A, AKey]  = Table.derive[A, AKey]()
+    implicit val tableB: Table[B, BKey]  = Table.derive[B, BKey]()
+    implicit val linkAB: Aux[A, B, Unit] = TableLink.direct[A, B](FieldSet("field1"), FieldSet("field2"))
+
     implicit val filterB: TableFilter[B, BFilter] = TableFilter.derive[B, BFilter]()
     implicit val filterA: TableFilter[A, AFilter] = TableFilter.derive[A, AFilter]()
 
@@ -77,7 +76,7 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
     implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
     implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
     implicit val linkAB: Aux[A, B, Unit] =
-      TableLink.safe[A, B](FieldSet("field2", "field1"), FieldSet("field1", "field2"))
+      TableLink.direct[A, B](FieldSet("field2", "field1"), FieldSet("field1", "field2"))
 
     println(linkAB.leftJoinFields)
   }
