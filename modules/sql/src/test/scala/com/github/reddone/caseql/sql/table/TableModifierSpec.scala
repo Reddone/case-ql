@@ -62,7 +62,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       None
     )
     val alias1  = "a1"
-    val syntax1 = table.syntax.withAlias(Some(alias1))
+    val syntax1 = table.syntax.withAlias(alias1)
     val result1 = tableModifier1.entityModifierNamedFragments(modifier1)
 
     result1(Some(alias1)).map(_._1) shouldBe List(
@@ -87,7 +87,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       Some(IntModifier(ModifierAction.Set, Some(1)))
     )
     val alias2  = "a2"
-    val syntax2 = table.syntax.withAlias(Some(alias2))
+    val syntax2 = table.syntax.withAlias(alias2)
     val result2 = tableModifier2.entityModifierNamedFragments(modifier2)
 
     result2(Some(alias2)).map(_._1) shouldBe List(
@@ -114,7 +114,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       Seq(6)
     )
     val alias3  = "a3"
-    val syntax3 = table.syntax.withAlias(Some(alias3))
+    val syntax3 = table.syntax.withAlias(alias3)
     val result3 = tableModifier3.entityModifierNamedFragments(modifier3)
 
     result3(Some(alias3)).map(_._1) shouldBe List(
@@ -141,7 +141,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
       Some(IntModifier(ModifierAction.Set, Some(1)))
     )
     val alias4  = "a4"
-    val syntax4 = table.syntax.withAlias(Some(alias4))
+    val syntax4 = table.syntax.withAlias(alias4)
     val result4 = tableModifier4.entityModifierNamedFragments(modifier4)
 
     result4(Some(alias4)).map(_._1) shouldBe List(

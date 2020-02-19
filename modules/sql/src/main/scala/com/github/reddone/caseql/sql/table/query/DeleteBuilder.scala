@@ -26,7 +26,7 @@ sealed abstract class DeleteBuilder[S, A, K](
       tableFilter: TableFilter[A, FA]
   ): DeleteBuilder[S with DeleteHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, querySyntax.alias)
+      .byFilterFragment(filter, None)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment

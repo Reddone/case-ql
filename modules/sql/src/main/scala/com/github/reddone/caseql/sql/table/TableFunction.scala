@@ -52,6 +52,8 @@ object TableFunction {
       }
   }
 
+  // TODO: change this to work also on TableLink[B, A] by calling inverse
+
   object relationFilterToOptionFragment extends Poly1 {
     implicit def atOptionRelationFilter[A, B, FB <: EntityFilter[FB], K <: Symbol, V <: Option[
       RelationFilter[A, B, FB]
@@ -65,7 +67,7 @@ object TableFunction {
         field[K]((alias: Option[String]) =>
           ft.flatMap(f =>
             if (link.isJunction) {
-              val leftQuerySyntax   = link.leftSyntax.withAlias(alias)
+              val leftQuerySyntax   = link.leftSyntax.withAlias(alias.getOrElse(""))
               val rightQuerySyntax  = link.rightSyntax // TODO: add right alias to handle self joins
               val middleQuerySyntax = link.junctionSyntax
               val leftCond          = link.leftJoinFields
@@ -140,7 +142,7 @@ object TableFunction {
               // combine everything together
               FragmentUtils.optionalAndOpt(every, some, none)
             } else {
-              val leftQuerySyntax  = link.leftSyntax.withAlias(alias)
+              val leftQuerySyntax  = link.leftSyntax.withAlias(alias.getOrElse(""))
               val rightQuerySyntax = link.rightSyntax // TODO: add right alias to handle self joins
               val leftCond         = link.leftJoinFields
               val leftCondSql = leftCond

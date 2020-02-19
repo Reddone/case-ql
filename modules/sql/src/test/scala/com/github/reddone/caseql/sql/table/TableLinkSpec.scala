@@ -55,7 +55,7 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
           |)""".stripMargin shouldNot compile
     """TableLink.self[TestLeft](
           |FieldSet("field1", "field3"), 
-          |FieldSet("field2", "field3")
+          |FieldSet("field3")
           |)""".stripMargin shouldNot compile
   }
 
@@ -81,16 +81,7 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
       |)""".stripMargin shouldNot compile
   }
 
-  "TableLink implicit resolution" should "compile for an inverse link" in {
-    implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] =
-      TableLink.direct[TestLeft, TestJunction](FieldSet("field1"), FieldSet("field1"))
-    implicit val leftRightLink: Aux[TestLeft, TestRight, Unit] =
-      TableLink.direct[TestLeft, TestRight](FieldSet("field1"), FieldSet("field3"))
-    """implicitly[TableLink[TestJunction, TestLeft]]""" should compile
-    """implicitly[TableLink[TestRight, TestLeft]]""" should compile
-  }
-
-  it should "compile for a junction link" in {
+  "TableLink implicit resolution" should "compile" in {
     implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] =
       TableLink.direct[TestLeft, TestJunction](FieldSet("field1"), FieldSet("field1"))
     implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] =
@@ -98,12 +89,8 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
     """implicitly[TableLink[TestLeft, TestRight]]""" should compile
   }
 
-  it should "compile for a junction link made of inverse links" in {
-    implicit val junctionLeftLink: Aux[TestJunction, TestLeft, Unit] =
-      TableLink.direct[TestJunction, TestLeft](FieldSet("field1"), FieldSet("field1"))
-    implicit val junctionRightLink: Aux[TestJunction, TestRight, Unit] =
-      TableLink.direct[TestJunction, TestRight](FieldSet("field2"), FieldSet("field1"))
-    """implicitly[TableLink[TestLeft, TestRight]]""" should compile
+  it should "not compile" in {
+    """implicitly[TableLink[TestLeft, TestRight]]""" shouldNot compile
   }
 
   "TableLink typeclass" should "work correctly on a self link" in {
@@ -115,6 +102,9 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
     link.leftSyntax shouldBe leftTable.syntax
     link.rightSyntax shouldBe leftTable.syntax
     link.junctionSyntax shouldBe Table.unit.syntax
+    link.leftJoinFields shouldBe List(("field3", "field1"), ("field1", "field3"))
+    link.rightJoinFields shouldBe List(("field1", "field3"), ("field3", "field1"))
+    link.isJunction shouldBe false
   }
 
   it should "work correctly on a direct link" in {
@@ -126,14 +116,24 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
     link.leftSyntax shouldBe leftTable.syntax
     link.rightSyntax shouldBe rightTable.syntax
     link.junctionSyntax shouldBe Table.unit.syntax
+    link.leftJoinFields shouldBe List(("field1", "field3"))
+    link.rightJoinFields shouldBe List(("field3", "field1"))
+    link.isJunction shouldBe false
   }
 
   it should "work correctly on an inverse link" in {
-    implicit val leftRightLink: Aux[TestLeft, TestRight, Unit] = TableLink.direct[TestLeft, TestRight](
+    val leftRightLink: Aux[TestLeft, TestRight, Unit] = TableLink.direct[TestLeft, TestRight](
       FieldSet("field1"),
       FieldSet("field3")
     )
-    val link = implicitly[TableLink[TestRight, TestLeft]]
+    val link: Aux[TestRight, TestLeft, Unit] = leftRightLink.inverse
+
+    link.leftSyntax shouldBe rightTable.syntax
+    link.rightSyntax shouldBe leftTable.syntax
+    link.junctionSyntax shouldBe Table.unit.syntax
+    link.leftJoinFields shouldBe List(("field3", "field1"))
+    link.rightJoinFields shouldBe List(("field1", "field3"))
+    link.isJunction shouldBe false
   }
 
   it should "work correctly on a junction link" in {
@@ -142,5 +142,12 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
     implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] =
       TableLink.direct[TestRight, TestJunction](FieldSet("field1"), FieldSet("field2"))
     val link = implicitly[TableLink[TestLeft, TestRight]]
+
+    link.leftSyntax shouldBe leftTable.syntax
+    link.rightSyntax shouldBe rightTable.syntax
+    link.junctionSyntax shouldBe junctionTable.syntax
+    link.leftJoinFields shouldBe List(("field1", "field1"))
+    link.rightJoinFields shouldBe List(("field1", "field2"))
+    link.isJunction shouldBe true
   }
 }

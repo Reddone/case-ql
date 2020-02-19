@@ -1,7 +1,8 @@
 package com.github.reddone.caseql.sql.table
 
+import com.github.reddone.caseql.sql.table.TableLink.Aux
 import shapeless.tag.@@
-import shapeless.{HList, LUBConstraint, LabelledGeneric, Lazy, Nat, Poly1, SingletonProductArgs, ops, tag}
+import shapeless.{HList, LUBConstraint, LabelledGeneric, Lazy, Poly1, SingletonProductArgs, ops, tag}
 
 object toTaggedSymbol extends Poly1 {
   implicit def atString[K <: String]: Case.Aux[K, Symbol @@ K] =
@@ -19,7 +20,7 @@ object FieldSet extends SingletonProductArgs {
   ): MappedL = l.map(toTaggedSymbol)
 }
 
-trait TableLink[A, B] {
+trait TableLink[A, B] { self =>
   type Junction
 
   def leftSyntax: TableSyntax[A]
@@ -28,6 +29,17 @@ trait TableLink[A, B] {
   def leftJoinFields: List[(String, String)]
   def rightJoinFields: List[(String, String)]
   def isJunction: Boolean
+
+  final def inverse: Aux[B, A, Junction] = new TableLink[B, A] {
+    override type Junction = self.Junction
+
+    override def leftSyntax: TableSyntax[B]              = self.rightSyntax
+    override def rightSyntax: TableSyntax[A]             = self.leftSyntax
+    override def junctionSyntax: TableSyntax[Junction]   = self.junctionSyntax
+    override def leftJoinFields: List[(String, String)]  = self.rightJoinFields
+    override def rightJoinFields: List[(String, String)] = self.leftJoinFields
+    override def isJunction: Boolean                     = self.isJunction
+  }
 }
 
 object TableLink {
@@ -45,9 +57,7 @@ object TableLink {
           ReprK <: HList,
           ReprJ <: HList,
           ValuesK <: HList,
-          ValuesJ <: HList,
-          N <: Nat,
-          M <: Nat
+          ValuesJ <: HList
       ](
           fsa: ReprK,
           fsb: ReprJ
@@ -55,10 +65,9 @@ object TableLink {
           implicit
           tableSyntaxA: TableSyntax[A],
           lgenA: LabelledGeneric.Aux[A, ReprA],
-          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK, N]],
-          fieldSelectionAJ: Lazy[FieldSelection.Aux[ReprA, ReprJ, ValuesJ, M]],
-          sameValuesKJ: ValuesK =:= ValuesJ,
-          sameLengthKJ: N =:= M
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
+          fieldSelectionAJ: Lazy[FieldSelection.Aux[ReprA, ReprJ, ValuesJ]],
+          sameValuesKJ: ValuesK =:= ValuesJ
       ): Aux[A, A, Unit] = new TableLink[A, A] {
         override type Junction = Unit
 
@@ -85,9 +94,7 @@ object TableLink {
           ReprK <: HList,
           ReprJ <: HList,
           ValuesK <: HList,
-          ValuesJ <: HList,
-          N <: Nat,
-          M <: Nat
+          ValuesJ <: HList
       ](
           fsa: ReprK,
           fsb: ReprJ
@@ -97,10 +104,9 @@ object TableLink {
           tableSyntaxB: TableSyntax[B],
           lgenA: LabelledGeneric.Aux[A, ReprA],
           lgenB: LabelledGeneric.Aux[B, ReprB],
-          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK, N]],
-          fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ, M]],
-          sameValuesKJ: ValuesK =:= ValuesJ,
-          sameLengthKJ: N =:= M
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
+          fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ]],
+          sameValuesKJ: ValuesK =:= ValuesJ
       ): Aux[A, B, Unit] = new TableLink[A, B] {
         override type Junction = Unit
 
@@ -115,59 +121,41 @@ object TableLink {
     }
   }
 
-  implicit def inverse[A, B](
-      implicit link: Aux[A, B, Unit]
-  ): Aux[B, A, link.Junction] = new TableLink[B, A] {
-    override type Junction = link.Junction
-
-    override def leftSyntax: TableSyntax[B]              = link.rightSyntax
-    override def rightSyntax: TableSyntax[A]             = link.leftSyntax
-    override def junctionSyntax: TableSyntax[Junction]   = link.junctionSyntax
-    override def leftJoinFields: List[(String, String)]  = link.rightJoinFields
-    override def rightJoinFields: List[(String, String)] = link.leftJoinFields
-    override def isJunction: Boolean                     = link.isJunction
-  }
-
   implicit def junction[A, B, C](
       implicit
-      leftLink: Lazy[Aux[A, C, Unit]],
-      rightLink: Lazy[Aux[B, C, Unit]]
+      leftLink: Aux[A, C, Unit],
+      rightLink: Aux[B, C, Unit]
   ): Aux[A, B, C] = new TableLink[A, B] {
     override type Junction = C
 
-    override def leftSyntax: TableSyntax[A]              = leftLink.value.leftSyntax
-    override def rightSyntax: TableSyntax[B]             = rightLink.value.leftSyntax
-    override def junctionSyntax: TableSyntax[Junction]   = rightLink.value.rightSyntax
-    override def leftJoinFields: List[(String, String)]  = leftLink.value.leftJoinFields
-    override def rightJoinFields: List[(String, String)] = rightLink.value.rightJoinFields
+    override def leftSyntax: TableSyntax[A]              = leftLink.leftSyntax
+    override def rightSyntax: TableSyntax[B]             = rightLink.leftSyntax
+    override def junctionSyntax: TableSyntax[Junction]   = rightLink.rightSyntax
+    override def leftJoinFields: List[(String, String)]  = leftLink.leftJoinFields
+    override def rightJoinFields: List[(String, String)] = rightLink.leftJoinFields
     override def isJunction: Boolean                     = true
   }
 }
 
 trait FieldSelection[ReprA <: HList, ReprK <: HList] {
   type Values <: HList
-  type Len <: Nat
 
   def fields(kRepr: ReprK): List[String]
 }
 
 object FieldSelection {
 
-  type Aux[ReprA <: HList, ReprK <: HList, Values0 <: HList, Len0 <: Nat] = FieldSelection[ReprA, ReprK] {
+  type Aux[ReprA <: HList, ReprK <: HList, Values0 <: HList] = FieldSelection[ReprA, ReprK] {
     type Values = Values0
-    type Len    = Len0
   }
 
-  implicit def derive[ReprA <: HList, ReprK <: HList, SelectedAK <: HList, N <: Nat](
+  implicit def derive[ReprA <: HList, ReprK <: HList, SelectedAK <: HList](
       implicit
       selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, SelectedAK],
-      lenK: ops.hlist.Length.Aux[ReprK, N],
       toListK: ops.hlist.ToList[ReprK, Symbol]
-  ): Aux[ReprA, ReprK, SelectedAK, N] =
-    new FieldSelection[ReprA, ReprK] {
-      override type Values = SelectedAK
-      override type Len    = N
+  ): Aux[ReprA, ReprK, SelectedAK] = new FieldSelection[ReprA, ReprK] {
+    override type Values = SelectedAK
 
-      override def fields(kRepr: ReprK): List[String] = kRepr.toList.map(_.name)
-    }
+    override def fields(kRepr: ReprK): List[String] = kRepr.toList.map(_.name)
+  }
 }

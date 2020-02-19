@@ -70,7 +70,7 @@ object ReprEntityModifier {
         modifierRepr: ReprMA
     ): Option[String] => List[(String, Option[Fragment])] =
       (alias: Option[String]) => {
-        val modifierSyntax = tableSyntaxA.withAlias(alias)
+        val modifierSyntax = tableSyntaxA.withAlias(alias.getOrElse(""))
         modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
           case (name, fragment) =>
             val column = modifierSyntax.column(name)

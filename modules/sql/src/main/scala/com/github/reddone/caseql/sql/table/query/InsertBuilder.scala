@@ -26,7 +26,7 @@ sealed abstract class InsertBuilder[S <: InsertBuilderState, A, K](
   ): InsertBuilder[S with InsertHasModifier, A, K] = {
     // TODO: replace empty options with DEFAULT
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)(querySyntax.alias)
+      .entityModifierNamedFragments(modifier)(None)
       .filter(_._2.nonEmpty)
       .map {
         case (column, modifier) => (column, modifier.get)

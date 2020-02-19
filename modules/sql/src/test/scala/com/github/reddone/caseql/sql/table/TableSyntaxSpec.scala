@@ -27,7 +27,7 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
     """implicitly[TableSyntax[Test]]""" shouldNot compile
   }
 
-  "TableSyntax methods" should "work correctly" in {
+  "TableSyntax class" should "work correctly" in {
     val alias1                     = table1.alias
     val syntax1: TableSyntax[Test] = table1.syntax
 
@@ -37,7 +37,7 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
     syntax1.column("field1") shouldBe s"$alias1.field1"
     syntax1.field1 shouldBe s"$alias1.field1"
 
-    val syntax2: TableSyntax[Test] = table2.syntax.withAlias(Some("t"))
+    val syntax2: TableSyntax[Test] = table2.syntax.withAlias("t")
 
     syntax2.name shouldBe "test_schema.test_name"
     syntax2.aliasedName shouldBe "test_schema.test_name t"

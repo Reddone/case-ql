@@ -27,7 +27,7 @@ sealed abstract class SelectBuilder[S, A, K](
       tableFilter: TableFilter[A, FA]
   ): SelectBuilder[S with SelectHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, querySyntax.alias)
+      .byFilterFragment(filter, alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment

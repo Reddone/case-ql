@@ -28,7 +28,7 @@ sealed abstract class UpdateBuilder[S <: UpdateBuilderState, A, K](
       tableModifier: TableModifier[A, MA]
   ): UpdateBuilder[S with UpdateHasModifier, A, K] = {
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)(querySyntax.alias)
+      .entityModifierNamedFragments(modifier)(None)
       .filter(_._2.nonEmpty)
       .map {
         case (column, modifier) => (column, modifier.get)
@@ -46,7 +46,7 @@ sealed abstract class UpdateBuilder[S <: UpdateBuilderState, A, K](
       tableFilter: TableFilter[A, FA]
   ): UpdateBuilder[S with UpdateHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, querySyntax.alias)
+      .byFilterFragment(filter, None)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment

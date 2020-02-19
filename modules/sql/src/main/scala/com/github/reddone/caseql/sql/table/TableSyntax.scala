@@ -4,23 +4,31 @@ import com.github.reddone.caseql.sql.util.StringUtils
 
 import scala.language.dynamics
 
-final case class TableSyntax[A](alias: Option[String], support: Table[A, _]) extends Dynamic { self =>
+final case class TableSyntax[A](alias: String, support: Table[A, _]) extends Dynamic {
+
+  private val aliasO = if (alias.isEmpty) Some(support.name) else Some(alias)
 
   val name: String = StringUtils.addPrefix(support.name, support.schema)
 
-  val aliasedName: String = StringUtils.addSuffix(name, alias, " ")
+  val aliasedName: String = StringUtils.addSuffix(name, if (alias.isEmpty) None else Some(alias), " ")
 
-  val columns: List[String] = support.fields.map(column) // TODO: we need columns and where columns
+  val columns: List[String] = support.fields.map(column)
+
+  val aliasedColumns: List[String] = support.fields.map(aliasedColumn) // used for select and where
 
   val keyColumns: List[String] = support.keyFields.map(column)
 
-  def column(field: String): String = StringUtils.addPrefix(c(field), alias)
+  val aliasedKeyColumns: List[String] = support.keyFields.map(aliasedColumn) // used for select and where
 
-  def selectDynamic(field: String): String = column(field)
+  def column(field: String): String = c(field)
+
+  def aliasedColumn(field: String): String = StringUtils.addPrefix(c(field), aliasO)
+
+  def selectDynamic(field: String): String = c(field)
+
+  def withAlias(newAlias: String): TableSyntax[A] = copy(alias = newAlias)
 
   private def c(field: String): String = support.fieldConverter.getOrElse(field, support.fieldMapper(field))
-
-  def withAlias(newAlias: Option[String]): TableSyntax[A] = copy(alias = newAlias)
 }
 
 object TableSyntax {

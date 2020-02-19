@@ -4,7 +4,6 @@ import com.github.reddone.caseql.sql.util.StringUtils
 import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
-import scala.language.dynamics
 import scala.reflect.runtime.universe.{Symbol => _, _}
 
 trait Table[A, K] extends TableQuery[A, K] { self =>
@@ -93,7 +92,7 @@ object Table {
         override val alias: String = TableRegistrar.aliasFor(tpeName)
 
         override val syntax: TableSyntax[A] =
-          if (useTableAlias) TableSyntax(Some(alias), self) else TableSyntax(Some(name), self)
+          if (useTableAlias) TableSyntax(alias, self) else TableSyntax("", self)
       }
     }
   }
