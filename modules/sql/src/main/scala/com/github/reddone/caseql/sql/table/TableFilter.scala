@@ -106,7 +106,7 @@ object ReprEntityFilter {
           .toList
           .map {
             case (field, makeFragment) =>
-              val column   = filterSyntax.column(field)
+              val column   = filterSyntax.aliasedColumn(field)
               val fragment = makeFragment(column)
               fragment
           }

@@ -9,9 +9,15 @@ abstract class QueryBuilder[A, K](table: Table[A, K], alias: Option[String]) {
 
   final val querySyntax: TableSyntax[A] = table.syntax.withAlias(alias.getOrElse(""))
 
-  final def byKeyFragment(key: K): Fragment = {
-    table.keyWrite.toFragment(key, querySyntax.keyColumns.map(col => s"$col = $Placeholder").mkString(s" $And "))
-  }
+  final def byKeyFragment(key: K): Fragment =
+    table.keyWrite
+      .toFragment(
+        key,
+        querySyntax.aliasedKeyColumns
+          .map(col => s"$col = $Placeholder")
+          .mkString(s" $And ")
+      )
+
 }
 
 trait SQLFragment {

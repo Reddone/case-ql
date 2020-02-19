@@ -7,7 +7,7 @@ import doobie._
 import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableModifier[A, MA <: EntityModifier[MA]] {
-  def entityModifierNamedFragments(modifier: MA): Option[String] => List[(String, Option[Fragment])]
+  def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])]
 }
 
 object TableModifier {
@@ -26,7 +26,7 @@ object TableModifier {
           lgenMA: LabelledGeneric.Aux[MA, ReprMA],
           entityModifierMA: Lazy[ReprEntityModifier[A, ReprA, ReprMA]]
       ): TableModifier[A, MA] = new TableModifier[A, MA] {
-        override def entityModifierNamedFragments(modifier: MA): Option[String] => List[(String, Option[Fragment])] = {
+        override def entityModifierNamedFragments(modifier: MA): List[(String, Option[Fragment])] = {
           entityModifierMA.value.entityModifierNamedFragments(lgenMA.to(modifier))
         }
       }
@@ -35,7 +35,7 @@ object TableModifier {
 }
 
 trait ReprEntityModifier[A, ReprA <: HList, ReprMA <: HList] {
-  def entityModifierNamedFragments(modifierRepr: ReprMA): Option[String] => List[(String, Option[Fragment])]
+  def entityModifierNamedFragments(modifierRepr: ReprMA): List[(String, Option[Fragment])]
 }
 
 object ReprEntityModifier {
@@ -66,16 +66,11 @@ object ReprEntityModifier {
       alignedMA: ops.record.AlignByKeys.Aux[ModifierMA, KeysA, AlignedModifierMA],
       isSubtypeMA: <:<[AlignedModifierMA, ZippedA]
   ): ReprEntityModifier[A, ReprA, ReprMA] = new ReprEntityModifier[A, ReprA, ReprMA] {
-    override def entityModifierNamedFragments(
-        modifierRepr: ReprMA
-    ): Option[String] => List[(String, Option[Fragment])] =
-      (alias: Option[String]) => {
-        val modifierSyntax = tableSyntaxA.withAlias(alias.getOrElse(""))
-        modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
-          case (name, fragment) =>
-            val column = modifierSyntax.column(name)
-            (column, fragment)
-        }
+    override def entityModifierNamedFragments(modifierRepr: ReprMA): List[(String, Option[Fragment])] =
+      modifierRepr.flatMap(extractModifier).map(modifierToNamedOptionFragment).toList.map {
+        case (name, fragment) =>
+          val column = tableSyntaxA.column(name)
+          (column, fragment)
       }
   }
 }

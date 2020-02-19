@@ -18,7 +18,7 @@ sealed abstract class SelectBuilder[S, A, K](
 ) extends QueryBuilder[A, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Select ${querySyntax.columns.mkString(", ")} $From ${querySyntax.aliasedName}"
+    s"$Select ${querySyntax.aliasedColumns.mkString(", ")} $From ${querySyntax.aliasedName}"
   )
 
   def withFilter[FA <: EntityFilter[FA]](filter: FA)(

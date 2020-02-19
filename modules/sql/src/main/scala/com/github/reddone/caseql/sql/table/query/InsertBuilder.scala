@@ -3,7 +3,7 @@ package com.github.reddone.caseql.sql.table.query
 import cats.implicits._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.{Table, TableModifier}
-import com.github.reddone.caseql.sql.tokens.{InsertInto, Values}
+import com.github.reddone.caseql.sql.tokens.{InsertInto, Values, Default}
 import doobie._
 import Fragment._
 
@@ -24,12 +24,11 @@ sealed abstract class InsertBuilder[S <: InsertBuilderState, A, K](
       ev: S =:= InsertHasTable,
       tableModifier: TableModifier[A, MA]
   ): InsertBuilder[S with InsertHasModifier, A, K] = {
-    // TODO: replace empty options with DEFAULT
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)(None)
-      .filter(_._2.nonEmpty)
+      .entityModifierNamedFragments(modifier)
       .map {
-        case (column, modifier) => (column, modifier.get)
+        case (column, Some(modifier)) => (column, modifier)       // one of VALUE, NULL, DEFAULT
+        case (column, None)           => (column, const(Default)) // replace None with DEFAULT
       }
     val columnsFragment = const(s"(${namedFragments.map(_._1).mkString(", ")}) $Values")
     val valuesFragment  = Fragments.parentheses(namedFragments.map(_._2).intercalate(const(",")))

@@ -33,16 +33,81 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
 
     syntax1.name shouldBe "test"
     syntax1.aliasedName shouldBe s"test $alias1"
-    syntax1.columns shouldBe List(s"$alias1.field1", s"$alias1.field2", s"$alias1.field3", s"$alias1.field4")
-    syntax1.column("field1") shouldBe s"$alias1.field1"
-    syntax1.field1 shouldBe s"$alias1.field1"
+    syntax1.columns shouldBe List(
+      "field1",
+      "field2",
+      "field3",
+      "field4"
+    )
+    syntax1.aliasedColumns shouldBe List(
+      s"$alias1.field1",
+      s"$alias1.field2",
+      s"$alias1.field3",
+      s"$alias1.field4"
+    )
+    syntax1.keyColumns shouldBe List(
+      "field1",
+      "field3"
+    )
+    syntax1.aliasedKeyColumns shouldBe List(
+      s"$alias1.field1",
+      s"$alias1.field3"
+    )
+    syntax1.column("field1") shouldBe "field1"
+    syntax1.aliasedColumn("field1") shouldBe s"$alias1.field1"
 
     val syntax2: TableSyntax[Test] = table2.syntax.withAlias("t")
 
     syntax2.name shouldBe "test_schema.test_name"
     syntax2.aliasedName shouldBe "test_schema.test_name t"
-    syntax2.columns shouldBe List("t.field_1", "t.field_2", "t.FIELD3", "t.FIELD4")
-    syntax2.column("field1") shouldBe "t.field_1"
-    syntax2.field1 shouldBe "t.field_1"
+    syntax2.columns shouldBe List(
+      "field_1",
+      "field_2",
+      "FIELD3",
+      "FIELD4"
+    )
+    syntax2.aliasedColumns shouldBe List(
+      "t.field_1",
+      "t.field_2",
+      "t.FIELD3",
+      "t.FIELD4"
+    )
+    syntax2.keyColumns shouldBe List(
+      "field_1",
+      "FIELD3"
+    )
+    syntax2.aliasedKeyColumns shouldBe List(
+      "t.field_1",
+      "t.FIELD3"
+    )
+    syntax2.column("field1") shouldBe "field_1"
+    syntax2.aliasedColumn("field1") shouldBe "t.field_1"
+
+    val syntax3 = table2.syntax.withAlias("")
+
+    syntax3.name shouldBe "test_schema.test_name"
+    syntax3.aliasedName shouldBe "test_schema.test_name"
+    syntax3.columns shouldBe List(
+      "field_1",
+      "field_2",
+      "FIELD3",
+      "FIELD4"
+    )
+    syntax3.aliasedColumns shouldBe List(
+      "test_name.field_1",
+      "test_name.field_2",
+      "test_name.FIELD3",
+      "test_name.FIELD4"
+    )
+    syntax3.keyColumns shouldBe List(
+      "field_1",
+      "FIELD3"
+    )
+    syntax3.aliasedKeyColumns shouldBe List(
+      s"test_name.field_1",
+      s"test_name.FIELD3"
+    )
+    syntax3.column("field1") shouldBe "field_1"
+    syntax3.aliasedColumn("field1") shouldBe s"test_name.field_1"
   }
 }
