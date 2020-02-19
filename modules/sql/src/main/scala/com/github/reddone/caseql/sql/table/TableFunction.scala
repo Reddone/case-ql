@@ -178,19 +178,22 @@ object TableFunction {
       rightJoinFields: List[(String, String)],
       tableFilter: TableFilter[B, FB]
   ): RelationFilter[A, B, FB] => Option[Fragment] = f => {
-    val leftQuerySyntax   = leftSyntax.withAlias(alias.getOrElse(""))
-    val rightQuerySyntax  = rightSyntax // TODO: add right alias to handle self joins
-    val middleQuerySyntax = junctionSyntax
-    val leftCond          = leftJoinFields
-    val rightCond         = rightJoinFields
-    val leftCondSql = leftCond
+    val leftAlias       = alias.getOrElse("")
+    val leftQuerySyntax = leftSyntax.withAlias(leftAlias)
+    val rightAlias = if (leftQuerySyntax.alias == rightSyntax.alias) { // name clash
+      s"${rightSyntax.alias}_self"
+    } else {
+      rightSyntax.alias
+    }
+    val rightQuerySyntax = rightSyntax.withAlias(rightAlias)
+    val leftJoinCondition = leftJoinFields
       .map {
-        case (lf, rf) => s"${leftQuerySyntax.column(lf)} = ${middleQuerySyntax.column(rf)}"
+        case (lf, rf) => s"${leftQuerySyntax.aliasedColumn(lf)} = ${junctionSyntax.aliasedColumn(rf)}"
       }
       .mkString(s" $And ")
-    val rightCondSql = rightCond
+    val rightJoinCondition = rightJoinFields
       .map {
-        case (lf, rf) => s"${rightQuerySyntax.column(lf)} = ${middleQuerySyntax.column(rf)}"
+        case (lf, rf) => s"${rightQuerySyntax.aliasedColumn(lf)} = ${junctionSyntax.aliasedColumn(rf)}"
       }
       .mkString(s" $And ")
     // JUNCTION LINK - EVERY
@@ -201,16 +204,18 @@ object TableFunction {
     //   ON joinTable.id = rightTable.id
     //   WHERE joinTable.id = leftTable.id AND IS NULL rightTable.id
     // )
-    val rightIsNull = rightCond.map(_._1).map(r => s"$IsNull $r").mkString(s" $And ")
+    val rightIsNull = rightJoinFields
+      .map(_._1)
+      .map(rightQuerySyntax.aliasedColumn)
+      .map(s"$IsNull " + _)
+      .mkString(s" $And ")
     val makeEveryFragment = (filterFragment: Fragment) =>
-      const(s"""
-                        |$NotExists (
-                        |$Select 1
-                        |$From ${middleQuerySyntax.aliasedName} $LeftJoin ${rightQuerySyntax.aliasedName}
-                        |$On ${rightCondSql}
-                        |$Where ${leftCondSql} $And $rightIsNull $And
-                        |""".stripMargin) ++ filterFragment ++
-        const(")")
+      const(
+        s"$NotExists (" +
+          s"$Select 1 $From ${junctionSyntax.aliasedName} $LeftJoin ${rightQuerySyntax.aliasedName} " +
+          s"$On ${rightJoinCondition} " +
+          s"$Where ${leftJoinCondition} $And $rightIsNull $And"
+      ) ++ filterFragment ++ const(")")
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, None))
       .map(makeEveryFragment)
@@ -224,14 +229,12 @@ object TableFunction {
     //   WHERE joinTable.id = leftTable.id
     // )
     val makeSomeFragment = (filterFragment: Fragment) =>
-      const(s"""
-                        |$Exists (
-                        |$Select 1
-                        |$From ${middleQuerySyntax.aliasedName} $InnerJoin ${rightQuerySyntax.aliasedName}
-                        |$On ${rightCondSql}
-                        |$Where ${leftCondSql} $And
-                        |""".stripMargin) ++ filterFragment ++
-        const(")")
+      const(
+        s"$Exists (" +
+          s"$Select 1 $From ${junctionSyntax.aliasedName} $InnerJoin ${rightQuerySyntax.aliasedName} " +
+          s"$On ${rightJoinCondition} " +
+          s"$Where ${leftJoinCondition} $And"
+      ) ++ filterFragment ++ const(")")
     val some = f.SOME
       .flatMap(tableFilter.byFilterFragment(_, None))
       .map(makeSomeFragment)
@@ -245,14 +248,12 @@ object TableFunction {
     //   WHERE joinTable.id = leftTable.id
     // )
     val makeNoneFragment = (filterFragment: Fragment) =>
-      const(s"""
-                        |$NotExists (
-                        |$Select 1
-                        |$From ${middleQuerySyntax.aliasedName} $InnerJoin ${rightQuerySyntax.aliasedName}
-                        |$On ${rightCondSql}
-                        |$Where ${leftCondSql} $And
-                        |""".stripMargin) ++ filterFragment ++
-        const(")")
+      const(
+        s"$NotExists (" +
+          s"$Select 1 $From ${junctionSyntax.aliasedName} $InnerJoin ${rightQuerySyntax.aliasedName} " +
+          s"$On ${rightJoinCondition} " +
+          s"$Where ${leftJoinCondition} $And"
+      ) ++ filterFragment ++ const(")")
     val none = f.NONE
       .flatMap(tableFilter.byFilterFragment(_, None))
       .map(makeNoneFragment)
