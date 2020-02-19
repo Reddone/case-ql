@@ -16,6 +16,8 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 
+  val alias: String = table.alias
+
   "TableQuery" should "produce a correct fragment on select" in {
     val filter = TestFilter.empty.copy(
       field1 = Some(IntFilter.empty.copy(EQ = Some(1)))
@@ -32,9 +34,9 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     val result2 = table.select(filter, None)
 
     result2.toFragment.toString shouldBe "Fragment(\"" +
-      "SELECT test.field1, test.field2, test.field3, test.field4 " +
-      "FROM test " +
-      "WHERE (((test.field1 = ? ) ) ) " +
+      s"SELECT $alias.field1, $alias.field2, $alias.field3, $alias.field4 " +
+      s"FROM test $alias " +
+      s"WHERE ((($alias.field1 = ? ) ) ) " +
       "\")"
   }
 
@@ -52,9 +54,9 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     val result2 = table.selectByKey(key, None)
 
     result2.toFragment.toString shouldBe "Fragment(\"" +
-      "SELECT test.field1, test.field2, test.field3, test.field4 " +
-      "FROM test " +
-      "WHERE test.field1 = ? AND test.field3 = ?" +
+      s"SELECT $alias.field1, $alias.field2, $alias.field3, $alias.field4 " +
+      s"FROM test $alias " +
+      s"WHERE $alias.field1 = ? AND $alias.field3 = ?" +
       "\")"
   }
 
@@ -104,7 +106,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "WHERE (((test.field1 = ? ) ) ) " +
+      s"WHERE ((($alias.field1 = ? ) ) ) " +
       "\")"
   }
 
@@ -124,7 +126,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "WHERE (((test.field1 = ? ) ) ) " +
+      s"WHERE ((($alias.field1 = ? ) ) ) " +
       "\")"
   }
 
@@ -142,7 +144,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "WHERE test.field1 = ? AND test.field3 = ?" +
+      s"WHERE $alias.field1 = ? AND $alias.field3 = ?" +
       "\")"
   }
 
@@ -160,7 +162,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "UPDATE test " +
       "SET field1 = ? , field2 = ? , field3 = DEFAULT " +
-      "WHERE test.field1 = ? AND test.field3 = ?" +
+      s"WHERE $alias.field1 = ? AND $alias.field3 = ?" +
       "\")"
   }
 
@@ -173,7 +175,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "DELETE FROM test " +
-      "WHERE (((test.field1 = ? ) ) ) " +
+      s"WHERE ((($alias.field1 = ? ) ) ) " +
       "\")"
   }
 
@@ -186,7 +188,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "DELETE FROM test " +
-      "WHERE (((test.field1 = ? ) ) ) " +
+      s"WHERE ((($alias.field1 = ? ) ) ) " +
       "\")"
   }
 
@@ -197,7 +199,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "DELETE FROM test " +
-      "WHERE test.field1 = ? AND test.field3 = ?" +
+      s"WHERE $alias.field1 = ? AND $alias.field3 = ?" +
       "\")"
   }
 
@@ -208,7 +210,7 @@ class TableQuerySpec extends AnyFlatSpec with Matchers {
 
     result1.toFragment.toString shouldBe "Fragment(\"" +
       "DELETE FROM test " +
-      "WHERE test.field1 = ? AND test.field3 = ?" +
+      s"WHERE $alias.field1 = ? AND $alias.field3 = ?" +
       "\")"
   }
 }

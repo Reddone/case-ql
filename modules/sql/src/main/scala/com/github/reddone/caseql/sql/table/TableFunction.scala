@@ -110,7 +110,7 @@ object TableFunction {
       joinFields: List[(String, String)],
       tableFilter: TableFilter[B, FB]
   ): RelationFilter[A, B, FB] => Option[Fragment] = f => {
-    val leftAlias       = alias.getOrElse("")
+    val leftAlias       = alias.getOrElse(leftSyntax.support.alias)
     val leftQuerySyntax = leftSyntax.withAlias(leftAlias)
     val rightAlias = if (leftQuerySyntax.alias == rightSyntax.alias) { // name clash
       s"${rightSyntax.alias}_self"
@@ -178,7 +178,7 @@ object TableFunction {
       rightJoinFields: List[(String, String)],
       tableFilter: TableFilter[B, FB]
   ): RelationFilter[A, B, FB] => Option[Fragment] = f => {
-    val leftAlias       = alias.getOrElse("")
+    val leftAlias       = alias.getOrElse(leftSyntax.support.alias)
     val leftQuerySyntax = leftSyntax.withAlias(leftAlias)
     val rightAlias = if (leftQuerySyntax.alias == rightSyntax.alias) { // name clash
       s"${rightSyntax.alias}_self"

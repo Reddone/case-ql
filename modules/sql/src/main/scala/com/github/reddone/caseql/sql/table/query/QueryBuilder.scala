@@ -7,7 +7,7 @@ import fs2.Stream
 
 abstract class QueryBuilder[A, K](table: Table[A, K], alias: Option[String]) {
 
-  final val querySyntax: TableSyntax[A] = table.syntax.withAlias(alias.getOrElse(""))
+  final val querySyntax: TableSyntax[A] = alias.map(table.syntax.withAlias).getOrElse(table.syntax)
 
   final def byKeyFragment(key: K): Fragment =
     table.keyWrite

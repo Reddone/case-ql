@@ -71,13 +71,4 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
         .map(_.apply(None))
     )
   }
-
-  it should "process links" in {
-    implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
-    implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
-    implicit val linkAB: Aux[A, B, Unit] =
-      TableLink.direct[A, B](FieldSet("field1"), FieldSet("field2"))
-
-    println(linkAB.leftJoinFields)
-  }
 }

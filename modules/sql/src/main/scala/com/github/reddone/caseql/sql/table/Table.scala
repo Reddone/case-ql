@@ -89,10 +89,9 @@ object Table {
 
         override implicit val keyWrite: Write[K] = writeK
 
-        override val alias: String = TableRegistrar.aliasFor(tpeName)
+        override val alias: String = if (useTableAlias) TableRegistrar.aliasFor(tpeName) else ""
 
-        override val syntax: TableSyntax[A] =
-          if (useTableAlias) TableSyntax(alias, self) else TableSyntax("", self)
+        override val syntax: TableSyntax[A] = TableSyntax(alias, self)
       }
     }
   }
