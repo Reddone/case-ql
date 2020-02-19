@@ -40,16 +40,25 @@ object TableLink {
 
     class Partial[A] {
 
-      def apply[ReprA <: HList, ReprK <: HList, ReprJ <: HList, N <: Nat, M <: Nat](
+      def apply[
+          ReprA <: HList,
+          ReprK <: HList,
+          ReprJ <: HList,
+          ValuesK <: HList,
+          ValuesJ <: HList,
+          N <: Nat,
+          M <: Nat
+      ](
           fsa: ReprK,
           fsb: ReprJ
       )(
           implicit
           tableSyntaxA: TableSyntax[A],
           lgenA: LabelledGeneric.Aux[A, ReprA],
-          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, N]],
-          fieldSelectionAJ: Lazy[FieldSelection.Aux[ReprA, ReprJ, M]],
-          ev: N =:= M
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK, N]],
+          fieldSelectionAJ: Lazy[FieldSelection.Aux[ReprA, ReprJ, ValuesJ, M]],
+          sameValuesKJ: ValuesK =:= ValuesJ,
+          sameLengthKJ: N =:= M
       ): Aux[A, A, Unit] = new TableLink[A, A] {
         override type Junction = Unit
 
@@ -70,7 +79,16 @@ object TableLink {
 
     class Partial[A, B] {
 
-      def apply[ReprA <: HList, ReprB <: HList, ReprK <: HList, ReprJ <: HList, N <: Nat, M <: Nat](
+      def apply[
+          ReprA <: HList,
+          ReprB <: HList,
+          ReprK <: HList,
+          ReprJ <: HList,
+          ValuesK <: HList,
+          ValuesJ <: HList,
+          N <: Nat,
+          M <: Nat
+      ](
           fsa: ReprK,
           fsb: ReprJ
       )(
@@ -79,9 +97,10 @@ object TableLink {
           tableSyntaxB: TableSyntax[B],
           lgenA: LabelledGeneric.Aux[A, ReprA],
           lgenB: LabelledGeneric.Aux[B, ReprB],
-          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, N]],
-          fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, M]],
-          ev: N =:= M
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK, N]],
+          fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ, M]],
+          sameValuesKJ: ValuesK =:= ValuesJ,
+          sameLengthKJ: N =:= M
       ): Aux[A, B, Unit] = new TableLink[A, B] {
         override type Junction = Unit
 
@@ -126,6 +145,7 @@ object TableLink {
 }
 
 trait FieldSelection[ReprA <: HList, ReprK <: HList] {
+  type Values <: HList
   type Len <: Nat
 
   def fields(kRepr: ReprK): List[String]
@@ -133,16 +153,20 @@ trait FieldSelection[ReprA <: HList, ReprK <: HList] {
 
 object FieldSelection {
 
-  type Aux[ReprA <: HList, ReprK <: HList, Len0 <: Nat] = FieldSelection[ReprA, ReprK] { type Len = Len0 }
+  type Aux[ReprA <: HList, ReprK <: HList, Values0 <: HList, Len0 <: Nat] = FieldSelection[ReprA, ReprK] {
+    type Values = Values0
+    type Len    = Len0
+  }
 
-  implicit def derive[ReprA <: HList, ReprK <: HList, N <: Nat](
+  implicit def derive[ReprA <: HList, ReprK <: HList, SelectedAK <: HList, N <: Nat](
       implicit
-      selectAllAK: ops.record.SelectAll[ReprA, ReprK],
-      toListK: ops.hlist.ToList[ReprK, Symbol],
-      lenK: ops.hlist.Length.Aux[ReprK, N]
-  ): Aux[ReprA, ReprK, N] =
+      selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, SelectedAK],
+      lenK: ops.hlist.Length.Aux[ReprK, N],
+      toListK: ops.hlist.ToList[ReprK, Symbol]
+  ): Aux[ReprA, ReprK, SelectedAK, N] =
     new FieldSelection[ReprA, ReprK] {
-      override type Len = N
+      override type Values = SelectedAK
+      override type Len    = N
 
       override def fields(kRepr: ReprK): List[String] = kRepr.toList.map(_.name)
     }

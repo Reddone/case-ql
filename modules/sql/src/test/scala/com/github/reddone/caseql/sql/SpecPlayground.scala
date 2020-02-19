@@ -76,7 +76,7 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
     implicit val tableA: Table[A, AKey] = Table.derive[A, AKey]()
     implicit val tableB: Table[B, BKey] = Table.derive[B, BKey]()
     implicit val linkAB: Aux[A, B, Unit] =
-      TableLink.direct[A, B](FieldSet("field2", "field1"), FieldSet("field1", "field2"))
+      TableLink.direct[A, B](FieldSet("field1"), FieldSet("field2"))
 
     println(linkAB.leftJoinFields)
   }
