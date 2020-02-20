@@ -99,14 +99,14 @@ object ReprEntityFilter {
   ): ReprEntityFilter[A, ReprA, ReprFA] = new ReprEntityFilter[A, ReprA, ReprFA] {
     override def entityFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] =
       (alias: Option[String]) => {
-        val filterSyntax = alias.map(tableSyntaxA.withAlias).getOrElse(tableSyntaxA)
+        val querySyntax = alias.map(tableSyntaxA.withAlias).getOrElse(tableSyntaxA)
         filterRepr
           .flatMap(extractFilter)
           .map(filterToNamedOptionFragment)
           .toList
           .map {
             case (field, makeFragment) =>
-              val column   = filterSyntax.aliasedColumn(field)
+              val column   = querySyntax.aliasedColumn(field)
               val fragment = makeFragment(column)
               fragment
           }

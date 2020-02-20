@@ -1,6 +1,5 @@
 package com.github.reddone.caseql.sql
 
-import cats.data.NonEmptyList
 import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.filter.models.{IntFilter, LongFilter, StringFilter}
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}

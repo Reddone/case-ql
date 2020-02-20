@@ -1,24 +1,7 @@
 package com.github.reddone.caseql.sql.table
 
 import com.github.reddone.caseql.sql.table.TableLink.Aux
-import shapeless.tag.@@
-import shapeless.{HList, LUBConstraint, LabelledGeneric, Lazy, Poly1, SingletonProductArgs, ops, tag}
-
-object toTaggedSymbol extends Poly1 {
-  implicit def atString[K <: String]: Case.Aux[K, Symbol @@ K] =
-    at[K] { k =>
-      new tag.Tagger[K].apply(Symbol(k))
-    }
-}
-
-object FieldSet extends SingletonProductArgs {
-
-  def applyProduct[L <: HList, MappedL <: HList](l: L)(
-      implicit
-      lubL: LUBConstraint[L, String],
-      taggedSymbolL: ops.hlist.Mapper.Aux[toTaggedSymbol.type, L, MappedL]
-  ): MappedL = l.map(toTaggedSymbol)
-}
+import shapeless.{HList, LabelledGeneric, Lazy, ops}
 
 trait TableLink[A, B] { self =>
   type Junction
@@ -42,9 +25,11 @@ trait TableLink[A, B] { self =>
   }
 }
 
-object TableLink {
+object TableLink extends LowPriorityTableLink with LowestPriorityTableLink {
 
   type Aux[A, B, C] = TableLink[A, B] { type Junction = C }
+
+  def apply[A, B](implicit ev: TableLink[A, B]): Aux[A, B, ev.Junction] = ev
 
   object self {
 
@@ -137,25 +122,20 @@ object TableLink {
   }
 }
 
-trait FieldSelection[ReprA <: HList, ReprK <: HList] {
-  type Values <: HList
+trait LowPriorityTableLink {
 
-  def fields(kRepr: ReprK): List[String]
+  implicit def junctionLeftInverse[A, B, C](
+      implicit
+      leftLink: Aux[C, A, Unit],
+      rightLink: Aux[B, C, Unit]
+  ): Aux[A, B, C] = TableLink.junction(leftLink.inverse, rightLink)
 }
 
-object FieldSelection {
+trait LowestPriorityTableLink {
 
-  type Aux[ReprA <: HList, ReprK <: HList, Values0 <: HList] = FieldSelection[ReprA, ReprK] {
-    type Values = Values0
-  }
-
-  implicit def derive[ReprA <: HList, ReprK <: HList, SelectedAK <: HList](
+  implicit def junctionRightInverse[A, B, C](
       implicit
-      selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, SelectedAK],
-      toListK: ops.hlist.ToList[ReprK, Symbol]
-  ): Aux[ReprA, ReprK, SelectedAK] = new FieldSelection[ReprA, ReprK] {
-    override type Values = SelectedAK
-
-    override def fields(kRepr: ReprK): List[String] = kRepr.toList.map(_.name)
-  }
+      leftLink: Aux[A, C, Unit],
+      rightLink: Aux[C, B, Unit]
+  ): Aux[A, B, C] = TableLink.junction(leftLink, rightLink.inverse)
 }
