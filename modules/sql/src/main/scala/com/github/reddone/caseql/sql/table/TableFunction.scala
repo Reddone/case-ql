@@ -91,16 +91,6 @@ object TableFunction {
           }
         )
       }
-
-    implicit def atOptionRelationFilterInverse[A, B, FB <: EntityFilter[FB], K <: Symbol, V <: Option[
-      RelationFilter[A, B, FB]
-    ]](
-        implicit
-        wt: Witness.Aux[K],
-        link: TableLink[B, A],
-        tableFilter: TableFilter[B, FB]
-    ): Case.Aux[FieldType[K, V], FieldType[K, Option[String] => Option[Fragment]]] =
-      atOptionRelationFilter(wt, link.inverse, tableFilter)
   }
 
   private def processDirectRelation[A, B, FB <: EntityFilter[FB]](
@@ -115,7 +105,7 @@ object TableFunction {
     val rightQuerySyntax = rightSyntax.withAlias(rightAlias)
     val joinCondition = joinFields
       .map {
-        case (lf, rf) => s"${leftQuerySyntax.aliasedColumn(lf)} = ${rightQuerySyntax.aliasedColumn(rf)}"
+        case (l, r) => s"${leftQuerySyntax.aliasedColumn(l)} = ${rightQuerySyntax.aliasedColumn(r)}"
       }
       .mkString(s" $And ")
     // DIRECT LINK - EVERY
@@ -175,12 +165,12 @@ object TableFunction {
     val rightQuerySyntax = rightSyntax.withAlias(rightAlias)
     val leftJoinCondition = leftJoinFields
       .map {
-        case (lf, rf) => s"${leftQuerySyntax.aliasedColumn(lf)} = ${junctionSyntax.aliasedColumn(rf)}"
+        case (l, r) => s"${leftQuerySyntax.aliasedColumn(l)} = ${junctionSyntax.aliasedColumn(r)}"
       }
       .mkString(s" $And ")
     val rightJoinCondition = rightJoinFields
       .map {
-        case (lf, rf) => s"${rightQuerySyntax.aliasedColumn(lf)} = ${junctionSyntax.aliasedColumn(rf)}"
+        case (l, r) => s"${rightQuerySyntax.aliasedColumn(l)} = ${junctionSyntax.aliasedColumn(r)}"
       }
       .mkString(s" $And ")
     // JUNCTION LINK - EVERY
@@ -191,17 +181,12 @@ object TableFunction {
     //   ON joinTable.id = rightTable.id
     //   WHERE joinTable.id = leftTable.id AND IS NULL rightTable.id
     // )
-    val rightIsNull = rightJoinFields
-      .map(_._1)
-      .map(rightQuerySyntax.aliasedColumn)
-      .map(s"$IsNull " + _)
-      .mkString(s" $And ")
     val makeEveryFragment = (filterFragment: Fragment) =>
       const(
         s"$NotExists (" +
           s"$Select 1 $From ${junctionSyntax.aliasedName} $LeftJoin ${rightQuerySyntax.aliasedName} " +
           s"$On ${rightJoinCondition} " +
-          s"$Where ${leftJoinCondition} $And $rightIsNull $And"
+          s"$Where ${leftJoinCondition} $And ${areNulls(rightQuerySyntax, rightJoinFields.map(_._1))} $And"
       ) ++ filterFragment ++ const(")")
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
@@ -254,4 +239,11 @@ object TableFunction {
     } else {
       rightSyntax.alias
     }
+
+  private def areNulls[A](syntax: TableSyntax[A], fields: Seq[String]): String = {
+    fields
+      .map(syntax.aliasedColumn)
+      .map(s"$IsNull " + _)
+      .mkString(s" $And ")
+  }
 }

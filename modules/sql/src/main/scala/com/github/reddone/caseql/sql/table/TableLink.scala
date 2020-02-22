@@ -31,6 +31,8 @@ object TableLink {
 
   def apply[A, B](implicit ev: TableLink[A, B]): Aux[A, B, ev.Junction] = ev
 
+  implicit def inverse[A, B](implicit ev: TableLink[A, B]): Aux[B, A, ev.Junction] = ev.inverse
+
   object self {
 
     def apply[A] = new Partial[A]
