@@ -81,16 +81,18 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
       |)""".stripMargin shouldNot compile
   }
 
-  "TableLink implicit resolution" should "compile" in {
-    implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] =
-      TableLink.direct[TestLeft, TestJunction](FieldSet("field1"), FieldSet("field1"))
-    implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] =
-      TableLink.direct[TestRight, TestJunction](FieldSet("field1"), FieldSet("field2"))
-    """implicitly[TableLink[TestLeft, TestRight]]""" should compile
+  it should "compile for a correct junction link" in {
+    """TableLink.junction[TestLeft, TestRight, TestJunction](
+      |(FieldSet("field1"), FieldSet("field1")),
+      |(FieldSet("field1"), FieldSet("field2"))
+      |)""".stripMargin should compile
   }
 
-  it should "not compile" in {
-    """implicitly[TableLink[TestLeft, TestRight]]""" shouldNot compile
+  it should "not compile for a wrong junction link" in {
+    """TableLink.junction[TestLeft, TestRight, TestJunction](
+      |(FieldSet("field1"), FieldSet("field2")),
+      |(FieldSet("field1"), FieldSet("field2"))
+      |)""".stripMargin shouldNot compile
   }
 
   "TableLink typeclass" should "work correctly on a self link" in {
@@ -137,17 +139,30 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
   }
 
   it should "work correctly on a junction link" in {
-    implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] =
+    val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] =
       TableLink.direct[TestLeft, TestJunction](FieldSet("field1"), FieldSet("field1"))
-    implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] =
+    val rightJunctionLink: Aux[TestRight, TestJunction, Unit] =
       TableLink.direct[TestRight, TestJunction](FieldSet("field1"), FieldSet("field2"))
-    val link = implicitly[TableLink[TestLeft, TestRight]]
+    val link1: Aux[TestLeft, TestRight, TestJunction] =
+      TableLink.union(leftJunctionLink, rightJunctionLink)
 
-    link.leftSyntax shouldBe leftTable.syntax
-    link.rightSyntax shouldBe rightTable.syntax
-    link.junctionSyntax shouldBe junctionTable.syntax
-    link.leftJoinFields shouldBe List(("field1", "field1"))
-    link.rightJoinFields shouldBe List(("field1", "field2"))
-    link.isJunction shouldBe true
+    link1.leftSyntax shouldBe leftTable.syntax
+    link1.rightSyntax shouldBe rightTable.syntax
+    link1.junctionSyntax shouldBe junctionTable.syntax
+    link1.leftJoinFields shouldBe List(("field1", "field1"))
+    link1.rightJoinFields shouldBe List(("field1", "field2"))
+    link1.isJunction shouldBe true
+
+    val link2 = TableLink.junction[TestLeft, TestRight, TestJunction](
+      (FieldSet("field1"), FieldSet("field1")),
+      (FieldSet("field1"), FieldSet("field2"))
+    )
+
+    link2.leftSyntax shouldBe leftTable.syntax
+    link2.rightSyntax shouldBe rightTable.syntax
+    link2.junctionSyntax shouldBe junctionTable.syntax
+    link2.leftJoinFields shouldBe List(("field1", "field1"))
+    link2.rightJoinFields shouldBe List(("field1", "field2"))
+    link2.isJunction shouldBe true
   }
 }
