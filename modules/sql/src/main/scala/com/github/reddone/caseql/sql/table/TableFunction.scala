@@ -14,12 +14,6 @@ object TableFunction {
 
   // type extractors
 
-  object extractFilter extends extract[Option[Filter[_]]]
-
-  object extractModifier extends extract[Option[Modifier[_]]]
-
-  object extractRelationFilter extends extract[Option[RelationFilter[_, _, _]]]
-
   trait extract[T] extends skip {
     implicit def atType[K <: Symbol, V <: T](
         implicit wt: Witness.Aux[K]
@@ -29,6 +23,17 @@ object TableFunction {
 
   trait skip extends Poly1 {
     implicit def atDefault[T]: Case.Aux[T, HNil] = at[T](_ => HNil)
+  }
+
+  object extractFilter extends extract[Option[Filter[_]]]
+
+  object extractModifier extends extract[Option[Modifier[_]]]
+
+  object extractRelationFilter extends skip {
+    implicit def atType[A, B, FB <: EntityFilter[FB], K <: Symbol, V <: RelationFilter[A, B, FB]](
+        implicit wt: Witness.Aux[K]
+    ): Case.Aux[FieldType[K, V], FieldType[K, V] :: HNil] =
+      at[FieldType[K, V]](_ :: HNil)
   }
 
   // type mappers

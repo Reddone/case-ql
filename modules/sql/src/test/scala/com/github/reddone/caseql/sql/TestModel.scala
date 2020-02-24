@@ -2,21 +2,9 @@ package com.github.reddone.caseql.sql
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.filter.models.{
-  IntFilter,
-  LongFilter,
-  StringFilter,
-  StringFilterOption,
-  TimestampFilterOption
-}
-import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.modifier.models.{
-  IntModifier,
-  LongModifier,
-  StringModifier,
-  StringModifierOption,
-  TimestampModifierOption
-}
+import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
+import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 
 object TestModel {
@@ -251,4 +239,87 @@ object TestModel {
   object TestModifierLessUnordered {
     val empty: TestModifierLessUnordered = TestModifierLessUnordered(None, None, None)
   }
+
+  // RELATION TABLE
+
+  // left and self relation with left
+  case class TestLeft(
+      field1: Int,
+      field2: String,
+      field3: Int
+  )
+  case class TestLeftKey(
+      field1: Int
+  )
+  // direct relation with left
+  case class TestDirect(
+      field1: String,
+      field2: Timestamp,
+      field3: Int
+  )
+  case class TestDirectKey(
+      field1: String
+  )
+  // right
+  case class TestRight(
+      field1: Long,
+      field2: String,
+      field3: Int
+  )
+  case class TestRightKey(
+      field1: Long
+  )
+  // junction relation with left and right
+  case class TestJunction(
+      field1: Int,
+      field2: Long
+  )
+  case class TestJunctionKey(
+      field1: Int,
+      field2: Long
+  )
+
+  // RELATION FILTER
+
+  // simple filter for left with relation filter on left and right
+  case class TestLeftFilter(
+      field1: Option[IntFilter],
+      field2: Option[StringFilter],
+      field3: Option[IntFilter],
+      selfRelation: Option[RelationFilter[TestLeft, TestLeft, TestLeftFilter]],
+      rightRelation: Option[RelationFilter[TestLeft, TestRight, TestRightFilter]],
+      AND: Option[Seq[TestLeftFilter]],
+      OR: Option[Seq[TestLeftFilter]],
+      NOT: Option[TestLeftFilter]
+  ) extends EntityFilter[TestLeftFilter]
+  // simple filter for direct with relation filter on left
+  case class TestDirectFilter(
+      field1: Option[StringFilter],
+      field2: Option[TimestampFilter],
+      field3: Option[IntFilter],
+      leftRelation: Option[RelationFilter[TestDirect, TestLeft, TestLeftFilter]],
+      AND: Option[Seq[TestDirectFilter]],
+      OR: Option[Seq[TestDirectFilter]],
+      NOT: Option[TestDirectFilter]
+  ) extends EntityFilter[TestDirectFilter]
+  // simple filter for right with relation filter on left
+  case class TestRightFilter(
+      field1: Option[LongFilter],
+      field2: Option[StringFilter],
+      field3: Option[IntFilter],
+      leftRelation: Option[RelationFilter[TestRight, TestLeft, TestLeftFilter]],
+      AND: Option[Seq[TestRightFilter]],
+      OR: Option[Seq[TestRightFilter]],
+      NOT: Option[TestRightFilter]
+  ) extends EntityFilter[TestRightFilter]
+  // simple filter for junction with relation filter on left and right
+  case class TestJunctionFilter(
+      field1: Option[IntFilter],
+      field2: Option[LongFilter],
+      leftRelation: Option[RelationFilter[TestJunction, TestLeft, TestLeftFilter]],
+      rightRelation: Option[RelationFilter[TestJunction, TestRight, TestRightFilter]],
+      AND: Option[Seq[TestJunctionFilter]],
+      OR: Option[Seq[TestJunctionFilter]],
+      NOT: Option[TestJunctionFilter]
+  ) extends EntityFilter[TestJunctionFilter]
 }

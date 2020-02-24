@@ -5,6 +5,7 @@ import java.time.Instant
 
 import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.table.TableLink.Aux
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -16,6 +17,30 @@ import shapeless.test.illTyped
 class TableFilterSpec extends AnyFlatSpec with Matchers {
 
   implicit val table: Table[Test, TestKey] = Table.derive[Test, TestKey]()
+
+  implicit val leftTable: Table[TestLeft, TestLeftKey]             = Table.derive[TestLeft, TestLeftKey]()
+  implicit val directTable: Table[TestDirect, TestDirectKey]       = Table.derive[TestDirect, TestDirectKey]()
+  implicit val rightTable: Table[TestRight, TestRightKey]          = Table.derive[TestRight, TestRightKey]()
+  implicit val junctionTable: Table[TestJunction, TestJunctionKey] = Table.derive[TestJunction, TestJunctionKey]()
+
+  implicit val leftSelfLink: Aux[TestLeft, TestLeft, Unit] = TableLink.self[TestLeft](
+    FieldSet("field1"),
+    FieldSet("field3")
+  )
+  implicit val directLeftLink: Aux[TestDirect, TestLeft, Unit] = TableLink.direct[TestDirect, TestLeft](
+    FieldSet("field3"),
+    FieldSet("field1")
+  )
+  implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] = TableLink.direct[TestLeft, TestJunction](
+    FieldSet("field1"),
+    FieldSet("field1")
+  )
+  implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] = TableLink.direct[TestRight, TestJunction](
+    FieldSet("field1"),
+    FieldSet("field2")
+  )
+  implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] =
+    TableLink.union(leftJunctionLink, rightJunctionLink)
 
   "TableFilter derivation" should "compile in the simple case" in {
     """TableFilter.derive[Test, TestFilter]()""" should compile
@@ -123,9 +148,6 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     )
   }
 
-  // TODO: test relation filter
-  it should "work correctly with RelationFilter[_, _, _]" in {}
-
   "TableFilter combinator" should "work correctly with an empty EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
@@ -153,7 +175,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a flat EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
-    val filter1 = TestFilter(
+    val filter = TestFilter(
       Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(1, 1, 1)))),
       Some(StringFilterOption.empty.copy(EQ = Some("2"), CONTAINS = Some("2"))),
       Some(LongFilter.empty.copy(EQ = Some(3L), IN = Some(Seq(3L, 3L, 3L)))),
@@ -162,11 +184,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None,
       None
     )
-    val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(filter1, Some(alias1))
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(filter, Some(alias))
 
-    result1 shouldBe defined
-    result1.get.toString shouldBe "Fragment(\"" +
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
       "(" +
       "((a1.field1 = ? ) AND (a1.field1 IN (?, ?, ?) ) ) AND " +
       "((a1.field2 = ? ) AND (a1.field2 LIKE %?% ) ) AND " +
@@ -179,7 +201,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a nested EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
-    val filter1 = TestFilter(
+    val filter = TestFilter(
       Some(IntFilter.empty.copy(EQ = Some(11))),
       Some(StringFilterOption.empty.copy(EQ = Some("22"))),
       None,
@@ -188,20 +210,20 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None,
       None
     )
-    val nestedFilter1 = TestFilter(
+    val nestedFilter = TestFilter(
       Some(IntFilter.empty.copy(EQ = Some(1))),
       Some(StringFilterOption.empty.copy(EQ = Some("2"))),
       None,
       None,
-      AND = Some(Seq(filter1, filter1)),
-      OR = Some(Seq(filter1, filter1)),
-      NOT = Some(filter1)
+      AND = Some(Seq(filter, filter)),
+      OR = Some(Seq(filter, filter)),
+      NOT = Some(filter)
     )
-    val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(nestedFilter1, Some(alias1))
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(nestedFilter, Some(alias))
 
-    result1 shouldBe defined
-    result1.get.toString shouldBe "Fragment(\"" +
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
       "(" +
       "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
       ") " +
@@ -237,7 +259,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a deeply nested EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
-    val deepFilter1 = TestFilter.empty.copy(OR = Some(
+    val deepFilter = TestFilter.empty.copy(OR = Some(
       Seq(
         TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(11)))),
         TestFilter.empty.copy(field2 = Some(StringFilterOption.empty.copy(EQ = Some("22")))),
@@ -260,11 +282,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     )
-    val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(deepFilter1, Some(alias1))
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(deepFilter, Some(alias))
 
-    result1 shouldBe defined
-    result1.get.toString shouldBe "Fragment(\"" +
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
       "((" + // OR BEGIN
       "(" +
       "((a1.field1 = ? ) ) " + // FIRST FILTER INSIDE OR
@@ -295,9 +317,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  // TODO: test nested relation filter
-  it should "work correctly with a nested RelationFilter[_, _, _]" in {}
+  "TableFilter relation" should "work correctly with a self RelationFilter[_, _, _]" in {}
 
-  // TODO: test deeply nested relation filter
-  it should "work correctly with a deeply nested RelationFilter[_, _, _]" in {}
+  it should "work correctly with a direct RelationFilter[_, _, _]" in {}
+
+  it should "work correctly with a junction RelationFilter[_, _, _]" in {}
+
+  it should "work correctly with a nested RelationFilter[_, _, _]" in {}
 }

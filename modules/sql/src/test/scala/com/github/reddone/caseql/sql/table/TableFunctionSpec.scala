@@ -18,7 +18,7 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
   "TableFunction extract" should "extract a generic type" in {
     object wrapperExtractor extends TableFunction.extract[Wrapper[_]]
 
-    val generic1 = TestGeneric(
+    val generic = TestGeneric(
       "1",
       new Wrapper[String] {},
       Some(3),
@@ -27,7 +27,7 @@ class TableFunctionSpec extends AnyFlatSpec with Matchers {
 
     type Correct = Wrapper[_] :: Wrapper[_] :: HNil
     type Wrong   = Wrapper[_] :: String :: HNil
-    val result = LabelledGeneric[TestGeneric].to(generic1).flatMap(wrapperExtractor)
+    val result = LabelledGeneric[TestGeneric].to(generic).flatMap(wrapperExtractor)
 
     """implicitly[<:<[result.type, Correct]]""" should compile
     """implicitly[<:<[result.type, Wrong]]""" shouldNot compile

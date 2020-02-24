@@ -1,37 +1,11 @@
 package com.github.reddone.caseql.sql.table
 
+import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.table.TableLink.Aux
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class TableLinkSpec extends AnyFlatSpec with Matchers {
-
-  case class TestLeft(
-      field1: Int,
-      field2: String,
-      field3: Int
-  )
-  case class TestLeftKey(
-      field1: Int
-  )
-
-  case class TestRight(
-      field1: Long,
-      field2: String,
-      field3: Int
-  )
-  case class TestRightKey(
-      field1: Long
-  )
-
-  case class TestJunction(
-      field1: Int,
-      field2: Long
-  )
-  case class TestJunctionKey(
-      field1: Int,
-      field2: Long
-  )
 
   implicit val leftTable: Table[TestLeft, TestLeftKey]             = Table.derive[TestLeft, TestLeftKey]()
   implicit val rightTable: Table[TestRight, TestRightKey]          = Table.derive[TestRight, TestRightKey]()
@@ -128,6 +102,7 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
       FieldSet("field1"),
       FieldSet("field3")
     )
+
     val link: Aux[TestRight, TestLeft, Unit] = leftRightLink.inverse
 
     link.leftSyntax shouldBe rightTable.syntax
@@ -143,6 +118,7 @@ class TableLinkSpec extends AnyFlatSpec with Matchers {
       TableLink.direct[TestLeft, TestJunction](FieldSet("field1"), FieldSet("field1"))
     val rightJunctionLink: Aux[TestRight, TestJunction, Unit] =
       TableLink.direct[TestRight, TestJunction](FieldSet("field1"), FieldSet("field2"))
+
     val link1: Aux[TestLeft, TestRight, TestJunction] =
       TableLink.union(leftJunctionLink, rightJunctionLink)
 
