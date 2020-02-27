@@ -21,6 +21,8 @@ object wrappers {
 
     def empty[A, B, FB <: EntityFilter[FB]]: RelationFilter[A, B, FB] = RelationFilter[A, B, FB](None, None, None)
 
+    def selfEmpty[A, FA <: EntityFilter[FA]]: RelationFilter[A, A, FA] = RelationFilter[A, A, FA](None, None, None)
+
     implicit def decoder[A, B, FB <: EntityFilter[FB]: Decoder]: Decoder[RelationFilter[A, B, FB]] =
       deriveDecoder[RelationFilter[A, B, FB]]
   }

@@ -70,8 +70,8 @@ object TableFunction {
         wt: Witness.Aux[K],
         link: TableLink[A, B],
         tableFilter: TableFilter[B, FB]
-    ): Case.Aux[FieldType[K, V], FieldType[K, Option[String] => Option[Fragment]]] =
-      at[FieldType[K, V]] { ft =>
+    ): Case.Aux[FieldType[K, Option[RelationFilter[A, B, FB]]], FieldType[K, Option[String] => Option[Fragment]]] =
+      at[FieldType[K, Option[RelationFilter[A, B, FB]]]] { ft =>
         field[K]((alias: Option[String]) =>
           ft.flatMap {
             if (link.isJunction) {

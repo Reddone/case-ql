@@ -4,6 +4,7 @@ import java.util.concurrent.Executors
 
 import cats.effect.{Async, Blocker, ContextShift}
 import com.github.reddone.caseql.sql.config.DoobieConfig
+import doobie.HC
 import doobie.util.ExecutionContexts
 import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
@@ -16,6 +17,10 @@ object TestTransactors {
     val Cached: BlockerMode.Value = Value("cached")
     val Fixed: BlockerMode.Value  = Value("fixed")
     val Sync: BlockerMode.Value   = Value("sync")
+  }
+
+  def alwaysRollback[F[_]: Async: ContextShift](xa: Transactor[F]): Transactor[F] = {
+    Transactor.after.set(xa, HC.rollback)
   }
 
   def valueOf[F[_]: Async: ContextShift](config: DoobieConfig, mode: BlockerMode.Value): Aux[F, Unit] = {

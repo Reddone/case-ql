@@ -5,6 +5,7 @@ import java.time.Instant
 
 import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.wrappers.RelationFilter
 import com.github.reddone.caseql.sql.table.TableLink.Aux
 import doobie._
 import doobie.implicits._
@@ -23,10 +24,10 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   implicit val rightTable: Table[TestRight, TestRightKey]          = Table.derive[TestRight, TestRightKey]()
   implicit val junctionTable: Table[TestJunction, TestJunctionKey] = Table.derive[TestJunction, TestJunctionKey]()
 
-  implicit val leftSelfLink: Aux[TestLeft, TestLeft, Unit] = TableLink.self[TestLeft](
-    FieldSet("field1"),
-    FieldSet("field3")
-  )
+//  implicit val leftSelfLink: Aux[TestLeft, TestLeft, Unit] = TableLink.self[TestLeft](
+//    FieldSet("field1"),
+//    FieldSet("field3")
+//  )
   implicit val directLeftLink: Aux[TestDirect, TestLeft, Unit] = TableLink.direct[TestDirect, TestLeft](
     FieldSet("field3"),
     FieldSet("field1")
@@ -317,7 +318,23 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  "TableFilter relation" should "work correctly with a self RelationFilter[_, _, _]" in {}
+  "TableFilter relation" should "work correctly with a self RelationFilter[_, _, _]" in {
+    implicit val tableFilter: TableFilter[TestLeft, TestLeftFilter] = TableFilter.derive[TestLeft, TestLeftFilter]()
+
+    val selfFilter = TestLeftFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+      selfRelation = Some(RelationFilter.selfEmpty[TestLeft, TestLeftFilter].copy(
+        EVERY = Some(TestLeftFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("EVERY"))))),
+        SOME = Some(TestLeftFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("SOME"))))),
+        NONE = Some(TestLeftFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("NONE")))))
+      ))
+    )
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(selfFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe ""
+  }
 
   it should "work correctly with a direct RelationFilter[_, _, _]" in {}
 

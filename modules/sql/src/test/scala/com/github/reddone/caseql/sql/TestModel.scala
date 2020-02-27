@@ -292,6 +292,9 @@ object TestModel {
       OR: Option[Seq[TestLeftFilter]],
       NOT: Option[TestLeftFilter]
   ) extends EntityFilter[TestLeftFilter]
+  object TestLeftFilter {
+    val empty: TestLeftFilter = TestLeftFilter(None, None, None, None, None, None, None, None)
+  }
   // simple filter for direct with relation filter on left
   case class TestDirectFilter(
       field1: Option[StringFilter],
@@ -302,6 +305,9 @@ object TestModel {
       OR: Option[Seq[TestDirectFilter]],
       NOT: Option[TestDirectFilter]
   ) extends EntityFilter[TestDirectFilter]
+  object TestDirectFilter {
+    val empty: TestDirectFilter = TestDirectFilter(None, None, None, None, None, None, None)
+  }
   // simple filter for right with relation filter on left
   case class TestRightFilter(
       field1: Option[LongFilter],
@@ -312,6 +318,9 @@ object TestModel {
       OR: Option[Seq[TestRightFilter]],
       NOT: Option[TestRightFilter]
   ) extends EntityFilter[TestRightFilter]
+  object TestRightFilter {
+    val empty: TestRightFilter = TestRightFilter(None, None, None, None, None, None, None)
+  }
   // simple filter for junction with relation filter on left and right
   case class TestJunctionFilter(
       field1: Option[IntFilter],
@@ -322,4 +331,7 @@ object TestModel {
       OR: Option[Seq[TestJunctionFilter]],
       NOT: Option[TestJunctionFilter]
   ) extends EntityFilter[TestJunctionFilter]
+  object TestJunctionFilter {
+    val empty: TestJunctionFilter = TestJunctionFilter(None, None, None, None, None, None, None)
+  }
 }
