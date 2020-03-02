@@ -100,9 +100,9 @@ class SpecPlayground extends AnyFlatSpec with Matchers {
       TableLink.union(leftJunctionLink, rightJunctionLink)
 
     // table filters
-    implicit val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
       TableFilter.derive[TestRight, TestRightFilter]()
-    implicit val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
       TableFilter.derive[TestLeft, TestLeftFilter]()
   }
 }
