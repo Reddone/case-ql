@@ -100,7 +100,7 @@ object ReprTableFilter extends LowPriorityReprTableFilter {
           filterRepr: FieldType[K, V] :: T
       ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
         headFilter.relationFilterFragments(filterRepr.head)(alias) :::
-          tailFilter.primitiveFilterFragments(filterRepr.tail)(alias)
+          tailFilter.relationFilterFragments(filterRepr.tail)(alias)
       }
     }
 
