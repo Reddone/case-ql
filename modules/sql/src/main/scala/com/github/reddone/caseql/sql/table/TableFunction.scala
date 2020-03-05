@@ -38,15 +38,15 @@ object TableFunction {
 
   // type mappers
 
-  object filterToNamedOptionFragment extends Poly1 {
-    implicit def atOptionFilter[K <: Symbol, V <: Option[Filter[_]]](
-        implicit wt: Witness.Aux[K]
-    ): Case.Aux[FieldType[K, V], FieldType[K, (String, String => Option[Fragment])]] =
-      at[FieldType[K, V]] { ft =>
-        val name = wt.value.name
-        field[K](ft.map(f => (name, f.toOptionFragment _)).getOrElse((name, (_: String) => None)))
-      }
-  }
+//  object filterToNamedOptionFragment extends Poly1 {
+//    implicit def atOptionFilter[K <: Symbol, V <: Option[Filter[_]]](
+//        implicit wt: Witness.Aux[K]
+//    ): Case.Aux[FieldType[K, V], FieldType[K, (String, String => Option[Fragment])]] =
+//      at[FieldType[K, V]] { ft =>
+//        val name = wt.value.name
+//        field[K](ft.map(f => (name, f.toOptionFragment _)).getOrElse((name, (_: String) => None)))
+//      }
+//  }
 
   object modifierToNamedOptionFragment extends Poly1 {
     implicit def atOptionModifier[K <: Symbol, V <: Option[Modifier[_]]](
@@ -58,47 +58,47 @@ object TableFunction {
       }
   }
 
-  object relationFilterToOptionFragment extends Poly1 {
-    implicit def atOptionRelationFilter[
-        A,
-        B,
-        FB <: EntityFilter[FB],
-        K <: Symbol,
-        V <: Option[RelationFilter[A, B, FB]]
-    ](
-        implicit
-        wt: Witness.Aux[K],
-        link: TableLink[A, B],
-        tableFilter: TableFilter[B, FB]
-    ): Case.Aux[FieldType[K, Option[RelationFilter[A, B, FB]]], FieldType[K, Option[String] => Option[Fragment]]] =
-      at[FieldType[K, Option[RelationFilter[A, B, FB]]]] { ft =>
-        field[K]((alias: Option[String]) =>
-          ft.flatMap {
-            if (link.isJunction) {
-              processJunctionRelation(
-                alias,
-                link.leftSyntax,
-                link.rightSyntax,
-                link.junctionSyntax,
-                link.leftJoinFields,
-                link.rightJoinFields,
-                tableFilter
-              )
-            } else {
-              processDirectRelation(
-                alias,
-                link.leftSyntax,
-                link.rightSyntax,
-                link.leftJoinFields,
-                tableFilter
-              )
-            }
-          }
-        )
-      }
-  }
+//  object relationFilterToOptionFragment extends Poly1 {
+//    implicit def atOptionRelationFilter[
+//        A,
+//        B,
+//        FB <: EntityFilter[FB],
+//        K <: Symbol,
+//        V <: Option[RelationFilter[A, B, FB]]
+//    ](
+//        implicit
+//        wt: Witness.Aux[K],
+//        link: TableLink[A, B],
+//        tableFilter: TableFilter[B, FB]
+//    ): Case.Aux[FieldType[K, Option[RelationFilter[A, B, FB]]], FieldType[K, Option[String] => Option[Fragment]]] =
+//      at[FieldType[K, Option[RelationFilter[A, B, FB]]]] { ft =>
+//        field[K]((alias: Option[String]) =>
+//          ft.flatMap {
+//            if (link.isJunction) {
+//              processJunctionRelation(
+//                alias,
+//                link.leftSyntax,
+//                link.rightSyntax,
+//                link.junctionSyntax,
+//                link.leftJoinFields,
+//                link.rightJoinFields,
+//                tableFilter
+//              )
+//            } else {
+//              processDirectRelation(
+//                alias,
+//                link.leftSyntax,
+//                link.rightSyntax,
+//                link.leftJoinFields,
+//                tableFilter
+//              )
+//            }
+//          }
+//        )
+//      }
+//  }
 
-  private def processDirectRelation[A, B, FB <: EntityFilter[FB]](
+  def processDirectRelation[A, B, FB <: EntityFilter[FB]](
       alias: Option[String],
       leftSyntax: TableSyntax[A],
       rightSyntax: TableSyntax[B],
@@ -156,7 +156,7 @@ object TableFunction {
     FragmentUtils.optionalAndOpt(every, some, none)
   }
 
-  private def processJunctionRelation[A, B, C, FB <: EntityFilter[FB]](
+  def processJunctionRelation[A, B, C, FB <: EntityFilter[FB]](
       alias: Option[String],
       leftSyntax: TableSyntax[A],
       rightSyntax: TableSyntax[B],

@@ -1,5 +1,8 @@
 package com.github.reddone.caseql.sql.filter
 
+import com.github.reddone.caseql.sql.table.TableFunction.{processDirectRelation, processJunctionRelation}
+import com.github.reddone.caseql.sql.table.{TableFilter, TableLink}
+import doobie.util.fragment.Fragment
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 
@@ -15,7 +18,35 @@ object wrappers {
       EVERY: Option[FB],
       SOME: Option[FB],
       NONE: Option[FB]
-  )
+  ) {
+    def toOptionFragment(
+        alias: Option[String],
+        tableLink: TableLink[A, B],
+        tableFilter: TableFilter[B, FB]
+    ): Option[Fragment] = {
+      val makeFragment =
+        if (tableLink.isJunction) {
+          processJunctionRelation(
+            alias,
+            tableLink.leftSyntax,
+            tableLink.rightSyntax,
+            tableLink.junctionSyntax,
+            tableLink.leftJoinFields,
+            tableLink.rightJoinFields,
+            tableFilter
+          )
+        } else {
+          processDirectRelation(
+            alias,
+            tableLink.leftSyntax,
+            tableLink.rightSyntax,
+            tableLink.leftJoinFields,
+            tableFilter
+          )
+        }
+      makeFragment(this)
+    }
+  }
 
   object RelationFilter {
 

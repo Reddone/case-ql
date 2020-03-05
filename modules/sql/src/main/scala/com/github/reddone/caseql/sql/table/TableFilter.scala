@@ -56,14 +56,16 @@ object TableFilter {
           lgenFA: LabelledGeneric.Aux[FA, ReprFA],
           tableFilterFA: Lazy[ReprTableFilter[A, ReprA, ReprFA]]
       ): TableFilter[A, FA] = new TableFilter[A, FA] {
-        override def primitiveFilterFragments(filter: FA): Option[String] => List[Option[Fragment]] = {
-          alias: Option[String] =>
-            tableFilterFA.value.primitiveFilterFragments(lgenFA.to(filter))(alias)
+        override def primitiveFilterFragments(
+            filter: FA
+        ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+          tableFilterFA.value.primitiveFilterFragments(lgenFA.to(filter))(alias)
         }
 
-        override def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]] = {
-          alias: Option[String] =>
-            tableFilterFA.value.relationFilterFragments(lgenFA.to(filter))(alias)
+        override def relationFilterFragments(
+            filter: FA
+        ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+          tableFilterFA.value.relationFilterFragments(lgenFA.to(filter))(alias)
         }
       }
     }
@@ -119,12 +121,8 @@ trait LowPriorityReprTableFilter extends LowestPriorityReprTableFilter {
     new ReprTableFilter[A, ReprA, FieldType[K, V]] {
       override def primitiveFilterFragments(
           filterRepr: FieldType[K, V]
-      ): Option[String] => List[Option[Fragment]] = {
-        val name = witness.value.name
-        alias: Option[String] => {
-          val querySyntax = alias.map(tableSyntax.withAlias).getOrElse(tableSyntax)
-          List(filterRepr.flatMap(f => f.toOptionFragment(querySyntax.aliasedColumn(name))))
-        }
+      ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+        List(filterRepr.flatMap(f => f.toOptionFragment(alias, tableSyntax, witness.value.name)))
       }
 
       override def relationFilterFragments(
@@ -146,10 +144,8 @@ trait LowPriorityReprTableFilter extends LowestPriorityReprTableFilter {
 
       override def relationFilterFragments(
           filterRepr: FieldType[K, V]
-      ): Option[String] => List[Option[Fragment]] = {
-        // TODO: copy relation implementation from table function
-        (_: Option[String]) =>
-          Nil
+      ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+        List(filterRepr.flatMap(f => f.toOptionFragment(alias, tableLink, tableFilter.value)))
       }
     }
 
@@ -169,46 +165,33 @@ trait LowestPriorityReprTableFilter {
 
   type AND = Symbol @@ Witness.`"AND"`.T
 
+  type OR = Symbol @@ Witness.`"OR"`.T
+
+  type NOT = Symbol @@ Witness.`"NOT"`.T
+
   implicit def andTableFilter[A, ReprA <: HList, K <: Symbol, V, FA <: EntityFilter[FA]](
       implicit
       witness: Witness.Aux[K],
       keyEvidence: K <:< AND,
       valueEvidence: V <:< Option[Seq[EntityFilter[FA]]]
-  ): ReprTableFilter[A, ReprA, FieldType[K, V]] = new ReprTableFilter[A, ReprA, FieldType[K, V]] {
-    override def primitiveFilterFragments(
-        filterRepr: FieldType[K, V]
-    ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
-
-    override def relationFilterFragments(
-        filterRepr: FieldType[K, V]
-    ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
-  }
-
-  type OR = Symbol @@ Witness.`"OR"`.T
+  ): ReprTableFilter[A, ReprA, FieldType[K, V]] = combinatorTableFilter[A, ReprA, K, V, FA]
 
   implicit def orTableFilter[A, ReprA <: HList, K <: Symbol, V, FA <: EntityFilter[FA]](
       implicit
       witness: Witness.Aux[K],
       keyEvidence: K <:< OR,
       valueEvidence: V <:< Option[Seq[EntityFilter[FA]]]
-  ): ReprTableFilter[A, ReprA, FieldType[K, V]] = new ReprTableFilter[A, ReprA, FieldType[K, V]] {
-    override def primitiveFilterFragments(
-        filterRepr: FieldType[K, V]
-    ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
-
-    override def relationFilterFragments(
-        filterRepr: FieldType[K, V]
-    ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
-  }
-
-  type NOT = Symbol @@ Witness.`"NOT"`.T
+  ): ReprTableFilter[A, ReprA, FieldType[K, V]] = combinatorTableFilter[A, ReprA, K, V, FA]
 
   implicit def notTableFilter[A, ReprA <: HList, K <: Symbol, V, FA <: EntityFilter[FA]](
       implicit
       witness: Witness.Aux[K],
       keyEvidence: K <:< NOT,
       valueEvidence: V <:< Option[EntityFilter[FA]]
-  ): ReprTableFilter[A, ReprA, FieldType[K, V]] = new ReprTableFilter[A, ReprA, FieldType[K, V]] {
+  ): ReprTableFilter[A, ReprA, FieldType[K, V]] = combinatorTableFilter[A, ReprA, K, V, FA]
+
+  private def combinatorTableFilter[A, ReprA <: HList, K <: Symbol, V, FA <: EntityFilter[FA]]
+      : ReprTableFilter[A, ReprA, FieldType[K, V]] = new ReprTableFilter[A, ReprA, FieldType[K, V]] {
     override def primitiveFilterFragments(
         filterRepr: FieldType[K, V]
     ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
