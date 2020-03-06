@@ -54,18 +54,18 @@ object TableFilter {
           implicit
           lgenA: LabelledGeneric.Aux[A, ReprA],
           lgenFA: LabelledGeneric.Aux[FA, ReprFA],
-          tableFilterFA: Lazy[ReprTableFilter[A, ReprA, ReprFA]]
+          tableFilter: Lazy[ReprTableFilter[A, ReprA, ReprFA]]
       ): TableFilter[A, FA] = new TableFilter[A, FA] {
         override def primitiveFilterFragments(
             filter: FA
         ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
-          tableFilterFA.value.primitiveFilterFragments(lgenFA.to(filter))(alias)
+          tableFilter.value.primitiveFilterFragments(lgenFA.to(filter))(alias)
         }
 
         override def relationFilterFragments(
             filter: FA
         ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
-          tableFilterFA.value.relationFilterFragments(lgenFA.to(filter))(alias)
+          tableFilter.value.relationFilterFragments(lgenFA.to(filter))(alias)
         }
       }
     }
@@ -201,109 +201,3 @@ trait LowestPriorityReprTableFilter {
     ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
   }
 }
-
-//object TableFilter {
-//
-//  def apply[A, FA <: EntityFilter[FA]](implicit ev: TableFilter[A, FA]): TableFilter[A, FA] = ev
-//
-//  object derive {
-//
-//    def apply[A, FA <: EntityFilter[FA]] = new Partial[A, FA]
-//
-//    class Partial[A, FA <: EntityFilter[FA]] {
-//
-//      def apply[ReprA <: HList, ReprFA <: HList]()(
-//          implicit
-//          lgenA: LabelledGeneric.Aux[A, ReprA],
-//          lgenFA: LabelledGeneric.Aux[FA, ReprFA],
-//          entityFilterFA: Lazy[ReprEntityFilter[A, ReprA, ReprFA]],
-//          relationFilterFA: Lazy[ReprRelationFilter[A, ReprFA]]
-//      ): TableFilter[A, FA] = new TableFilter[A, FA] {
-//        override def primitiveFilterFragments(filter: FA): Option[String] => List[Option[Fragment]] = {
-//          entityFilterFA.value.primitiveFilterFragments(lgenFA.to(filter))
-//        }
-//        override def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]] = {
-//          relationFilterFA.value.relationFilterFragments(lgenFA.to(filter))
-//        }
-//      }
-//    }
-//  }
-//}
-//
-//trait ReprEntityFilter[A, ReprA <: HList, ReprFA <: HList] {
-//  def primitiveFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
-//}
-//
-//object ReprEntityFilter {
-//
-//  type OptionFilter[A] = Option[Filter[A]]
-//
-//  implicit def derive[
-//      A,
-//      ReprA <: HList,
-//      KeysA <: HList,
-//      ValuesA <: HList,
-//      WrappedValuesA <: HList,
-//      ZippedA <: HList,
-//      ReprFA <: HList,
-//      FilterFA <: HList,
-//      FragmentFA <: HList,
-//      AlignedFilterFA <: HList
-//  ](
-//      implicit
-//      tableSyntaxA: TableSyntax[A],
-//      keysA: ops.record.Keys.Aux[ReprA, KeysA],
-//      valuesA: ops.record.Values.Aux[ReprA, ValuesA],
-//      wrappedValuesA: ops.hlist.Mapped.Aux[ValuesA, OptionFilter, WrappedValuesA],
-//      zippedA: ops.hlist.ZipWithKeys.Aux[KeysA, WrappedValuesA, ZippedA],
-//      filtersA: ops.hlist.FlatMapper.Aux[extractFilter.type, ReprFA, FilterFA],
-//      fragmentsFA: ops.hlist.Mapper.Aux[filterToNamedOptionFragment.type, FilterFA, FragmentFA],
-//      toListFragmentsFA: ops.hlist.ToList[FragmentFA, (String, String => Option[Fragment])],
-//      alignedFA: ops.record.AlignByKeys.Aux[FilterFA, KeysA, AlignedFilterFA],
-//      isSubtypeFA: <:<[AlignedFilterFA, ZippedA]
-//  ): ReprEntityFilter[A, ReprA, ReprFA] = new ReprEntityFilter[A, ReprA, ReprFA] {
-//    override def primitiveFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] =
-//      (alias: Option[String]) => {
-//        val querySyntax = alias.map(tableSyntaxA.withAlias).getOrElse(tableSyntaxA)
-//        filterRepr
-//          .flatMap(extractFilter)
-//          .map(filterToNamedOptionFragment)
-//          .toList
-//          .map {
-//            case (field, makeFragment) =>
-//              val column   = querySyntax.aliasedColumn(field)
-//              val fragment = makeFragment(column)
-//              fragment
-//          }
-//      }
-//  }
-//}
-//
-//trait ReprRelationFilter[A, ReprFA <: HList] {
-//  def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
-//}
-//
-//object ReprRelationFilter {
-//
-//  implicit def derive[
-//      A,
-//      ReprFA <: HList,
-//      RelationFilterFA <: HList,
-//      FragmentFA <: HList
-//  ](
-//      implicit
-//      relationFiltersFA: ops.hlist.FlatMapper.Aux[extractRelationFilter.type, ReprFA, RelationFilterFA],
-//      // TODO: use A to check that every RelationFilter is in the form RelationFilter[A, _, _]
-//      // TODO: B and FB inside RelationFilter can be anything, the mapper will validate them later
-//      fragmentsFA: ops.hlist.Mapper.Aux[relationFilterToOptionFragment.type, RelationFilterFA, FragmentFA],
-//      toListFragmentsFA: ops.hlist.ToList[FragmentFA, Option[String] => Option[Fragment]]
-//  ): ReprRelationFilter[A, ReprFA] = new ReprRelationFilter[A, ReprFA] {
-//    override def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]] =
-//      (alias: Option[String]) =>
-//        filterRepr
-//          .flatMap(extractRelationFilter)
-//          .map(relationFilterToOptionFragment)
-//          .toList
-//          .map(_.apply(alias))
-//  }
-//}

@@ -5,7 +5,7 @@ import shapeless.{HList, ops}
 trait FieldSelection[ReprA <: HList, ReprK <: HList] {
   type Values <: HList
 
-  def fields(kRepr: ReprK): List[String]
+  def fields(fieldsRepr: ReprK): List[String]
 }
 
 object FieldSelection {
@@ -14,13 +14,13 @@ object FieldSelection {
     type Values = Values0
   }
 
-  implicit def derive[ReprA <: HList, ReprK <: HList, SelectedAK <: HList](
+  implicit def derive[ReprA <: HList, ReprK <: HList, Selected <: HList](
       implicit
-      selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, SelectedAK],
-      toListK: ops.hlist.ToList[ReprK, Symbol]
-  ): Aux[ReprA, ReprK, SelectedAK] = new FieldSelection[ReprA, ReprK] {
-    override type Values = SelectedAK
+      selectAll: ops.record.SelectAll.Aux[ReprA, ReprK, Selected],
+      toList: ops.hlist.ToList[ReprK, Symbol]
+  ): Aux[ReprA, ReprK, Selected] = new FieldSelection[ReprA, ReprK] {
+    override type Values = Selected
 
-    override def fields(kRepr: ReprK): List[String] = kRepr.toList.map(_.name)
+    override def fields(fieldsRepr: ReprK): List[String] = fieldsRepr.toList.map(_.name)
   }
 }

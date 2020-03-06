@@ -19,7 +19,7 @@ object models {
 
   trait Filter[T] {
 
-    def processPrimitive(column: String): Option[Fragment]
+    def processPrimitiveFilter(column: String): Option[Fragment]
 
     final def toOptionFragment[A](
         alias: Option[String],
@@ -28,7 +28,7 @@ object models {
     ): Option[Fragment] = {
       val querySyntax = alias.map(tableSyntax.withAlias).getOrElse(tableSyntax)
       val column      = querySyntax.aliasedColumn(field)
-      processPrimitive(column)
+      processPrimitiveFilter(column)
     }
   }
 
@@ -46,7 +46,7 @@ object models {
       GT: Option[T],
       GTE: Option[T]
   ) extends Filter[T] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -69,7 +69,7 @@ object models {
       GTE: Option[T],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[T] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -94,7 +94,7 @@ object models {
       GT: Option[T],
       GTE: Option[T]
   ) extends Filter[T] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -117,7 +117,7 @@ object models {
       GTE: Option[T],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[T] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -142,7 +142,7 @@ object models {
       GT: Option[T],
       GTE: Option[T]
   ) extends Filter[T] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -165,7 +165,7 @@ object models {
       GTE: Option[T],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[T] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -186,7 +186,7 @@ object models {
       IN: Option[Seq[E]],
       NOT_IN: Option[Seq[E]]
   ) extends Filter[E] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -211,7 +211,7 @@ object models {
       NOT_IN: Option[Seq[E]],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[E] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -235,7 +235,7 @@ object models {
   final case class BooleanFilter(
       EQ: Option[Boolean]
   ) extends Filter[Boolean] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ)
     )
   }
@@ -252,7 +252,7 @@ object models {
       EQ: Option[Boolean],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[Boolean] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.isNull(column, IS_NULL)
     )
@@ -272,7 +272,7 @@ object models {
       EQ: Option[Byte],
       NOT_EQ: Option[Byte]
   ) extends Filter[Byte] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ)
     )
@@ -291,7 +291,7 @@ object models {
       NOT_EQ: Option[Byte],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[Byte] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.isNull(column, IS_NULL)
@@ -312,7 +312,7 @@ object models {
       EQ: Option[Array[Byte]],
       NOT_EQ: Option[Array[Byte]]
   ) extends Filter[Array[Byte]] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ)
     )
@@ -331,7 +331,7 @@ object models {
       NOT_EQ: Option[Array[Byte]],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[Array[Byte]] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.isNull(column, IS_NULL)
@@ -538,7 +538,7 @@ object models {
       CONTAINS_SOME: Option[Seq[String]],
       CONTAINS_NONE: Option[Seq[String]]
   ) extends Filter[String] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
@@ -571,7 +571,7 @@ object models {
       CONTAINS_NONE: Option[Seq[String]],
       IS_NULL: Option[Boolean]
   ) extends FilterOption[String] {
-    override def processPrimitive(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
+    override def processPrimitiveFilter(column: String): Option[Fragment] = FragmentUtils.optionalAndOpt(
       ops.eq(column, EQ),
       ops.notEq(column, NOT_EQ),
       ops.in(column, IN),
