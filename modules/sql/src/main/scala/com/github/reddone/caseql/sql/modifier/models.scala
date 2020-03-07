@@ -8,6 +8,7 @@ import com.github.reddone.caseql.sql.util.CirceDecoders._
 import doobie._
 import doobie.implicits._
 import Fragment._
+import com.github.reddone.caseql.sql.table.TableSyntax
 import javasql._
 import javatime._
 import io.circe.Decoder
@@ -31,7 +32,15 @@ object models {
   }
 
   trait Modifier[T] {
-    def toFragment: Fragment
+    def processPrimitiveModifier: Fragment
+
+    final def toNamedFragment[A](
+        tableSyntax: TableSyntax[A],
+        field: String
+    ): (String, Fragment) = {
+      val column = tableSyntax.aliasedColumn(field)
+      (column, processPrimitiveModifier)
+    }
   }
 
   type ModifierOption[T] = Modifier[Option[T]]
@@ -42,7 +51,7 @@ object models {
       action: ModifierAction.Value,
       value: Option[T]
   ) extends Modifier[T] {
-    override def toFragment: Fragment = action match {
+    override def processPrimitiveModifier: Fragment = action match {
       case ModifierAction.Default =>
         const(tokens.Default)
       case ModifierAction.Set =>
@@ -55,7 +64,7 @@ object models {
       action: ModifierOptionAction.Value,
       value: Option[T]
   ) extends ModifierOption[T] {
-    override def toFragment: Fragment = action match {
+    override def processPrimitiveModifier: Fragment = action match {
       case ModifierOptionAction.Default =>
         const(tokens.Default)
       case ModifierOptionAction.Set =>

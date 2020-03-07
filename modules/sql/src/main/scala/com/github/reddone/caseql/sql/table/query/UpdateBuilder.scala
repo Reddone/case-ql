@@ -28,7 +28,7 @@ sealed abstract class UpdateBuilder[S <: UpdateBuilderState, A, K](
       tableModifier: TableModifier[A, MA]
   ): UpdateBuilder[S with UpdateHasModifier, A, K] = {
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)
+      .primitiveModifierNamedFragments(modifier)
       .filter(_._2.nonEmpty)
       .map {
         case (column, modifier) => (column, modifier.get)

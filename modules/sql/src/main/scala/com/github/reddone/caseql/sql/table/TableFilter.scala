@@ -8,8 +8,6 @@ import shapeless.labelled.FieldType
 import shapeless.tag.@@
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness, ops}
 
-import scala.collection.mutable.ListBuffer
-
 trait TableFilter[A, FA <: EntityFilter[FA]] {
   def primitiveFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
   def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
@@ -59,13 +57,13 @@ object TableFilter {
         override def primitiveFilterFragments(
             filter: FA
         ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
-          tableFilter.value.primitiveFilterFragments(lgenFA.to(filter))(alias)
+          tableFilter.value.primitiveFilterFragments(lgenFA.to(filter))(alias).reverse
         }
 
         override def relationFilterFragments(
             filter: FA
         ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
-          tableFilter.value.relationFilterFragments(lgenFA.to(filter))(alias)
+          tableFilter.value.relationFilterFragments(lgenFA.to(filter))(alias).reverse
         }
       }
     }
@@ -73,9 +71,6 @@ object TableFilter {
 }
 
 trait ReprTableFilter[A, ReprA <: HList, ReprFA] {
-  val primitiveBuffer: ListBuffer[Option[Fragment]]      = ListBuffer.empty[Option[Fragment]]
-  val relationFilterBuffer: ListBuffer[Option[Fragment]] = ListBuffer.empty[Option[Fragment]]
-
   def primitiveFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
   def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
 }
@@ -84,7 +79,7 @@ object ReprTableFilter extends LowPriorityReprTableFilter {
 
   def pass: Option[String] => List[Option[Fragment]] = (_: Option[String]) => Nil
 
-  implicit def hlistTableFilter[A, ReprA <: HList, K <: Symbol, V, T <: HList](
+  implicit def hconsTableFilter[A, ReprA <: HList, K <: Symbol, V, T <: HList](
       implicit
       witness: Witness.Aux[K],
       headFilter: ReprTableFilter[A, ReprA, FieldType[K, V]],
@@ -94,18 +89,17 @@ object ReprTableFilter extends LowPriorityReprTableFilter {
       override def primitiveFilterFragments(
           filterRepr: FieldType[K, V] :: T
       ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
-        headFilter.primitiveFilterFragments(filterRepr.head)(alias) :::
-          tailFilter.primitiveFilterFragments(filterRepr.tail)(alias)
+        tailFilter.primitiveFilterFragments(filterRepr.tail)(alias) ++
+          headFilter.primitiveFilterFragments(filterRepr.head)(alias)
       }
 
       override def relationFilterFragments(
           filterRepr: FieldType[K, V] :: T
       ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
-        headFilter.relationFilterFragments(filterRepr.head)(alias) :::
-          tailFilter.relationFilterFragments(filterRepr.tail)(alias)
+        tailFilter.relationFilterFragments(filterRepr.tail)(alias) ++
+          headFilter.relationFilterFragments(filterRepr.head)(alias)
       }
     }
-
 }
 
 trait LowPriorityReprTableFilter extends LowestPriorityReprTableFilter {

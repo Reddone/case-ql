@@ -1,18 +1,14 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.filter.models.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.modifier.models.Modifier
 import com.github.reddone.caseql.sql.tokens._
 import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
 import doobie._
 import Fragment._
-import shapeless.labelled.{FieldType, field}
+import shapeless.labelled.FieldType
 import shapeless.{::, HNil, Poly1, Witness}
 
-object TableFunction {
-
-  // type extractors
+object RelationHelper {
 
   trait extract[T] extends skip {
     implicit def atType[K <: Symbol, V <: T](
@@ -25,80 +21,7 @@ object TableFunction {
     implicit def atDefault[T]: Case.Aux[T, HNil] = at[T](_ => HNil)
   }
 
-  object extractFilter extends extract[Option[Filter[_]]]
-
-  object extractModifier extends extract[Option[Modifier[_]]]
-
-  object extractRelationFilter extends skip {
-    implicit def atType[A, B, FB <: EntityFilter[FB], K <: Symbol, V <: RelationFilter[A, B, FB]](
-        implicit wt: Witness.Aux[K]
-    ): Case.Aux[FieldType[K, V], FieldType[K, V] :: HNil] =
-      at[FieldType[K, V]](_ :: HNil)
-  }
-
-  // type mappers
-
-//  object filterToNamedOptionFragment extends Poly1 {
-//    implicit def atOptionFilter[K <: Symbol, V <: Option[Filter[_]]](
-//        implicit wt: Witness.Aux[K]
-//    ): Case.Aux[FieldType[K, V], FieldType[K, (String, String => Option[Fragment])]] =
-//      at[FieldType[K, V]] { ft =>
-//        val name = wt.value.name
-//        field[K](ft.map(f => (name, f.toOptionFragment _)).getOrElse((name, (_: String) => None)))
-//      }
-//  }
-
-  object modifierToNamedOptionFragment extends Poly1 {
-    implicit def atOptionModifier[K <: Symbol, V <: Option[Modifier[_]]](
-        implicit wt: Witness.Aux[K]
-    ): Case.Aux[FieldType[K, V], FieldType[K, (String, Option[Fragment])]] =
-      at[FieldType[K, V]] { ft =>
-        val name = wt.value.name
-        field[K](ft.map(f => (name, Some(f.toFragment))).getOrElse((name, None)))
-      }
-  }
-
-//  object relationFilterToOptionFragment extends Poly1 {
-//    implicit def atOptionRelationFilter[
-//        A,
-//        B,
-//        FB <: EntityFilter[FB],
-//        K <: Symbol,
-//        V <: Option[RelationFilter[A, B, FB]]
-//    ](
-//        implicit
-//        wt: Witness.Aux[K],
-//        link: TableLink[A, B],
-//        tableFilter: TableFilter[B, FB]
-//    ): Case.Aux[FieldType[K, Option[RelationFilter[A, B, FB]]], FieldType[K, Option[String] => Option[Fragment]]] =
-//      at[FieldType[K, Option[RelationFilter[A, B, FB]]]] { ft =>
-//        field[K]((alias: Option[String]) =>
-//          ft.flatMap {
-//            if (link.isJunction) {
-//              processJunctionRelation(
-//                alias,
-//                link.leftSyntax,
-//                link.rightSyntax,
-//                link.junctionSyntax,
-//                link.leftJoinFields,
-//                link.rightJoinFields,
-//                tableFilter
-//              )
-//            } else {
-//              processDirectRelation(
-//                alias,
-//                link.leftSyntax,
-//                link.rightSyntax,
-//                link.leftJoinFields,
-//                tableFilter
-//              )
-//            }
-//          }
-//        )
-//      }
-//  }
-
-  def processDirectRelation[A, B, FB <: EntityFilter[FB]](
+  def processDirectRelationFilter[A, B, FB <: EntityFilter[FB]](
       alias: Option[String],
       leftSyntax: TableSyntax[A],
       rightSyntax: TableSyntax[B],
@@ -156,7 +79,7 @@ object TableFunction {
     FragmentUtils.optionalAndOpt(every, some, none)
   }
 
-  def processJunctionRelation[A, B, C, FB <: EntityFilter[FB]](
+  def processJunctionRelationFilter[A, B, C, FB <: EntityFilter[FB]](
       alias: Option[String],
       leftSyntax: TableSyntax[A],
       rightSyntax: TableSyntax[B],

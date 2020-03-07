@@ -42,13 +42,13 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] =
     TableLink.union(leftJunctionLink, rightJunctionLink)
 
-//  "TableFilter derivation" should "compile in the simple case" in {
-//    """TableFilter.derive[Test, TestFilter]()""" should compile
-//  }
-//
-//  it should "compile in the unordered case" in {
-//    """TableFilter.derive[Test, TestFilterUnordered]()""" should compile
-//  }
+  "TableFilter derivation" should "compile in the simple case" in {
+    """TableFilter.derive[Test, TestFilter]()""" should compile
+  }
+
+  it should "compile in the unordered case" in {
+    """TableFilter.derive[Test, TestFilterUnordered]()""" should compile
+  }
 //
 //  it should "compile in the other case" in {
 //    """TableFilter.derive[Test, TestFilterOther]()""" should compile
@@ -110,42 +110,6 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None,
       Some("Fragment(\"(a2.field1 = ? ) AND (a2.field1 IN (?, ?) ) \")")
     )
-
-//    val tableFilter3: TableFilter[Test, TestFilterOther] =
-//      TableFilter.derive[Test, TestFilterOther]()
-//    val filter3 = TestFilterOther.empty.copy(
-//      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3)))),
-//      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
-//      otherField1 = "5",
-//      otherField2 = Seq(6)
-//    )
-//    val alias3  = "a3"
-//    val result3 = tableFilter3.primitiveFilterFragments(filter3)
-//
-//    result3(Some(alias3)).map(_.map(_.toString)) shouldBe List(
-//      Some("Fragment(\"(a3.field1 = ? ) AND (a3.field1 IN (?, ?) ) \")"),
-//      Some("Fragment(\"(a3.field2 LIKE %?% ) \")"),
-//      None,
-//      None
-//    )
-//
-//    val tableFilter4: TableFilter[Test, TestFilterOtherUnordered] =
-//      TableFilter.derive[Test, TestFilterOtherUnordered]()
-//    val filter4 = TestFilterOtherUnordered.empty.copy(
-//      otherField2 = Seq(6),
-//      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
-//      otherField1 = "5",
-//      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3))))
-//    )
-//    val alias4  = "a4"
-//    val result4 = tableFilter4.primitiveFilterFragments(filter4)
-//
-//    result4(Some(alias4)).map(_.map(_.toString)) shouldBe List(
-//      None,
-//      Some("Fragment(\"(a4.field2 LIKE %?% ) \")"),
-//      None,
-//      Some("Fragment(\"(a4.field1 = ? ) AND (a4.field1 IN (?, ?) ) \")")
-//    )
   }
 
   "TableFilter combinator" should "work correctly with an empty EntityFilter[_]" in {

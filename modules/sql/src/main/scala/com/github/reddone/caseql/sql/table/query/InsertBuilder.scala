@@ -25,7 +25,7 @@ sealed abstract class InsertBuilder[S <: InsertBuilderState, A, K](
       tableModifier: TableModifier[A, MA]
   ): InsertBuilder[S with InsertHasModifier, A, K] = {
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)
+      .primitiveModifierNamedFragments(modifier)
       .map {
         case (column, Some(modifier)) => (column, modifier)       // one of VALUE, NULL, DEFAULT
         case (column, None)           => (column, const(Default)) // replace None with DEFAULT
