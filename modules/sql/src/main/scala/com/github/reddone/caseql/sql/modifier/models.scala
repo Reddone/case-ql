@@ -33,14 +33,6 @@ object models {
 
   trait Modifier[T] {
     def processPrimitiveModifier: Fragment
-
-    final def toNamedFragment[A](
-        tableSyntax: TableSyntax[A],
-        field: String
-    ): (String, Fragment) = {
-      val column = tableSyntax.aliasedColumn(field)
-      (column, processPrimitiveModifier)
-    }
   }
 
   type ModifierOption[T] = Modifier[Option[T]]

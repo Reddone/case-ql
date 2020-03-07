@@ -223,6 +223,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a deeply nested EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
+    // danger: a LISP enthusiast may want to test a deeper filter
     val deepFilter = TestFilter.empty.copy(OR = Some(
       Seq(
         TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(11)))),
