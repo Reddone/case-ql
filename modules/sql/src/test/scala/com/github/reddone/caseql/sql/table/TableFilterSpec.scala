@@ -17,11 +17,16 @@ import shapeless.test.illTyped
 
 class TableFilterSpec extends AnyFlatSpec with Matchers {
 
-  implicit val table: Table[Test, TestKey]                         = Table.derive[Test, TestKey]()
-  implicit val leftTable: Table[TestLeft, TestLeftKey]             = Table.derive[TestLeft, TestLeftKey]()
-  implicit val directTable: Table[TestDirect, TestDirectKey]       = Table.derive[TestDirect, TestDirectKey]()
-  implicit val rightTable: Table[TestRight, TestRightKey]          = Table.derive[TestRight, TestRightKey]()
-  implicit val junctionTable: Table[TestJunction, TestJunctionKey] = Table.derive[TestJunction, TestJunctionKey]()
+  implicit val table: Table[Test, TestKey] =
+    Table.derive[Test, TestKey](useTableAlias = false)
+  implicit val leftTable: Table[TestLeft, TestLeftKey] =
+    Table.derive[TestLeft, TestLeftKey](useTableAlias = false)
+  implicit val directTable: Table[TestDirect, TestDirectKey] =
+    Table.derive[TestDirect, TestDirectKey](useTableAlias = false)
+  implicit val rightTable: Table[TestRight, TestRightKey] =
+    Table.derive[TestRight, TestRightKey](useTableAlias = false)
+  implicit val junctionTable: Table[TestJunction, TestJunctionKey] =
+    Table.derive[TestJunction, TestJunctionKey](useTableAlias = false)
 
   implicit val leftSelfLink: Aux[TestLeft, TestLeft, Unit] = TableLink.self[TestLeft](
     FieldSet("field1"),
@@ -49,34 +54,34 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "compile in the unordered case" in {
     """TableFilter.derive[Test, TestFilterUnordered]()""" should compile
   }
-//
-//  it should "compile in the other case" in {
-//    """TableFilter.derive[Test, TestFilterOther]()""" should compile
-//  }
-//
-//  it should "compile in the other unordered case" in {
-//    """TableFilter.derive[Test, TestFilterOtherUnordered]()""" should compile
-//  }
-//
-//  it should "not compile in the plus case" in {
-//    """TableFilter.derive[Test, TestFilterPlus]()""" shouldNot compile
-//    illTyped { """TableFilter.derive[Test, TestFilterPlus]()""" }
-//  }
-//
-//  it should "not compile in the plus unordered case" in {
-//    """TableFilter.derive[Test, TestFilterPlusUnordered]()""" shouldNot compile
-//    illTyped { """TableFilter.derive[Test, TestFilterPlusUnordered]()""" }
-//  }
-//
-//  it should "not compile in the less case" in {
-//    """TableFilter.derive[Test, TestFilterLess]()""" shouldNot compile
-//    illTyped { """TableFilter.derive[Test, TestFilterLess]()""" }
-//  }
-//
-//  it should "not compile in the less unordered case" in {
-//    """TableFilter.derive[Test, TestFilterLessUnordered]()""" shouldNot compile
-//    illTyped { """TableFilter.derive[Test, TestFilterLessUnordered]()""" }
-//  }
+
+  it should "not compile in the other case" in {
+    """TableFilter.derive[Test, TestFilterOther]()""" shouldNot compile
+    illTyped { """TableFilter.derive[Test, TestFilterOther]()""" }
+  }
+
+  it should "not compile in the other unordered case" in {
+    """TableFilter.derive[Test, TestFilterOtherUnordered]()""" shouldNot compile
+    illTyped { """TableFilter.derive[Test, TestFilterOtherUnordered]()""" }
+  }
+
+  it should "not compile in the plus case" in {
+    """TableFilter.derive[Test, TestFilterPlus]()""" shouldNot compile
+    illTyped { """TableFilter.derive[Test, TestFilterPlus]()""" }
+  }
+
+  it should "not compile in the plus unordered case" in {
+    """TableFilter.derive[Test, TestFilterPlusUnordered]()""" shouldNot compile
+    illTyped { """TableFilter.derive[Test, TestFilterPlusUnordered]()""" }
+  }
+
+  it should "compile in the less case" in {
+    """TableFilter.derive[Test, TestFilterLess]()""" should compile
+  }
+
+  it should "compile in the less unordered case" in {
+    """TableFilter.derive[Test, TestFilterLessUnordered]()""" should compile
+  }
 
   "TableFilter typeclass" should "work correctly with EntityFilter[_]" in {
     val tableFilter1: TableFilter[Test, TestFilter] =
@@ -304,12 +309,51 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     val result = leftTableFilter.byFilterFragment(selfFilter, Some(alias))
 
     result shouldBe defined
-    result.get.toString shouldBe ""
+    result.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN SELF RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left x2 WHERE a1.field1 = x2.field3 AND (((x2.field2 = ? ) ) ) ) " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left x2 WHERE a1.field1 = x2.field3) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (SELECT 1 FROM test_left x2 WHERE a1.field1 = x2.field3 AND (((x2.field2 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (SELECT 1 FROM test_left x2 WHERE a1.field1 = x2.field3 AND (((x2.field2 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END SELF RELATION
+      ") " +
+      "\")"
   }
 
-  it should "work correctly with a direct RelationFilter[_, _, _]" in {}
+  it should "work correctly with a direct RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
+    implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
+      TableFilter.derive[TestDirect, TestDirectFilter]()
+  }
 
-  it should "work correctly with a junction RelationFilter[_, _, _]" in {}
+  it should "work correctly with a junction RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
+  }
 
-  it should "work correctly with a nested RelationFilter[_, _, _]" in {}
+  it should "work correctly with a nested RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
+    implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
+      TableFilter.derive[TestDirect, TestDirectFilter]()
+  }
 }

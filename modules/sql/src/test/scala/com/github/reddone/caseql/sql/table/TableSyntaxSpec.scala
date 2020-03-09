@@ -10,12 +10,13 @@ import org.scalatest.matchers.should.Matchers
 
 class TableSyntaxSpec extends AnyFlatSpec with Matchers {
 
-  val table1: Table[Test, TestKey] = Table.derive[Test, TestKey]()
+  val table1: Table[Test, TestKey] = Table.derive[Test, TestKey](useTableAlias = false)
   val table2: Table[Test, TestKey] = Table.derive[Test, TestKey](
     Some("test_name"),
     Some("test_schema"),
     Map("field1" -> "field_1", "field2" -> "field_2"),
-    str => str.toUpperCase
+    str => str.toUpperCase,
+    useTableAlias = false
   )
 
   "TableSyntax implicit resolution" should "compile" in {

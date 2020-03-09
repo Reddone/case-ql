@@ -12,44 +12,44 @@ import shapeless.test.illTyped
 
 class TableModifierSpec extends AnyFlatSpec with Matchers {
 
-  implicit val table: Table[Test, TestKey] = Table.derive[Test, TestKey]()
+  implicit val table: Table[Test, TestKey] = Table.derive[Test, TestKey](useTableAlias = false)
   val syntax: TableSyntax[Test]            = table.syntax
 
-//  "TableModifier derivation" should "compile in the simple case" in {
-//    """TableModifier.derive[Test, TestModifier]()""" should compile
-//  }
-//
-//  it should "compile in the unordered case" in {
-//    """TableModifier.derive[Test, TestModifierUnordered]()""" should compile
-//  }
-//
-//  it should "compile in the other case" in {
-//    """TableModifier.derive[Test, TestModifierOther]()""" should compile
-//  }
-//
-//  it should "compile in the other unordered case" in {
-//    """TableModifier.derive[Test, TestModifierOtherUnordered]()""" should compile
-//  }
-//
-//  it should "not compile in the plus case" in {
-//    """TableModifier.derive[Test, TestModifierPlus]()""" shouldNot compile
-//    illTyped { """TableModifier.derive[Test, TestModifierPlus]()""" }
-//  }
-//
-//  it should "not compile in the plus unordered case" in {
-//    """TableModifier.derive[Test, TestModifierPlusUnordered]()""" shouldNot compile
-//    illTyped { """TableModifier.derive[Test, TestModifierPlusUnordered]()""" }
-//  }
-//
-//  it should "not compile in the less case" in {
-//    """TableModifier.derive[Test, TestModifierLess]()""" shouldNot compile
-//    illTyped { """TableModifier.derive[Test, TestModifierLess]()""" }
-//  }
-//
-//  it should "not compile in the less unordered case" in {
-//    """TableModifier.derive[Test, TestModifierLessUnordered]()""" shouldNot compile
-//    illTyped { """TableModifier.derive[Test, TestModifierLessUnordered]()""" }
-//  }
+  "TableModifier derivation" should "compile in the simple case" in {
+    """TableModifier.derive[Test, TestModifier]()""" should compile
+  }
+
+  it should "compile in the unordered case" in {
+    """TableModifier.derive[Test, TestModifierUnordered]()""" should compile
+  }
+
+  it should "not compile in the other case" in {
+    """TableModifier.derive[Test, TestModifierOther]()""" shouldNot compile
+    illTyped { """TableModifier.derive[Test, TestModifierOther]()""" }
+  }
+
+  it should "not compile in the other unordered case" in {
+    """TableModifier.derive[Test, TestModifierOtherUnordered]()""" shouldNot compile
+    illTyped { """TableModifier.derive[Test, TestModifierOtherUnordered]()""" }
+  }
+
+  it should "not compile in the plus case" in {
+    """TableModifier.derive[Test, TestModifierPlus]()""" shouldNot compile
+    illTyped { """TableModifier.derive[Test, TestModifierPlus]()""" }
+  }
+
+  it should "not compile in the plus unordered case" in {
+    """TableModifier.derive[Test, TestModifierPlusUnordered]()""" shouldNot compile
+    illTyped { """TableModifier.derive[Test, TestModifierPlusUnordered]()""" }
+  }
+
+  it should "compile in the less case" in {
+    """TableModifier.derive[Test, TestModifierLess]()""" should compile
+  }
+
+  it should "compile in the less unordered case" in {
+    """TableModifier.derive[Test, TestModifierLessUnordered]()""" should compile
+  }
 
   "TableModifier typeclass" should "work correctly with EntityModifier[_]" in {
     val tableModifier1: TableModifier[Test, TestModifier] =

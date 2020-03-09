@@ -12,7 +12,7 @@ import org.scalatest.matchers.should.Matchers
 
 class TableQuerySpec extends AnyFlatSpec with Matchers {
 
-  implicit val table: Table[Test, TestKey]                      = Table.derive[Test, TestKey]()
+  implicit val table: Table[Test, TestKey]                      = Table.derive[Test, TestKey](useTableAlias = false)
   implicit val tableFilter: TableFilter[Test, TestFilter]       = TableFilter.derive[Test, TestFilter]()
   implicit val tableModifier: TableModifier[Test, TestModifier] = TableModifier.derive[Test, TestModifier]()
 

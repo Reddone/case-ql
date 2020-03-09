@@ -69,7 +69,7 @@ object TestModel {
   object TestFilterUnordered {
     val empty: TestFilterUnordered = TestFilterUnordered(None, None, None, None, None, None, None)
   }
-  // with other fields, should compile
+  // with other fields, should not compile
   case class TestFilterOther(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
@@ -84,7 +84,7 @@ object TestModel {
   object TestFilterOther {
     val empty: TestFilterOther = TestFilterOther(None, None, None, None, "", Seq.empty, None, None, None)
   }
-  // with other fields and unordered, should compile
+  // with other fields and unordered, should not compile
   case class TestFilterOtherUnordered(
       otherField2: Seq[Int],
       field4: Option[TimestampFilterOption],
@@ -128,7 +128,7 @@ object TestModel {
   object TestFilterPlusUnordered {
     val empty: TestFilterPlusUnordered = TestFilterPlusUnordered(None, None, None, None, None, None, None, None)
   }
-  // one less field, should not compile
+  // one less field, should compile
   case class TestFilterLess(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
@@ -140,7 +140,7 @@ object TestModel {
   object TestFilterLess {
     val empty: TestFilterLess = TestFilterLess(None, None, None, None, None, None)
   }
-  // one less field and unordered, should not compile
+  // one less field and unordered, should compile
   case class TestFilterLessUnordered(
       field2: Option[StringFilterOption],
       field1: Option[IntFilter],
@@ -175,7 +175,7 @@ object TestModel {
   object TestModifierUnordered {
     val empty: TestModifierUnordered = TestModifierUnordered(None, None, None, None)
   }
-  // with other fields, should compile
+  // with other fields, should not compile
   case class TestModifierOther(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
@@ -187,7 +187,7 @@ object TestModel {
   object TestModifierOther {
     val empty: TestModifierOther = TestModifierOther(None, None, None, None, "", Seq.empty)
   }
-  // with other fields and unordered, should compile
+  // with other fields and unordered, should not compile
   case class TestModifierOtherUnordered(
       otherField2: Seq[Int],
       field4: Option[TimestampModifierOption],
@@ -221,7 +221,7 @@ object TestModel {
   object TestModifierPlusUnordered {
     val empty: TestModifierPlusUnordered = TestModifierPlusUnordered(None, None, None, None, None)
   }
-  // one less field, should not compile
+  // one less field, should compile
   case class TestModifierLess(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
@@ -230,7 +230,7 @@ object TestModel {
   object TestModifierLess {
     val empty: TestModifierLess = TestModifierLess(None, None, None)
   }
-  // one less field and unordered, should not compile
+  // one less field and unordered, should compile
   case class TestModifierLessUnordered(
       field2: Option[StringModifierOption],
       field1: Option[IntModifier],

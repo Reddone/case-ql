@@ -7,9 +7,12 @@ import org.scalatest.matchers.should.Matchers
 
 class TableLinkSpec extends AnyFlatSpec with Matchers {
 
-  implicit val leftTable: Table[TestLeft, TestLeftKey]             = Table.derive[TestLeft, TestLeftKey]()
-  implicit val rightTable: Table[TestRight, TestRightKey]          = Table.derive[TestRight, TestRightKey]()
-  implicit val junctionTable: Table[TestJunction, TestJunctionKey] = Table.derive[TestJunction, TestJunctionKey]()
+  implicit val leftTable: Table[TestLeft, TestLeftKey] =
+    Table.derive[TestLeft, TestLeftKey](useTableAlias = false)
+  implicit val rightTable: Table[TestRight, TestRightKey] =
+    Table.derive[TestRight, TestRightKey](useTableAlias = false)
+  implicit val junctionTable: Table[TestJunction, TestJunctionKey] =
+    Table.derive[TestJunction, TestJunctionKey](useTableAlias = false)
 
   "TableLink derivation" should "compile for a correct self link" in {
     """TableLink.self[TestLeft](

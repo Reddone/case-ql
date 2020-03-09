@@ -30,7 +30,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
   }
 
   "Table typeclass" should "work correctly" in {
-    val table1: Table[Test, TestKey] = Table.derive[Test, TestKey]()
+    val table1: Table[Test, TestKey] = Table.derive[Test, TestKey](useTableAlias = false)
 
     table1.name shouldBe "test"
     table1.schema shouldBe None
@@ -44,7 +44,8 @@ class TableSpec extends AnyFlatSpec with Matchers {
       Some("test_name"),
       Some("test_schema"),
       Map("field1" -> "field_1", "field2" -> "field_2"),
-      str => str.toUpperCase
+      str => str.toUpperCase,
+      useTableAlias = false
     )
 
     table2.name shouldBe "test_name"
