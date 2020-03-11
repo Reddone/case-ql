@@ -305,27 +305,52 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
           )
       )
     )
-    val alias  = "a1"
-    val result = leftTableFilter.byFilterFragment(selfFilter, Some(alias))
+    val alias1  = "a1"
+    val result1 = leftTableFilter.byFilterFragment(selfFilter, Some(alias1))
 
-    result shouldBe defined
-    result.get.toString shouldBe "Fragment(\"" +
+    result1 shouldBe defined
+    result1.get.toString shouldBe "Fragment(\"" +
       "(((a1.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left x2 WHERE a1.field1 = x2.field3 AND (((x2.field2 = ? ) ) ) ) " +
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
       "= " +
-      "(SELECT COUNT (*) FROM test_left x2 WHERE a1.field1 = x2.field3) " +
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3) " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left x2 WHERE a1.field1 = x2.field3 AND (((x2.field2 = ? ) ) ) ) " +
+      "EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left x2 WHERE a1.field1 = x2.field3 AND (((x2.field2 = ? ) ) ) ) " +
+      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END SELF RELATION
+      ") " +
+      "\")"
+
+    val result2 = leftTableFilter.byFilterFragment(selfFilter, None)
+
+    result2 shouldBe defined
+    result2.get.toString shouldBe "Fragment(\"" +
+      "(((test_left.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN SELF RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
       ") " + // END NONE
       ") " + // END SELF RELATION
       ") " +
@@ -339,6 +364,25 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       TableFilter.derive[TestRight, TestRightFilter]()
     implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
       TableFilter.derive[TestDirect, TestDirectFilter]()
+
+    val directFilter = TestDirectFilter.empty.copy(
+      field1 = Some(StringFilter.empty.copy(EQ = Some("1"))),
+      leftRelation = Some(
+        RelationFilter
+          .empty[TestDirect, TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            SOME = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            NONE = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1)))))
+          )
+      )
+    )
+    val alias  = "a1"
+    val result = directTableFilter.byFilterFragment(directFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
+      "\")"
   }
 
   it should "work correctly with a junction RelationFilter[_, _, _]" in {
@@ -346,6 +390,17 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       TableFilter.derive[TestLeft, TestLeftFilter]()
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
       TableFilter.derive[TestRight, TestRightFilter]()
+
+    val junctionFilter = TestRightFilter.empty.copy(
+
+    )
+
+    val alias = "a1"
+    val result = rightTableFilter.byFilterFragment(junctionFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
+      "\")"
   }
 
   it should "work correctly with a nested RelationFilter[_, _, _]" in {
@@ -355,5 +410,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       TableFilter.derive[TestRight, TestRightFilter]()
     implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
       TableFilter.derive[TestDirect, TestDirectFilter]()
+
+    // TODO: I'll write this, promise
   }
 }

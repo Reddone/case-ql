@@ -162,10 +162,14 @@ object RelationHelper {
   }
 
   private def resolveRightAlias[A, B](leftSyntax: TableSyntax[A], rightSyntax: TableSyntax[B]): String =
-    if (leftSyntax.alias == rightSyntax.alias) {
-      s"${rightSyntax.alias}_2"
-    } else {
-      rightSyntax.alias
+    if (leftSyntax.aliasedName == rightSyntax.aliasedName) { // it's the same table
+      if (rightSyntax.alias.isEmpty) {                       // and right part has no alias
+        "self"                                               // use 'self' an alias
+      } else {                                               // or if right part has an alias
+        s"${rightSyntax.alias}_self"                         // append '_self' to existing alias
+      }                                                      // it's not the same table
+    } else {                                                 // keep using right alias
+      rightSyntax.alias                                      // because it's not a self join
     }
 
   private def areNulls[A](syntax: TableSyntax[A], fields: Seq[String]): String = {

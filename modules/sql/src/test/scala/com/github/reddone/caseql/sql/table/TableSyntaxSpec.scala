@@ -29,11 +29,10 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
   }
 
   "TableSyntax class" should "work correctly" in {
-    val alias1                     = table1.alias
     val syntax1: TableSyntax[Test] = table1.syntax
 
     syntax1.name shouldBe "test"
-    syntax1.aliasedName shouldBe s"test $alias1"
+    syntax1.aliasedName shouldBe s"test"
     syntax1.columns shouldBe List(
       "field1",
       "field2",
@@ -41,21 +40,21 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
       "field4"
     )
     syntax1.aliasedColumns shouldBe List(
-      s"$alias1.field1",
-      s"$alias1.field2",
-      s"$alias1.field3",
-      s"$alias1.field4"
+      s"test.field1",
+      s"test.field2",
+      s"test.field3",
+      s"test.field4"
     )
     syntax1.keyColumns shouldBe List(
       "field1",
       "field3"
     )
     syntax1.aliasedKeyColumns shouldBe List(
-      s"$alias1.field1",
-      s"$alias1.field3"
+      s"test.field1",
+      s"test.field3"
     )
     syntax1.column("field1") shouldBe "field1"
-    syntax1.aliasedColumn("field1") shouldBe s"$alias1.field1"
+    syntax1.aliasedColumn("field1") shouldBe s"test.field1"
 
     val syntax2: TableSyntax[Test] = table2.syntax.withAlias("t")
 

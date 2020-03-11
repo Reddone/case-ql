@@ -2,15 +2,18 @@ package com.github.reddone.caseql.sql.table
 
 import com.github.reddone.caseql.sql.util.StringUtils
 
-import scala.language.dynamics
+final case class TableSyntax[A](alias: String, support: Table[A, _]) {
 
-final case class TableSyntax[A](alias: String, support: Table[A, _]) extends Dynamic {
+  val name: String = StringUtils.addPrefix(
+    support.name,
+    support.schema
+  )
 
-  private val aliasO = if (alias.isEmpty) Some(support.name) else Some(alias)
-
-  val name: String = StringUtils.addPrefix(support.name, support.schema)
-
-  val aliasedName: String = StringUtils.addSuffix(name, if (alias.isEmpty) None else Some(alias), " ")
+  val aliasedName: String = StringUtils.addSuffix(
+    name,
+    if (alias.isEmpty) None else Some(alias),
+    " "
+  )
 
   val columns: List[String] = support.fields.map(column)
 
@@ -22,9 +25,10 @@ final case class TableSyntax[A](alias: String, support: Table[A, _]) extends Dyn
 
   def column(field: String): String = c(field)
 
-  def aliasedColumn(field: String): String = StringUtils.addPrefix(c(field), aliasO)
-
-  def selectDynamic(field: String): String = c(field)
+  def aliasedColumn(field: String): String = StringUtils.addPrefix(
+    c(field),
+    if (alias.isEmpty) Some(support.name) else Some(alias)
+  )
 
   def withAlias(newAlias: String): TableSyntax[A] = copy(alias = newAlias)
 

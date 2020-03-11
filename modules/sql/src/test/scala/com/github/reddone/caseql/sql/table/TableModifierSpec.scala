@@ -63,10 +63,10 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     val result1 = tableModifier1.primitiveModifierNamedFragments(modifier1)
 
     result1.map(_._1) shouldBe List(
-      syntax.field1,
-      syntax.field2,
-      syntax.field3,
-      syntax.field4
+      syntax.column("field1"),
+      syntax.column("field2"),
+      syntax.column("field3"),
+      syntax.column("field4")
     )
     result1.map(_._2.map(_.toString)) shouldBe List(
       Some("Fragment(\"? \")"),
@@ -86,10 +86,10 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     val result2 = tableModifier2.primitiveModifierNamedFragments(modifier2)
 
     result2.map(_._1) shouldBe List(
-      syntax.field4,
-      syntax.field2,
-      syntax.field3,
-      syntax.field1
+      syntax.column("field4"),
+      syntax.column("field2"),
+      syntax.column("field3"),
+      syntax.column("field1")
     )
     result2.map(_._2.map(_.toString)) shouldBe List(
       None,
