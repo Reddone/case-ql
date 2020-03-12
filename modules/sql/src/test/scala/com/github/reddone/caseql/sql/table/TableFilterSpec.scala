@@ -293,7 +293,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
       TableFilter.derive[TestRight, TestRightFilter]()
 
-    val selfFilter = TestLeftFilter.empty.copy(
+    val leftFilter = TestLeftFilter.empty.copy(
       field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
       selfRelation = Some(
         RelationFilter
@@ -306,7 +306,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias1  = "a1"
-    val result1 = leftTableFilter.byFilterFragment(selfFilter, Some(alias1))
+    val result1 = leftTableFilter.byFilterFragment(leftFilter, Some(alias1))
 
     result1 shouldBe defined
     result1.get.toString shouldBe "Fragment(\"" +
@@ -331,7 +331,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") " +
       "\")"
 
-    val result2 = leftTableFilter.byFilterFragment(selfFilter, None)
+    val result2 = leftTableFilter.byFilterFragment(leftFilter, None)
 
     result2 shouldBe defined
     result2.get.toString shouldBe "Fragment(\"" +
@@ -391,12 +391,21 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
       TableFilter.derive[TestRight, TestRightFilter]()
 
-    val junctionFilter = TestRightFilter.empty.copy(
-
+    val rightFilter = TestRightFilter.empty.copy(
+      field1 = Some(LongFilter.empty.copy(EQ = Some(1L))),
+      leftRelation = Some(
+        RelationFilter
+          .empty[TestRight, TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            SOME = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            NONE = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1)))))
+          )
+      )
     )
 
-    val alias = "a1"
-    val result = rightTableFilter.byFilterFragment(junctionFilter, Some(alias))
+    val alias  = "a1"
+    val result = rightTableFilter.byFilterFragment(rightFilter, Some(alias))
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -412,5 +421,62 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       TableFilter.derive[TestDirect, TestDirectFilter]()
 
     // TODO: I'll write this, promise
+    val directFilter = TestDirectFilter.empty.copy(
+      field1 = Some(StringFilter.empty.copy(EQ = Some("1"))),
+      leftRelation = Some(
+        RelationFilter
+          .empty[TestDirect, TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(
+              TestLeftFilter.empty.copy(
+                field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+                rightRelation = Some(
+                  RelationFilter
+                    .empty[TestLeft, TestRight, TestRightFilter]
+                    .copy(
+                      EVERY = None,
+                      SOME = None,
+                      NONE = None
+                    )
+                )
+              )
+            ),
+            SOME = Some(
+              TestLeftFilter.empty.copy(
+                field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+                rightRelation = Some(
+                  RelationFilter
+                    .empty[TestLeft, TestRight, TestRightFilter]
+                    .copy(
+                      EVERY = None,
+                      SOME = None,
+                      NONE = None
+                    )
+                )
+              )
+            ),
+            NONE = Some(
+              TestLeftFilter.empty.copy(
+                field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+                rightRelation = Some(
+                  RelationFilter
+                    .empty[TestLeft, TestRight, TestRightFilter]
+                    .copy(
+                      EVERY = None,
+                      SOME = None,
+                      NONE = None
+                    )
+                )
+              )
+            )
+          )
+      )
+    )
+    val alias  = "a1"
+    val result = directTableFilter.byFilterFragment(directFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
+      "\")"
   }
 }
