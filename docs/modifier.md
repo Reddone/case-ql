@@ -61,7 +61,7 @@ following modifiers are provided:
 
 ## EntityModifier
 
-Modifiers should be combined together inside a case class T in order to construct an EntityModifier[T <: EntityModifier[T]:
+Modifiers should be combined together inside a case class *MA* extending *EntityModifier[MA <: EntityModifier[MA]]*:
 
 ```scala
 case class Test(

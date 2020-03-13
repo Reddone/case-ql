@@ -1,7 +1,7 @@
 ## Table
 
-A *Table[T, K]* is a typeclass which evidences that *T* can be correctly read and written in SQL and that *K* is a 
-subset of *T* in the sense that it has a subset of fields having same types. To create a table, simply use:
+A *Table[A, K]* is a typeclass which evidences that *A* can be correctly read and written in SQL and that *K* is a 
+subset of *A* in the sense that it has a subset of fields having same types. To create a table, simply use:
 
 ```scala
 case class Test(
@@ -43,31 +43,33 @@ type *K* is checked against *T* using shapeless record *Extractor*.
 The last argument is used to enable unique aliases in the form "xN" where "x" is a constant prefix and "N" is a
 counter. It defaults to true, but if you can disable it.
 
-A *Table[T, K]* also holds implicits instances for *Read[T]*, *Write[T]*, *Read[K]*, *Write[K]*: it proves that *T* 
+A *Table[A, K]* also holds implicits instances for *Read[A]*, *Write[A]*, *Read[K]*, *Write[K]*: it proves that *A* 
 and *K* can be safely used with JDBC.
 
 ## TableSyntax
 
-A *TableSyntax[T]* is a facility class for decoupling *T* from *K* and for accessing and aliasing table columns during a
-query. If you have an implicit instance of *Table[T, K]*, then an implicit instance of *TableSyntax[T]* is automatically 
-derived. You can also access the syntax directly from table: 
+A *TableSyntax[A]* is a facility class for decoupling *A* from *K* and for accessing and aliasing table columns during 
+a query. If you have an implicit instance of *Table[A, K]*, then an implicit instance of *TableSyntax[A]* is 
+automatically derived. You can also access the syntax directly from table: 
 
 ```scala
-val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey](Some("test"), Some("public"))
+val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey](Some("test"), Some("public"), useTableAlias = false)
 val syntax: TableSyntax[T]          = testTable.syntax
 val aliasedSyntax: TableSyntax[T]   = testTable.syntax.withAlias(Some("t"))
 
-syntax.name             // "public.test"
-syntax.aliasedName      // "public.test"
-syntax.columns          // List("field1", "field2", "field3", "field4")
-syntax.column("field1") // "field1"
-syntax.field1           // "field1"
+syntax.name                    // "public.test"
+syntax.aliasedName             // "public.test"
+syntax.columns                 // List("field1", "field2", "field3", "field4")
+syntax.aliasedColumns          // List("test.field1", "test.field2", "test.field3", "test.field4")
+syntax.column("field1")        // "field1"
+syntax.aliasedColumn("field1") // "test.field1"
 
-aliasedSyntax.name             // "public.test"
-aliasedSyntax.aliasedName      // "public.test t"
-aliasedSyntax.columns          // List("t.field1", "t.field2", "t.field3", "t.field4")
-aliasedSyntax.column("field1") // "t.field1"
-aliasedSyntax.field1           // "t.field1"
+aliasedSyntax.name                    // "public.test"
+aliasedSyntax.aliasedName             // "public.test t"
+aliasedSyntax.columns                 // List("field1", "field2", "field3", "field4")
+aliasedSyntax.aliasedColumns          // List("t.field1", "t.field2", "t.field3", "t.field4")
+aliasedSyntax.column("field1")        // "field1"
+aliasedSyntax.aliasedColumn("field1") // "t.field1"
 ```
 
 You never interact directly with this class, because it is used only during the derivation process of other typeclasses:
@@ -86,62 +88,98 @@ There are three kinds of link:
 - junction link signals that *A* and *B* are linked together via a junction table *C*. The type *C* is encoded inside 
 the *TableLink* class and you can use *TableLink.Aux[A, B, C]* to refer to it.
 
-To create a link, you can use the following:
+Suppose you have the following tables:
 
 ```scala
-case class TestDirect(
-  field1: String,
-  field2: Option[Long],
-  field3: Timestamp,
-  testField1: Int
-)
-case class TestDirectKey(
-  field: String
-)
-
-implicit val testDirectTable    = Table.derive[TestDirect, TestDirectKey]()
-
-implicit val testTestDirectLink = TableLink.direct(testTable, testDirectTable)(
-  (a, b) => NonEmptyList.of(("field1", "testField1"))
-)
-
+// left and self relation with left
 case class TestLeft(
-  leftField1: Long,
-  leftField2: String,
-  leftField3: Int
+    field1: Int,
+    field2: String,
+    field3: Int
 )
 case class TestLeftKey(
-  leftField1: Long
+    field1: Int
 )
-
-case class TestMiddle(
-  middleField1: Long,
-  middleField2: Int
+// direct relation with left
+case class TestDirect(
+    field1: String,
+    field2: Timestamp,
+    field3: Int
 )
-case class TestMiddleKey(
-  middleField1: Long,
-  middleField2: Int
+case class TestDirectKey(
+    field1: String
 )
-
+// right
 case class TestRight(
-  rightField1: Int,
-  rightField2: Long,
-  rightField3: String
+    field1: Long,
+    field2: String,
+    field3: Int
 )
 case class TestRightKey(
-  rightField1: Int
+    field1: Long
+)
+// junction relation with left and right
+case class TestJunction(
+    field1: Int,
+    field2: Long
+)
+case class TestJunctionKey(
+    field1: Int,
+    field2: Long
 )
 
-implicit val testLeftTable   = Table.derive[TestLeft, TestLeftKey]()
-implicit val testMiddleTable = Table.derive[TestMiddle, TestMiddleKey]()
-implicit val testRightTable  = Table.derive[TestRight, TestRightKey]()
+implicit val leftTable: Table[TestLeft, TestLeftKey] =
+  Table.derive[TestLeft, TestLeftKey](useTableAlias = false)
 
-implicit val testJunctionLink = TableLink.junction(testLeftTable, testRightTable, testMiddleTable)( 
-  (a, c) => NonEmptyList.of(("leftField1", "middleField1")),
-  (b, c) => NonEmptyList.of(("rightField1", "middleField2"))
+implicit val directTable: Table[TestDirect, TestDirectKey] =
+  Table.derive[TestDirect, TestDirectKey](useTableAlias = false)
+
+implicit val rightTable: Table[TestRight, TestRightKey] =
+  Table.derive[TestRight, TestRightKey](useTableAlias = false)
+
+implicit val junctionTable: Table[TestJunction, TestJunctionKey] =
+  Table.derive[TestJunction, TestJunctionKey](useTableAlias = false)
+```
+
+To create links between tables, you can use the following:
+
+```scala
+implicit val leftSelfLink: Aux[TestLeft, TestLeft, Unit] = TableLink.self[TestLeft](
+  FieldSet("field1"),
+  FieldSet("field3")
 )
+
+implicit val directLeftLink: Aux[TestDirect, TestLeft, Unit] = TableLink.direct[TestDirect, TestLeft](
+  FieldSet("field3"),
+  FieldSet("field1")
+)
+
+implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] = TableLink.direct[TestLeft, TestJunction](
+  FieldSet("field1"),
+  FieldSet("field1")
+)
+
+implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] = TableLink.direct[TestRight, TestJunction](
+  FieldSet("field1"),
+  FieldSet("field2")
+)
+
+implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] = TableLink.union(
+  leftJunctionLink, 
+  rightJunctionLink
+)
+```
+
+There is also a *TableLink.junction* factory method, which you can use if you want to create a link without using an
+intermediate table:
+
+```scala
+implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] = 
+  TableLink.junction[TestLeft, TestRight, TestJunction](
+    (FieldSet("field1"), FieldSet("field1")),
+    (FieldSet("field1"), FieldSet("field2"))
+  )
 ```
 
 Thanks to implicit derivation, there is no need to define the inverse link, i.e. if you have an implicit instance of
 *TableLink[A, B]* you don't have to define *TableLink[B, A]*.
-*TableLink* is currently experimental but it will be fixed and made type-safe soon.
