@@ -22,7 +22,7 @@ trait PgSetup { self: Suite with ForAllTestContainer =>
 
   implicit val contextShift: ContextShift[IO] = IO.contextShift(ec)
 
-  var _xa: Aux[IO, Unit] = _
+  private var _xa: Aux[IO, Unit] = _
 
   lazy val xa: Aux[IO, Unit] = _xa
 

@@ -382,6 +382,25 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN DIRECT RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END DIRECT RELATION
+      ") " +
       "\")"
   }
 
@@ -409,6 +428,32 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN JUNCTION RELATION
+      "(" + // BEGIN EVERY
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "LEFT OUTER JOIN test_left ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND IS NULL test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END JUNCTION RELATION
+      ") " +
       "\")"
   }
 
@@ -420,8 +465,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
       TableFilter.derive[TestDirect, TestDirectFilter]()
 
-    // TODO: I'll write this, promise
-    val directFilter = TestDirectFilter.empty.copy(
+    val directNestedFilter = TestDirectFilter.empty.copy(
       field1 = Some(StringFilter.empty.copy(EQ = Some("1"))),
       leftRelation = Some(
         RelationFilter
@@ -434,37 +478,37 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
                   RelationFilter
                     .empty[TestLeft, TestRight, TestRightFilter]
                     .copy(
-                      EVERY = None,
-                      SOME = None,
-                      NONE = None
+                      EVERY = Some(TestRightFilter.empty.copy(field1 = Some(LongFilter.empty.copy(EQ = Some(1L))))),
+                      SOME = Some(TestRightFilter.empty.copy(field1 = Some(LongFilter.empty.copy(EQ = Some(1L))))),
+                      NONE = Some(TestRightFilter.empty.copy(field1 = Some(LongFilter.empty.copy(EQ = Some(1L)))))
                     )
                 )
               )
             ),
             SOME = Some(
               TestLeftFilter.empty.copy(
-                field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+                field1 = Some(IntFilter.empty.copy(EQ = Some(2))),
                 rightRelation = Some(
                   RelationFilter
                     .empty[TestLeft, TestRight, TestRightFilter]
                     .copy(
-                      EVERY = None,
-                      SOME = None,
-                      NONE = None
+                      EVERY = Some(TestRightFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("2"))))),
+                      SOME = Some(TestRightFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("2"))))),
+                      NONE = Some(TestRightFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("2")))))
                     )
                 )
               )
             ),
             NONE = Some(
               TestLeftFilter.empty.copy(
-                field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+                field1 = Some(IntFilter.empty.copy(EQ = Some(3))),
                 rightRelation = Some(
                   RelationFilter
                     .empty[TestLeft, TestRight, TestRightFilter]
                     .copy(
-                      EVERY = None,
-                      SOME = None,
-                      NONE = None
+                      EVERY = Some(TestRightFilter.empty.copy(field3 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+                      SOME = Some(TestRightFilter.empty.copy(field3 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+                      NONE = Some(TestRightFilter.empty.copy(field3 = Some(IntFilter.empty.copy(EQ = Some(1)))))
                     )
                 )
               )
@@ -473,10 +517,13 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias  = "a1"
-    val result = directTableFilter.byFilterFragment(directFilter, Some(alias))
+    val result = directTableFilter.byFilterFragment(directNestedFilter, Some(alias))
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
-      "\")"
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "((((SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) AND (((NOT EXISTS (SELECT 1 FROM test_junction LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND IS NULL test_right.field1 AND (((test_right.field1 = ? ) ) ) ) ) AND (EXISTS (SELECT 1 FROM test_junction INNER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) ) AND (NOT EXISTS (SELECT 1 FROM test_junction INNER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) ) ) ) ) = (SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) ) AND (EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) AND (((NOT EXISTS (SELECT 1 FROM test_junction LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND IS NULL test_right.field1 AND (((test_right.field2 = ? ) ) ) ) ) AND (EXISTS (SELECT 1 FROM test_junction INNER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) ) AND (NOT EXISTS (SELECT 1 FROM test_junction INNER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) ) ) ) ) ) AND (NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) AND (((NOT EXISTS (SELECT 1 FROM test_junction LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND IS NULL test_right.field1 AND (((test_right.field3 = ? ) ) ) ) ) AND (EXISTS (SELECT 1 FROM test_junction INNER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) ) AND (NOT EXISTS (SELECT 1 FROM test_junction INNER JOIN test_right ON test_right.field1 = test_junction.field2 WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) ) ) ) ) ) ) ) "
+    "\")"
   }
 }

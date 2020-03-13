@@ -32,7 +32,7 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
     val syntax1: TableSyntax[Test] = table1.syntax
 
     syntax1.name shouldBe "test"
-    syntax1.aliasedName shouldBe s"test"
+    syntax1.aliasedName shouldBe "test"
     syntax1.columns shouldBe List(
       "field1",
       "field2",
@@ -40,21 +40,21 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
       "field4"
     )
     syntax1.aliasedColumns shouldBe List(
-      s"test.field1",
-      s"test.field2",
-      s"test.field3",
-      s"test.field4"
+      "test.field1",
+      "test.field2",
+      "test.field3",
+      "test.field4"
     )
     syntax1.keyColumns shouldBe List(
       "field1",
       "field3"
     )
     syntax1.aliasedKeyColumns shouldBe List(
-      s"test.field1",
-      s"test.field3"
+      "test.field1",
+      "test.field3"
     )
     syntax1.column("field1") shouldBe "field1"
-    syntax1.aliasedColumn("field1") shouldBe s"test.field1"
+    syntax1.aliasedColumn("field1") shouldBe "test.field1"
 
     val syntax2: TableSyntax[Test] = table2.syntax.withAlias("t")
 
@@ -104,10 +104,10 @@ class TableSyntaxSpec extends AnyFlatSpec with Matchers {
       "FIELD3"
     )
     syntax3.aliasedKeyColumns shouldBe List(
-      s"test_name.field_1",
-      s"test_name.FIELD3"
+      "test_name.field_1",
+      "test_name.FIELD3"
     )
     syntax3.column("field1") shouldBe "field_1"
-    syntax3.aliasedColumn("field1") shouldBe s"test_name.field_1"
+    syntax3.aliasedColumn("field1") shouldBe "test_name.field_1"
   }
 }

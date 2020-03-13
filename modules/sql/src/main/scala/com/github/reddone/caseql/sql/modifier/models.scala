@@ -8,7 +8,6 @@ import com.github.reddone.caseql.sql.util.CirceDecoders._
 import doobie._
 import doobie.implicits._
 import Fragment._
-import com.github.reddone.caseql.sql.table.TableSyntax
 import javasql._
 import javatime._
 import io.circe.Decoder
