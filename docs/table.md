@@ -78,7 +78,11 @@ want to use a custom alias.
 
 ## TableLink
 
-A *TableLink[A, B]* is an auxiliary class which is used to signal that *A* and *B* participate in a relation.
+A *TableLink[A, B]* is a typeclass which evidences that *A* and *B* have some fields in common having the same types,
+thus it's possible to use these fields to describe a relation. To be more precise, we deal with the the auxiliary
+type *TableLink.Aux[A, B, C]* where *C* is *Unit* in the case of a relation between two tables and *C* is a case
+class in the case of a relation between two tables where a junction table is involved. 
+
 There are three kinds of link:
 
 - self link, in the form *TableLink[A, A]*. It indicates that *A* has one or more fields which point to *A* itself. 

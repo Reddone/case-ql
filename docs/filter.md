@@ -95,7 +95,7 @@ implicit val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey]()
 
 The *EntityFilter* trait use a self recursive type to enable the composition of filters using AND, OR and NOT. Now, if
 we want to build a where condition for a select, update or delete statement we can create the appropriate instance
-of TestFilter:
+of *TestFilter*:
 
 ```scala
 val testFilter = TestFilter.empty.copy(
@@ -130,8 +130,8 @@ on a sequence of filters.
 ## RelationFilter
 
 If you want to filter entities according to criteria on their relation, then you have to use a 
-RelationFilter[A, B, FB <: EntityFilter[FB]] in order to allow an EntityFilter FB to be used on entity A linked to 
-entity B. Basically, RelationFilter acts as a wrapper for an EntityFilter, allowing the latter to be used inside
+*RelationFilter[A, B, FB <: EntityFilter[FB]]* in order to allow an *EntityFilter[FB]* to be used on entity *A* linked to 
+entity *B*. Basically, *RelationFilter* acts as a wrapper for an *EntityFilter*, allowing the latter to be used inside
 other filters.
 Consider the following example:
 
@@ -167,13 +167,13 @@ implicit val testTestDirectLink: TableLink[Test, TestDirect] = TableLink.direct(
 )
 ```
 
-Here TestFilter is wrapped by RelationFilter, which also adds a type information regarding the link between entities.
+Here *TestFilter* is wrapped by *RelationFilter*, which also adds a type information regarding the link between entities.
 This type information is necessary in order to help the TableFilter derivation process, so be careful to provide types
-in the right order. Note that the field holding the RelationFilter is named "relationTest", but you can give it the
+in the right order. Note that the field holding the *RelationFilter* is named "relationTest", but you can give it the
 name you prefer. It makes little sense to enforce a naming convention on relations because one cannot know in advance
-which relations will be included in an EntityFilter; for example, you can opt to don't use RelationFilter at all.
+which relations will be included in an *EntityFilter*; for example, you can opt to don't use RelationFilter at all.
 
-The RelationFilter case class has three fields: EVERY, SOME and NONE. The first one checks that every related entity
+The *RelationFilter* case class has three fields: EVERY, SOME and NONE. The first one checks that every related entity
 meets the filter conditions, the second one performs the check on at least one related entity and the third one checks
 that no related entity meets the filter conditions.
 The following:
@@ -211,21 +211,21 @@ The operators EVERY, SOME and NONE accept a single filter.
 
 ## TableFilter
 
-An EntityFilter[FA] with an arbitrary number of RelationFilter[A, _, _] can be used to produce a where condition in select, 
-update or delete queries on a Table[A, K] only
-if we have an implicit instance of TableFilter[T, FA] in scope. The typeclass TableFilter guarantees that:
+An *EntityFilter[FA]* with an arbitrary number of *RelationFilter[A, B, FB]* can be used to produce a where condition in select, 
+update or delete queries on a *Table[A, K]* only
+if we have an implicit instance of *TableFilter[A, FA]* in scope. The typeclass TableFilter guarantees that:
 
-- an implicit TableSyntax[T] exists for T
+- an implicit *TableSyntax[A]* exists for *A*
 
-- the filter FA has all fields of A (it can also have extra fields)
+- the filter *FA* has all or a subset of the fields of *A*
 
-- each Filter is wrapped inside an Option
+- each *Filter* is wrapped inside an *Option*
 
-- the type of each Filter field of FA is equivalent to the type of the corresponding field in A
+- the type of each *Filter* field of *FA* is equivalent to the type of the corresponding field in *A*
 
-- each RelationFilter[A, B, FB] links A to an entity B having a filter FB with an implicit TableFilter[B, FB]
+- each *RelationFilter[A, B, FB]* links *A* to an entity *B* having a filter *FB* with an implicit *TableFilter[B, FB]*
 
-- each RelationFilter[A, B, FB] has a corresponding implicit TableLink[A, B]
+- each *RelationFilter[A, B, FB]* has a corresponding implicit *TableLink[A, B]*
 
 These conditions are sufficient to generate a type-safe where condition. To create a table filter, use:
 
