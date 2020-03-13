@@ -4,21 +4,21 @@ CaseQL is a small library for creating type-safe and JSON-serializable SQL queri
 It provides basic CRUD operations for entities and it offers a powerful filter mechanism to enable querying an
 entity and its relations.
 
-Considering that everything is serializable, this library is a good fit if you work with GraphQL. There is a module
-dedicated to [Sangria](https://github.com/sangria-graphql/sangria) and I plan to add support in the future for 
-[Caliban](https://github.com/ghostdogpr/caliban). This library uses [Doobie](https://github.com/tpolecat/doobie) 
-to deal with SQL queries but since it relies only on the possibility to combine SQL strings, it is possible to add 
-support for any SQL library which support interpolation and concatenation of such strings. For example, it will be 
-possible to support [Scalikejdbc](https://github.com/scalikejdbc/scalikejdbc) with little modifications. I am not 
-planning to add [Slick](https://github.com/slick/slick) and [Quill](https://github.com/getquill/quill) support because 
-they are not based or they not provide good support for the fragment approach (I strongly believe that we should write 
-SQL and not try to port SQL inside Scala).
+The basic idea is that case classes used to represent filters and modifications are checked at compile time
+against the case class representing the data model. This library provides powerful combinator to express almost any
+kind of condition, taking into account also relations between entities.
 
-[Full documentation](./docs/intro.md)
+Queries are built using implicit instances of special objects which can be derived only if the type checking succeeds.
+These objects act as a glue between the serializable word and the type-safe world, i.e. if you can derive the right
+implicit instance you can be sure that your serializable case class representing a filter or a modification will 
+produce the desired effect when used to query or modify the entity.
 
 See the "example" sub project to see it in action! It is still an experiment but it helped me a lot!!!
 **I am writing examples along with tests and documentation these month, so please wait a little. If you want you can 
-explore the source code, the core is located inside the "table" package of the "sql" module.**
+explore the source code, the core is located inside the "table" package of the "sql" module. If you want to see some
+action please consult the TableFilterSpec test class of the same module.**
+
+[Full documentation](./docs/intro.md)
 
 ## Motivation
 
@@ -87,16 +87,26 @@ nested filters and write practically any kind of condition. You can perform inse
 There are also some interesting utilities for working with doobie, for example you can work with raw data in the form 
 *Map[String, Any]*.
 
+Considering that everything is serializable, this library is a good fit if you work with GraphQL. There is a module
+dedicated to [Sangria](https://github.com/sangria-graphql/sangria) and I plan to add support in the future for 
+[Caliban](https://github.com/ghostdogpr/caliban). This library uses [Doobie](https://github.com/tpolecat/doobie) 
+to deal with SQL queries but since it relies only on the possibility to combine SQL strings, it is possible to add 
+support for any SQL library which support interpolation and concatenation of such strings. For example, it will be 
+possible to support [Scalikejdbc](https://github.com/scalikejdbc/scalikejdbc) with little modifications. I am not 
+planning to add [Slick](https://github.com/slick/slick) and [Quill](https://github.com/getquill/quill) support because 
+they are not based or they not provide good support for the fragment approach (I strongly believe that we should write 
+SQL and not try to port SQL inside Scala).
+
 For a full explanation read the [documentation](./docs/intro.md).
 
 ## TODO
 
-- [x] add relations (ALMOST DONE)
-- [ ] add joins (help appreciated)
-- [ ] setup an easy build and release process and move to sonatype
-- [ ] abstract over Fragment in order to include scalalikejdbc support
-- [ ] provide support for caliban (I still have to study the project)
-- [ ] fix spacing inside queries (not necessary but nice to have)
+- [ ] setup an easy build and release process and move to sonatype (it's my first open source project)
+- [ ] provide support for caliban
+- [ ] add joins inside select queries (help appreciated)
+- [ ] add aggregations inside select queries (help appreciated)
+- [ ] abstract over Fragment in order to include scalalikejdbc support (proposals accepted)
+- [ ] fix spacing inside queries
 - [ ] add a logo if I get 10 stars
 
 ## Inspiration

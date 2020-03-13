@@ -13,7 +13,7 @@ examples at https://github.com/tpolecat/doobie/tree/master/modules/example/src/m
 
 ### Table
 
-A *Table[T, K]* is a wrapper for a type *T* having a key *K*. Both *T* and *K* are case classes. Scala fields are 
+A *Table[A, K]* is a wrapper for a type *A* having a key *K*. Both *A* and *K* are case classes. Scala fields are 
 converted to SQL columns using a camel case to snake case converter; if you want to override the mapping, you can 
 provide a custom mapper in the form of a *Map[String, String]*, where each entry is in the form 
 (Scala field -> SQL table column). In order to make a case class *T* work with this library, you need to create an 
@@ -31,30 +31,31 @@ compliant filter to query a table.
 
 ### Filter
 
-A *Filter[+A]* is a wrapper for a type *A* on which it's possible to express filter expressions. The library provides
-instances of various *Filter*, for *A* and *Option[A]*: they only differ in the is nullable condition. For example, 
+A *Filter[T]* is a wrapper for a type *T* on which it's possible to express filter expressions. The library provides
+instances of various *Filter*, for *T* and *Option[T]*: they only differ in the is nullable condition. For example, 
 on an *IntFilter* you can use the following expressions: EQ, NOT_EQ, IN, NOT_IN, LT, LTE, GT, GTE.
 
-You can create filters on case classes by mixing the *EntityFilter* trait and assigning to each field a *Filter[_]* or 
-a *RelationFilter[_, _, _]*. Then, you need to create an implicit instance of *TableFilter[T, F]* using the derivation 
-method: if the code compiles, it means that *F* can be used to generate a where condition on a table having type *T*.
+You can use a case class *F* as a filter by mixing the *EntityFilter* trait and assigning to each field a 
+*Filter[_]* or a *RelationFilter[_, _, _]*. Then, you need to create an implicit instance of *TableFilter[A, F]* using 
+the derivation method: if the code compiles, it means that case class *F* can be used to generate a where condition on 
+a table having type *A*.
 
 You can build complex filters using AND, OR and NOT conditions on an entity and using EVERY, SOME, NONE conditions
-on its relations. The implicit *TableFilter[T, F]* will take care of combining all these conditions, producing an
+on its relations. The implicit *TableFilter[A, F]* will take care of combining all these conditions, producing an
 efficient SQL query. Filters can be used inside select, update and delete statements.
 
 [Filter documentation](./filter.md)
 
 ### Modifier
 
-A *Modifier[+A]* is a wrapper for a type *A* on which it's possible to set values. The library provides instances of
-various *Modifier*, for *A* and *Option[A]*: they only differ in the possibility to set a NULL value. For example, 
+A *Modifier[T]* is a wrapper for a type *T* on which it's possible to set values. The library provides instances of
+various *Modifier*, for *T* and *Option[T]*: they only differ in the possibility to set a NULL value. For example, 
 on an *IntModifier* you can either set DEFAULT or a value of type *Int* and on a *StringModifierOption* you can set 
 DEFAULT, NULL or a value of type *String*.
 
-You can create modifiers on case classes by mixing the *EntityModifier* trait and assigning to each field a 
-*Modifier[_]*. Then, you need to create an implicit instance of *TableModifier[T, M]* using the derivation method: 
-if the code compiles, it means that *M* can be used to set values on a table having type *T*.
+You can use a case class *M* as a modifier by mixing the *EntityModifier* trait and assigning to each field a 
+*Modifier[_]*. Then, you need to create an implicit instance of *TableModifier[A, M]* using the derivation method: 
+if the code compiles, it means that *M* can be used to set values on a table having type *A*.
 
 Note that we don't care about auto generated keys or fields not having default values: these parts are better managed
 by SQL DDL and in my opinion there is no need to introduce such concepts in a library like this. The use case of
@@ -64,29 +65,29 @@ performing multiple inserts or updates is left to the user.
 
 ### Query
 
-Once you have a *Table[T, K]*, you can execute elementary SQL queries. At the moment, these are the supported ones:
+Once you have a *Table[A, K]*, you can execute elementary SQL queries. At the moment, these are the supported ones:
 
-- SELECT * using a *TableFilter[T, F]* with filter *F*, returning *Stream[ConnectionIO, T]*.
+- SELECT * using a *TableFilter[A, F]* with filter *F*, returning *Stream[ConnectionIO, A]*.
 
-- SELECT * using key *K*, returning *ConnectionIO[Option[T]]*.
+- SELECT * using key *K*, returning *ConnectionIO[Option[A]]*.
 
-- INSERT using a *TableModifier[T, M]* with modifier *M*, returning *ConnectionIO[Int]*.
+- INSERT using a *TableModifier[A, M]* with modifier *M*, returning *ConnectionIO[Int]*.
 
-- INSERT RETURNING using a *TableModifier[T, M]* with modifier *M* and returning *ConnectionIO[K]*.
+- INSERT RETURNING using a *TableModifier[A, M]* with modifier *M* and returning *ConnectionIO[K]*.
 
-- UPDATE using a *TableModifier[T, M]* with modifier *M* and a *TableFilter[T, F]* with filter *F*, 
+- UPDATE using a *TableModifier[A, M]* with modifier *M* and a *TableFilter[A, F]* with filter *F*, 
 returning *ConnectionIO[Int]*.
 
-- UPDATE RETURNING using a *TableModifier[T, M]* with modifier *M* and a *TableFilter[T, F]* with filter *F*, 
+- UPDATE RETURNING using a *TableModifier[A, M]* with modifier *M* and a *TableFilter[A, F]* with filter *F*, 
 returning *Stream[ConnectionIO, K]*.
 
-- UPDATE using a *TableModifier[T, M]* with modifier *M* and key *K*, returning *ConnectionIO[Int]*.
+- UPDATE using a *TableModifier[A, M]* with modifier *M* and key *K*, returning *ConnectionIO[Int]*.
 
-- UPDATE RETURNING using a *TableModifier[T, M]* with modifier *M* and a key *K*, returning *Stream[ConnectionIO, K]*.
+- UPDATE RETURNING using a *TableModifier[A, M]* with modifier *M* and a key *K*, returning *Stream[ConnectionIO, K]*.
 
-- DELETE using a *TableFilter[T, F]* with filter *F*, returning *ConnectionIO[Int]*.
+- DELETE using a *TableFilter[A, F]* with filter *F*, returning *ConnectionIO[Int]*.
 
-- DELETE RETURNING using a *TableFilter[T, F]* with filter *F*, returning *Stream[ConnectionIO, K]*.
+- DELETE RETURNING using a *TableFilter[A, F]* with filter *F*, returning *Stream[ConnectionIO, K]*.
 
 - DELETE using key *K*, returning *ConnectionIO[Int]*.
 
@@ -126,28 +127,28 @@ result to a case class before the final mapping step with the GraphQL object.
 
 ### Scalar
 
-For every type used inside Filter and Modifier, there is a corresponding implicit ScalarType. 
-You can find these instances inside ByteTypeDefinition, JavaSqlTypeDefinition and JavaTimeTypeDefinition.
+For every type used inside *Filter* and *Modifier*, there is a corresponding implicit *ScalarType*. 
+You can find these instances inside *ByteTypeDefinition*, *JavaSqlTypeDefinition* and *JavaTimeTypeDefinition*.
 
 ### Input
 
-For every Filter and Modifier provided by this library, there is a corresponding implicit InputObjectType.
-You can find these instances inside InputTypeDefinition. There is also an utility method *makeRelationFilterInputType*
-which you can use to create an InputObjectType for a RelationFilter.
+For every *Filter* and *Modifier* provided by this library, there is a corresponding implicit *InputObjectType*.
+You can find these instances inside *InputTypeDefinition*. There is also an utility method *makeRelationFilterInputType*
+which you can use to create an *InputObjectType* for a *RelationFilter*.
 
 ### Util
 
 There are also some utilities for common GraphQL queries, in particular:
 
-- PageInfo, an object including hasPrevious, hasNext and total, useful when dealing with pagination. The corresponding
-ObjectType can be found under ObjectDefinition.
+- *PageInfo*, an object including *hasPrevious*, *hasNext* and *total*, useful when dealing with pagination. 
+The corresponding *ObjectType* can be found under *ObjectDefinition*.
 
-- ListContainer[A], a container for a type A which includes a Seq[A] and a PageInfo object. It can be created from
-a QueryResultSet[A], which is the equivalent of ListContainer on the SQL side. Two different class are
+- *ListContainer[A]*, a container for a type *A* which includes a *Seq[A]* and a *PageInfo* object. It can be created 
+from a *QueryResultSet[A]*, which is the equivalent of *ListContainer* on the SQL side. Two different classes are
 used because it's better to keep container and wrappers separate between the two worlds since entities can
 be mapped in different ways.
 
-- Identifiable, an utility trait containing an *id* method typed by Identity. Mixins for Int, Long and String
-are provided, and corresponding InterfaceType can be found under ObjectDefinition.
+- *Identifiable*, an utility trait containing an *id* method typed by Identity. Mixins for *Int*, *Long* and *String*
+are provided, and corresponding *InterfaceType* can be found under *ObjectDefinition*.
 
-- various Argument related to utilities described above.
+- various *Argument* related to utilities described above.
