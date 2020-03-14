@@ -1,10 +1,9 @@
-package com.github.reddone.caseql.sql.repository
+package com.github.reddone.caseql.sql.util
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
 import com.github.reddone.caseql.sql.ItTestData.{developers, projects, testSchema}
-import doobie._
+import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
 import doobie.implicits._
 
 class GenericRepositoryItSpec extends PgAnyWordSpec {

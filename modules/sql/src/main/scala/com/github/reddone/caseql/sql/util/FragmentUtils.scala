@@ -27,7 +27,7 @@ object FragmentUtils {
     if (united.isEmpty) None else Some(Fragments.or(united: _*))
   }
 
-  def optionalNot(f: Option[Fragment]): Option[Fragment] = {
+  def optionalNotOpt(f: Option[Fragment]): Option[Fragment] = {
     f.map(const(Not) ++ Fragments.parentheses(_))
   }
 }

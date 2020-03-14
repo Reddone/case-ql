@@ -14,7 +14,7 @@ object Raw {
 
   type Row = mutable.LinkedHashMap[String, Any] // order matters when doing writes
 
-  private final case class ColMetadata(
+  private final case class ColumnMetadata(
       className: String,
       label: String,
       name: String,
@@ -25,10 +25,10 @@ object Raw {
       nullability: Int
   )
 
-  private object ColMetadata {
+  private object ColumnMetadata {
 
-    def of(rsm: ResultSetMetaData, index: Int): ColMetadata = {
-      ColMetadata(
+    def of(rsm: ResultSetMetaData, index: Int): ColumnMetadata = {
+      ColumnMetadata(
         rsm.getColumnClassName(index),
         rsm.getColumnLabel(index),
         rsm.getColumnName(index),
@@ -41,8 +41,9 @@ object Raw {
     }
   }
 
-  private final case class ParamMetadata(
+  private final case class ParameterMetadata(
       className: String,
+      mode: Int,
       tpe: Int,
       tpeName: String,
       precision: Int,
@@ -50,11 +51,12 @@ object Raw {
       nullability: Int
   )
 
-  private object ParamMetadata {
+  private object ParameterMetadata {
 
-    def of(pm: ParameterMetaData, index: Int): ParamMetadata = {
-      ParamMetadata(
+    def of(pm: ParameterMetaData, index: Int): ParameterMetadata = {
+      ParameterMetadata(
         pm.getParameterClassName(index),
+        pm.getParameterMode(index),
         pm.getParameterType(index),
         pm.getParameterTypeName(index),
         pm.getPrecision(index),
@@ -75,10 +77,10 @@ object Raw {
     assert(n > 0, "Row unsafeGet column index must be greater than 0")
     val rsMeta         = rs.getMetaData
     val colCount       = rsMeta.getColumnCount
-    val colMetaSeq     = (n to colCount).map(ColMetadata.of(rsMeta, _))
+    val colMetaSeq     = (n to colCount).map(ColumnMetadata.of(rsMeta, _))
     val mutableBuilder = mutable.LinkedHashMap.newBuilder[String, Any]
     colMetaSeq.foreach({
-      case ColMetadata(_, label, _, _, _, _, _, nullability) =>
+      case ColumnMetadata(_, label, _, _, _, _, _, nullability) =>
         val rsObject = rs.getObject(label)
         val value = if (nullability == 0) { // columnNoNulls
           rsObject
@@ -105,11 +107,11 @@ object Raw {
         s"You are trying to set ${paramCount - n + 1} parameters using ${a.size} values"
       )
     }
-    val paramMetaWithIndexSeq = (n to paramCount).map(i => (i, ParamMetadata.of(psMeta, i)))
+    val paramMetaWithIndexSeq = (n to paramCount).map(i => (i, ParameterMetadata.of(psMeta, i)))
     a.valuesIterator.toList // respect insertion order
       .zip(paramMetaWithIndexSeq)
       .foreach({
-        case (value, (index, ParamMetadata(_, tpe, _, _, _, _))) =>
+        case (value, (index, ParameterMetadata(_, _, tpe, _, _, _, _))) =>
           value match {
             case _: None.type => ps.setNull(index, tpe)
             case v: Some[_]   => ps.setObject(index, v.get, tpe)
@@ -127,9 +129,9 @@ object Raw {
         s"You are trying to update ${colCount - n + 1} columns using ${a.size} values"
       )
     }
-    val colMetaSeq = (n to colCount).map(ColMetadata.of(rsMeta, _))
+    val colMetaSeq = (n to colCount).map(ColumnMetadata.of(rsMeta, _))
     colMetaSeq.foreach({
-      case ColMetadata(_, label, _, _, _, _, _, _) =>
+      case ColumnMetadata(_, label, _, _, _, _, _, _) =>
         val value = a.getOrElse(label, throw new IllegalArgumentException(s"Cannot get Row value for column $label"))
         value match {
           case _: None.type => rs.updateNull(label)

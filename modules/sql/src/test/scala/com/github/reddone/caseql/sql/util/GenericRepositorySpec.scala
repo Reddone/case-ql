@@ -1,11 +1,11 @@
-package com.github.reddone.caseql.sql.repository
+package com.github.reddone.caseql.sql.util
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
 class GenericRepositorySpec extends AnyFlatSpec with Matchers {
-  import GenericDDL._
-  import GenericDML._
+  import com.github.reddone.caseql.sql.util.GenericDDL._
+  import com.github.reddone.caseql.sql.util.GenericDML._
 
   val schemaName: String   = "public"
   val tableName: String    = "product"

@@ -24,7 +24,7 @@ Configuration:
       AppenderRef:
         - ref: STDOUT
     Logger:
-      - name: com.github.reddone.caseql.example.Diagnostic
+      - name: com.github.reddone.caseql.example.Example
         level: info
         additivity: false
         AppenderRef:

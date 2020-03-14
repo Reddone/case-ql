@@ -5,13 +5,18 @@ import com.github.reddone.caseql.sql.tokens.{And, Placeholder}
 import doobie._
 import fs2.Stream
 
-abstract class QueryBuilder[T, K](table: Table[T, K], alias: Option[String]) {
+abstract class QueryBuilder[A, K](table: Table[A, K], alias: Option[String]) {
 
-  protected val querySyntax: TableSyntax[T] = table.syntax.withAlias(alias)
+  final val querySyntax: TableSyntax[A] = alias.map(table.syntax.withAlias).getOrElse(table.syntax)
 
-  final def byKeyFragment(key: K): Fragment = {
-    table.keyWrite.toFragment(key, querySyntax.keyColumns.map(col => s"$col = $Placeholder").mkString(s" $And "))
-  }
+  final def byKeyFragment(key: K): Fragment =
+    table.keyWrite
+      .toFragment(
+        key,
+        querySyntax.aliasedKeyColumns
+          .map(col => s"$col = $Placeholder")
+          .mkString(s" $And ")
+      )
 }
 
 trait SQLFragment {

@@ -1,7 +1,5 @@
 package com.github.reddone.caseql.sql.table
 
-import java.sql.Timestamp
-
 import com.github.reddone.caseql.sql.TestModel._
 import doobie._
 import doobie.implicits._
@@ -32,7 +30,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
   }
 
   "Table typeclass" should "work correctly" in {
-    val table1: Table[Test, TestKey] = Table.derive[Test, TestKey]()
+    val table1: Table[Test, TestKey] = Table.derive[Test, TestKey](useTableAlias = false)
 
     table1.name shouldBe "test"
     table1.schema shouldBe None
@@ -40,13 +38,14 @@ class TableSpec extends AnyFlatSpec with Matchers {
     table1.fieldMapper("CamelCase") shouldBe "camel_case"
     table1.fields shouldBe List("field1", "field2", "field3", "field4")
     table1.keyFields shouldBe List("field1", "field3")
-    table1.alias shouldBe TableRegistrar.aliasFor("Test")
+    table1.alias shouldBe ""
 
     val table2: Table[Test, TestKey] = Table.derive[Test, TestKey](
       Some("test_name"),
       Some("test_schema"),
       Map("field1" -> "field_1", "field2" -> "field_2"),
-      str => str.toUpperCase
+      str => str.toUpperCase,
+      useTableAlias = false
     )
 
     table2.name shouldBe "test_name"
@@ -55,7 +54,7 @@ class TableSpec extends AnyFlatSpec with Matchers {
     table2.fieldMapper("lower") shouldBe "LOWER"
     table2.fields shouldBe List("field1", "field2", "field3", "field4")
     table2.keyFields shouldBe List("field1", "field3")
-    table2.alias shouldBe TableRegistrar.aliasFor("Test")
+    table2.alias shouldBe ""
   }
 
   it should "provide a valid Unit instance" in {

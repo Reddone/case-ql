@@ -1,14 +1,13 @@
-package com.github.reddone.caseql.sql.repository
+package com.github.reddone.caseql.sql.util
 
 import cats.implicits._
-import com.github.reddone.caseql.sql.util.{FragmentUtils, StringUtils}
-import com.github.reddone.caseql.sql.tokens.{Update => UpdateToken, _}
 import com.github.reddone.caseql.sql.functions
+import com.github.reddone.caseql.sql.tokens.{Update => UpdateToken, _}
 import doobie._
 import Fragment._
 import fs2.Stream
 
-private[repository] object GenericDDL {
+object GenericDDL {
 
   def create_schema_ddl(schemaName: String, checkExistence: Boolean): Fragment = {
     val sqlString = s"$Create $Schema${if (checkExistence) " " + IfNotExists else ""} $schemaName"
@@ -55,7 +54,7 @@ private[repository] object GenericDDL {
   }
 }
 
-private[repository] object GenericDML {
+object GenericDML {
 
   def select_query(
       tableName: String,
@@ -97,7 +96,9 @@ object GenericRepository {
     import GenericDDL._
     import GenericDML._
 
+    // #########################
     // ########## DDL ##########
+    // #########################
 
     // SCHEMA
 
@@ -129,7 +130,9 @@ object GenericRepository {
       drop_sequence_ddl(sequence, Some(schema), checkExistence).update.run
     }
 
+    // #########################
     // ########## DML ##########
+    // #########################
 
     // SELECT
 
@@ -166,7 +169,7 @@ object GenericRepository {
         .run(valueParameters)
     }
 
-    override def insertReturningUniqueKeys[W: Write, R: Read](
+    override def insertReturningKey[W: Write, R: Read](
         table: String,
         columns: List[String],
         valueParameters: W,
@@ -176,18 +179,6 @@ object GenericRepository {
       FragmentUtils
         .wrapInUpdate[W](insertFragment)
         .withUniqueGeneratedKeys[R](returningColumns: _*)(valueParameters)
-    }
-
-    override def insertReturningKeys[W: Write, R: Read](
-        table: String,
-        columns: List[String],
-        valueParameters: W,
-        returningColumns: List[String]
-    ): Stream[ConnectionIO, R] = {
-      val insertFragment = insert_query(table, Some(schema), columns)
-      FragmentUtils
-        .wrapInUpdate[W](insertFragment)
-        .withGeneratedKeys[R](returningColumns: _*)(valueParameters)
     }
 
     override def insertMany[W: Write](
@@ -225,19 +216,6 @@ object GenericRepository {
       FragmentUtils
         .wrapInUpdate[W](updateFragment)
         .run(valueAndWhereParameters)
-    }
-
-    override def updateReturningUniqueKeys[W: Write, R: Read](
-        table: String,
-        columns: List[String],
-        whereStatement: String,
-        valueAndWhereParameters: W,
-        returningColumns: List[String]
-    ): ConnectionIO[R] = {
-      val updateFragment = update_query(table, Some(schema), columns, whereStatement)
-      FragmentUtils
-        .wrapInUpdate[W](updateFragment)
-        .withUniqueGeneratedKeys(columns: _*)(valueAndWhereParameters)
     }
 
     override def updateReturningKeys[W: Write, R: Read](
@@ -288,19 +266,6 @@ object GenericRepository {
         .run
     }
 
-    override def deleteReturningUniqueKeys[W: Write, R: Read](
-        table: String,
-        whereStatement: String,
-        whereParameters: W,
-        returningColumns: List[String]
-    ): ConnectionIO[R] = {
-      val deleteFragment = delete_query(table, Some(schema), whereStatement)
-      FragmentUtils
-        .wrapInUpdate[W](deleteFragment)
-        .toUpdate0(whereParameters)
-        .withUniqueGeneratedKeys[R](returningColumns: _*)
-    }
-
     override def deleteReturningKeys[W: Write, R: Read](
         table: String,
         whereStatement: String,
@@ -341,7 +306,9 @@ object GenericRepository {
 
 trait GenericRepository {
 
+  // #########################
   // ########## DDL ##########
+  // #########################
 
   // SCHEMA
 
@@ -361,7 +328,9 @@ trait GenericRepository {
 
   def dropSequence(sequence: String, checkExistence: Boolean = true): ConnectionIO[Int]
 
+  // #########################
   // ########## DML ##########
+  // #########################
 
   // SELECT
 
@@ -383,19 +352,12 @@ trait GenericRepository {
 
   def insert[W: Write](table: String, columns: List[String], valueParameters: W): ConnectionIO[Int]
 
-  def insertReturningUniqueKeys[W: Write, R: Read](
+  def insertReturningKey[W: Write, R: Read](
       table: String,
       columns: List[String],
       valueParameters: W,
       returningColumns: List[String]
   ): ConnectionIO[R]
-
-  def insertReturningKeys[W: Write, R: Read](
-      table: String,
-      columns: List[String],
-      valueParameters: W,
-      returningColumns: List[String]
-  ): Stream[ConnectionIO, R]
 
   def insertMany[W: Write](table: String, columns: List[String], valueParametersList: List[W]): ConnectionIO[Int]
 
@@ -414,14 +376,6 @@ trait GenericRepository {
       whereStatement: String,
       valueAndWhereParameters: W
   ): ConnectionIO[Int]
-
-  def updateReturningUniqueKeys[W: Write, R: Read](
-      table: String,
-      columns: List[String],
-      whereStatement: String,
-      valueAndWhereParameters: W,
-      returningColumns: List[String]
-  ): ConnectionIO[R]
 
   def updateReturningKeys[W: Write, R: Read](
       table: String,
@@ -449,13 +403,6 @@ trait GenericRepository {
   // DELETE
 
   def delete[W: Write](table: String, whereStatement: String, whereParameters: W): ConnectionIO[Int]
-
-  def deleteReturningUniqueKeys[W: Write, R: Read](
-      table: String,
-      whereStatement: String,
-      whereParameters: W,
-      returningColumns: List[String]
-  ): ConnectionIO[R]
 
   def deleteReturningKeys[W: Write, R: Read](
       table: String,

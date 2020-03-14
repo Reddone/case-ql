@@ -5,7 +5,7 @@ import shapeless.labelled.{FieldType, field}
 
 // Excellent answer provided by Travis Brown:
 // https://stackoverflow.com/questions/31640565/converting-mapstring-any-to-a-case-class
-// The fix to work with options is provided here:
+// The fix to work with options is provided by Dmytro Mitin:
 // https://stackoverflow.com/questions/55042252/shapeless-code-to-convert-mapstring-any-to-case-class-cannot-handle-optional
 trait FromMap[L <: HList] {
   def apply(m: Map[String, Any]): Option[L]
@@ -103,7 +103,5 @@ class ConvertHelper[A]() {
       implicit
       lgen: LabelledGeneric.Aux[A, R],
       fromMap: FromMap[R]
-  ): Option[A] = {
-    fromMap(m).map(lgen.from)
-  }
+  ): Option[A] = fromMap(m).map(lgen.from)
 }

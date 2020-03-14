@@ -3,7 +3,7 @@ package com.github.reddone.caseql.sql.table.query
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
-import com.github.reddone.caseql.sql.tokens.{From, Update => Upd, Where}
+import com.github.reddone.caseql.sql.tokens.{Update => UpdateToken, Where}
 import doobie._
 import Fragment._
 import fs2.Stream
@@ -14,54 +14,51 @@ sealed trait UpdateHasModifier extends UpdateBuilderState
 sealed trait UpdateHasFilter   extends UpdateBuilderState
 sealed trait UpdateHasKey      extends UpdateBuilderState
 
-final class UpdateBuilder[S <: UpdateBuilderState, T, K](
-    table: Table[T, K],
-    alias: Option[String]
-) extends QueryBuilder[T, K](table, alias) { self =>
+sealed abstract class UpdateBuilder[S <: UpdateBuilderState, A, K](
+    table: Table[A, K]
+) extends QueryBuilder[A, K](table, None) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Upd ${querySyntax.alias.getOrElse(querySyntax.name)}"
+    s"$UpdateToken ${querySyntax.name}"
   )
 
-  def withModifier[MT <: EntityModifier[MT]](modifier: MT)(
+  def withModifier[MA <: EntityModifier[MA]](modifier: MA)(
       implicit
       ev: S =:= UpdateHasTable,
-      tableModifier: TableModifier[T, MT]
-  ): UpdateBuilder[S with UpdateHasModifier, T, K] = {
+      tableModifier: TableModifier[A, MA]
+  ): UpdateBuilder[S with UpdateHasModifier, A, K] = {
     val namedFragments = tableModifier
-      .entityModifierNamedFragments(modifier)(querySyntax.alias)
+      .primitiveModifierNamedFragments(modifier)
       .filter(_._2.nonEmpty)
       .map {
         case (column, modifier) => (column, modifier.get)
       }
-    // TODO: handle empty modifier case, because all Option[Modifier[_] are empty
     val setFragment = Fragments.set(namedFragments.map {
-      case (col, parameter) => const(col + " =") ++ parameter
+      case (col, param) => const(col + " =") ++ param
     }: _*) // love scala emojis
-    val fromFragment = const(s"$From ${querySyntax.aliasedName}")
-    fragment = fragment ++ setFragment ++ fromFragment
-    self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, T, K]]
+    fragment = fragment ++ setFragment
+    self.asInstanceOf[UpdateBuilder[S with UpdateHasModifier, A, K]]
   }
 
-  def withFilter[FT <: EntityFilter[FT]](filter: FT)(
+  def withFilter[FA <: EntityFilter[FA]](filter: FA)(
       implicit
       ev: S =:= UpdateHasTable with UpdateHasModifier,
-      tableFilter: TableFilter[T, FT]
-  ): UpdateBuilder[S with UpdateHasFilter, T, K] = {
+      tableFilter: TableFilter[A, FA]
+  ): UpdateBuilder[S with UpdateHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, querySyntax.alias)
+      .byFilterFragment(filter, None)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
-    self.asInstanceOf[UpdateBuilder[S with UpdateHasFilter, T, K]]
+    self.asInstanceOf[UpdateBuilder[S with UpdateHasFilter, A, K]]
   }
 
   def withKey(key: K)(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier
-  ): UpdateBuilder[S with UpdateHasKey, T, K] = {
+  ): UpdateBuilder[S with UpdateHasKey, A, K] = {
     val whereFragment = const(Where) ++ byKeyFragment(key)
     fragment = fragment ++ whereFragment
-    self.asInstanceOf[UpdateBuilder[S with UpdateHasKey, T, K]]
+    self.asInstanceOf[UpdateBuilder[S with UpdateHasKey, A, K]]
   }
 
   def buildUpdate(
@@ -97,9 +94,9 @@ final class UpdateBuilder[S <: UpdateBuilderState, T, K](
 
 private[table] object UpdateBuilder {
 
-  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
-    new UpdateBuilder[UpdateHasTable, T, K](table, alias)
+  def apply[A, K](implicit table: Table[A, K]): UpdateBuilder[UpdateHasTable, A, K] =
+    new UpdateBuilder[UpdateHasTable, A, K](table) {}
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
-    new UpdateBuilder[UpdateHasTable, T, K](table, alias)
+  def forTable[A, K](table: Table[A, K]): UpdateBuilder[UpdateHasTable, A, K] =
+    new UpdateBuilder[UpdateHasTable, A, K](table) {}
 }

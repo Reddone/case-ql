@@ -12,58 +12,58 @@ sealed trait SelectHasTable  extends SelectBuilderState
 sealed trait SelectHasFilter extends SelectBuilderState
 sealed trait SelectHasKey    extends SelectBuilderState
 
-final class SelectBuilder[S, T, K](
-    table: Table[T, K],
+sealed abstract class SelectBuilder[S, A, K](
+    table: Table[A, K],
     alias: Option[String]
-) extends QueryBuilder[T, K](table, alias) { self =>
+) extends QueryBuilder[A, K](table, alias) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Select ${querySyntax.columns.mkString(", ")} $From ${querySyntax.aliasedName}"
+    s"$Select ${querySyntax.aliasedColumns.mkString(", ")} $From ${querySyntax.aliasedName}"
   )
 
-  def withFilter[FT <: EntityFilter[FT]](filter: FT)(
+  def withFilter[FA <: EntityFilter[FA]](filter: FA)(
       implicit
       ev: S =:= SelectHasTable,
-      tableFilter: TableFilter[T, FT]
-  ): SelectBuilder[S with SelectHasFilter, T, K] = {
+      tableFilter: TableFilter[A, FA]
+  ): SelectBuilder[S with SelectHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, querySyntax.alias)
+      .byFilterFragment(filter, alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
-    self.asInstanceOf[SelectBuilder[S with SelectHasFilter, T, K]]
+    self.asInstanceOf[SelectBuilder[S with SelectHasFilter, A, K]]
   }
 
   def withKey(key: K)(
       implicit ev: S =:= SelectHasTable
-  ): SelectBuilder[S with SelectHasKey, T, K] = {
+  ): SelectBuilder[S with SelectHasKey, A, K] = {
     val whereFragment = const(Where) ++ byKeyFragment(key)
     fragment = fragment ++ whereFragment
-    self.asInstanceOf[SelectBuilder[S with SelectHasKey, T, K]]
+    self.asInstanceOf[SelectBuilder[S with SelectHasKey, A, K]]
   }
 
   def buildSelect(
       implicit ev: S =:= SelectHasTable with SelectHasFilter
-  ): SQLStreamingAction[T] =
-    new SQLStreamingAction[T] {
+  ): SQLStreamingAction[A] =
+    new SQLStreamingAction[A] {
       override def toFragment: Fragment             = fragment
-      override def execute: Stream[ConnectionIO, T] = fragment.query[T](table.read).stream
+      override def execute: Stream[ConnectionIO, A] = fragment.query[A](table.read).stream
     }
 
   def buildSelectByKey(
       implicit ev: S =:= SelectHasTable with SelectHasKey
-  ): SQLAction[Option[T]] =
-    new SQLAction[Option[T]] {
+  ): SQLAction[Option[A]] =
+    new SQLAction[Option[A]] {
       override def toFragment: Fragment             = fragment
-      override def execute: ConnectionIO[Option[T]] = fragment.query[T](table.read).option
+      override def execute: ConnectionIO[Option[A]] = fragment.query[A](table.read).option
     }
 }
 
 object SelectBuilder {
 
-  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
-    new SelectBuilder[SelectHasTable, T, K](table, alias)
+  def apply[A, K](alias: Option[String])(implicit table: Table[A, K]): SelectBuilder[SelectHasTable, A, K] =
+    new SelectBuilder[SelectHasTable, A, K](table, alias) {}
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
-    new SelectBuilder[SelectHasTable, T, K](table, alias)
+  def forTable[A, K](table: Table[A, K], alias: Option[String]): SelectBuilder[SelectHasTable, A, K] =
+    new SelectBuilder[SelectHasTable, A, K](table, alias) {}
 }

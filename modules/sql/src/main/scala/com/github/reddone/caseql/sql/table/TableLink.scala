@@ -1,11 +1,9 @@
 package com.github.reddone.caseql.sql.table
 
-import cats.data.NonEmptyList
+import com.github.reddone.caseql.sql.table.TableLink.Aux
+import shapeless.{HList, LabelledGeneric, Lazy}
 
-// TODO: use type safe columns to select fields. It is expensive but it ensures
-// TODO: that both tables can be linked together
-
-trait TableLink[A, B] {
+trait TableLink[A, B] { self =>
   type Junction
 
   def leftSyntax: TableSyntax[A]
@@ -14,63 +12,163 @@ trait TableLink[A, B] {
   def leftJoinFields: List[(String, String)]
   def rightJoinFields: List[(String, String)]
   def isJunction: Boolean
+
+  final def inverse: Aux[B, A, Junction] = new TableLink[B, A] {
+    override type Junction = self.Junction
+
+    override def leftSyntax: TableSyntax[B]              = self.rightSyntax
+    override def rightSyntax: TableSyntax[A]             = self.leftSyntax
+    override def junctionSyntax: TableSyntax[Junction]   = self.junctionSyntax
+    override def leftJoinFields: List[(String, String)]  = self.rightJoinFields
+    override def rightJoinFields: List[(String, String)] = self.leftJoinFields
+    override def isJunction: Boolean                     = self.isJunction
+  }
 }
 
 object TableLink {
 
   type Aux[A, B, C] = TableLink[A, B] { type Junction = C }
 
-  def self[A, K](left: Table[A, K])(
-      condition: TableSyntax[A] => NonEmptyList[String]
-  ): Aux[A, A, Unit] = new TableLink[A, A] {
-    override type Junction = Unit
+  def apply[A, B](implicit ev: TableLink[A, B]): Aux[A, B, ev.Junction] = ev
 
-    override def leftSyntax: TableSyntax[A]            = left.syntax
-    override def rightSyntax: TableSyntax[A]           = left.syntax
-    override def junctionSyntax: TableSyntax[Junction] = Table.unit.syntax
-    override def leftJoinFields: List[(String, String)] =
-      condition(leftSyntax).toList.zip(condition(leftSyntax).toList)
-    override def rightJoinFields: List[(String, String)] = List.empty
-    override def isJunction: Boolean                     = false
+  implicit def inverse[A, B](implicit ev: TableLink[A, B]): Aux[B, A, ev.Junction] = ev.inverse
+
+  object self {
+
+    def apply[A] = new Partial[A]
+
+    class Partial[A] {
+
+      def apply[
+          ReprA <: HList,
+          ReprK <: HList,
+          ReprJ <: HList,
+          ValuesK <: HList,
+          ValuesJ <: HList
+      ](
+          fsa: ReprK,
+          fsb: ReprJ
+      )(
+          implicit
+          tableSyntaxA: TableSyntax[A],
+          lgenA: LabelledGeneric.Aux[A, ReprA],
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
+          fieldSelectionAJ: Lazy[FieldSelection.Aux[ReprA, ReprJ, ValuesJ]],
+          sameValuesKJ: ValuesK =:= ValuesJ
+      ): Aux[A, A, Unit] = new TableLink[A, A] {
+        override type Junction = Unit
+
+        override def leftSyntax: TableSyntax[A]            = tableSyntaxA
+        override def rightSyntax: TableSyntax[A]           = tableSyntaxA
+        override def junctionSyntax: TableSyntax[Junction] = Table.unit.syntax
+        override def leftJoinFields: List[(String, String)] =
+          fieldSelectionAK.value.fields(fsa).zip(fieldSelectionAJ.value.fields(fsb))
+        override def rightJoinFields: List[(String, String)] = leftJoinFields.map(_.swap)
+        override def isJunction: Boolean                     = false
+      }
+    }
   }
 
-  def direct[A, K, B, J](left: Table[A, K], right: Table[B, J])(
-      condition: (TableSyntax[A], TableSyntax[B]) => NonEmptyList[(String, String)]
-  ): Aux[A, B, Unit] = new TableLink[A, B] {
-    override type Junction = Unit
+  object direct {
 
-    override def leftSyntax: TableSyntax[A]              = left.syntax
-    override def rightSyntax: TableSyntax[B]             = right.syntax
-    override def junctionSyntax: TableSyntax[Junction]   = Table.unit.syntax
-    override def leftJoinFields: List[(String, String)]  = condition(leftSyntax, rightSyntax).toList
-    override def rightJoinFields: List[(String, String)] = List.empty
-    override def isJunction: Boolean                     = false
+    def apply[A, B] = new Partial[A, B]
+
+    class Partial[A, B] {
+
+      def apply[
+          ReprA <: HList,
+          ReprB <: HList,
+          ReprK <: HList,
+          ReprJ <: HList,
+          ValuesK <: HList,
+          ValuesJ <: HList
+      ](
+          fsa: ReprK,
+          fsb: ReprJ
+      )(
+          implicit
+          tableSyntaxA: TableSyntax[A],
+          tableSyntaxB: TableSyntax[B],
+          lgenA: LabelledGeneric.Aux[A, ReprA],
+          lgenB: LabelledGeneric.Aux[B, ReprB],
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
+          fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ]],
+          sameValuesKJ: ValuesK =:= ValuesJ
+      ): Aux[A, B, Unit] = new TableLink[A, B] {
+        override type Junction = Unit
+
+        override def leftSyntax: TableSyntax[A]            = tableSyntaxA
+        override def rightSyntax: TableSyntax[B]           = tableSyntaxB
+        override def junctionSyntax: TableSyntax[Junction] = Table.unit.syntax
+        override def leftJoinFields: List[(String, String)] =
+          fieldSelectionAK.value.fields(fsa).zip(fieldSelectionBJ.value.fields(fsb))
+        override def rightJoinFields: List[(String, String)] = leftJoinFields.map(_.swap)
+        override def isJunction: Boolean                     = false
+      }
+    }
   }
 
-  def junction[A, K, B, J, C, I](left: Table[A, K], right: Table[B, J], junction: Table[C, I])(
-      leftCondition: (TableSyntax[A], TableSyntax[C]) => NonEmptyList[(String, String)],
-      rightCondition: (TableSyntax[B], TableSyntax[C]) => NonEmptyList[(String, String)]
-  ): Aux[A, B, C] = new TableLink[A, B] {
-    override type Junction = C
+  object junction {
 
-    override def leftSyntax: TableSyntax[A]              = left.syntax
-    override def rightSyntax: TableSyntax[B]             = right.syntax
-    override def junctionSyntax: TableSyntax[Junction]   = junction.syntax
-    override def leftJoinFields: List[(String, String)]  = leftCondition(leftSyntax, junctionSyntax).toList
-    override def rightJoinFields: List[(String, String)] = rightCondition(rightSyntax, junctionSyntax).toList
-    override def isJunction: Boolean                     = true
+    def apply[A, B, C] = new Partial[A, B, C]
+
+    class Partial[A, B, C] {
+
+      def apply[
+          ReprA <: HList,
+          ReprB <: HList,
+          ReprC <: HList,
+          ReprK <: HList,
+          ReprJ <: HList,
+          ReprIL <: HList,
+          ReprIR <: HList,
+          ValuesK <: HList,
+          ValuesJ <: HList,
+          ValuesIL <: HList,
+          ValuesIR <: HList
+      ](
+          fsac: (ReprK, ReprIL),
+          fsbc: (ReprJ, ReprIR)
+      )(
+          implicit
+          tableSyntaxA: TableSyntax[A],
+          tableSyntaxB: TableSyntax[B],
+          tableSyntaxC: TableSyntax[C],
+          lgenA: LabelledGeneric.Aux[A, ReprA],
+          lgenB: LabelledGeneric.Aux[B, ReprB],
+          lgenC: LabelledGeneric.Aux[C, ReprC],
+          fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
+          fieldSelectionCIL: Lazy[FieldSelection.Aux[ReprC, ReprIL, ValuesIL]],
+          fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ]],
+          fieldSelectionCIR: Lazy[FieldSelection.Aux[ReprC, ReprIR, ValuesIR]],
+          sameValuesKIL: ValuesK =:= ValuesIL,
+          sameValuesJIR: ValuesJ =:= ValuesIR
+      ): Aux[A, B, C] = new TableLink[A, B] {
+        override type Junction = C
+
+        override def leftSyntax: TableSyntax[A]            = tableSyntaxA
+        override def rightSyntax: TableSyntax[B]           = tableSyntaxB
+        override def junctionSyntax: TableSyntax[Junction] = tableSyntaxC
+        override def leftJoinFields: List[(String, String)] =
+          fieldSelectionAK.value.fields(fsac._1).zip(fieldSelectionCIL.value.fields(fsac._2))
+        override def rightJoinFields: List[(String, String)] =
+          fieldSelectionBJ.value.fields(fsbc._1).zip(fieldSelectionCIR.value.fields(fsbc._2))
+        override def isJunction: Boolean = true
+      }
+    }
   }
 
-  implicit def inverse[A, B, C](
-      implicit link: TableLink.Aux[A, B, C]
-  ): Aux[B, A, C] = new TableLink[B, A] {
-    override type Junction = C
+  object union {
 
-    override def leftSyntax: TableSyntax[B]              = link.rightSyntax
-    override def rightSyntax: TableSyntax[A]             = link.leftSyntax
-    override def junctionSyntax: TableSyntax[Junction]   = link.junctionSyntax
-    override def leftJoinFields: List[(String, String)]  = link.rightJoinFields
-    override def rightJoinFields: List[(String, String)] = link.leftJoinFields
-    override def isJunction: Boolean                     = link.isJunction
+    def apply[A, B, C](leftLink: Aux[A, C, Unit], rightLink: Aux[B, C, Unit]): Aux[A, B, C] = new TableLink[A, B] {
+      override type Junction = C
+
+      override def leftSyntax: TableSyntax[A]              = leftLink.leftSyntax
+      override def rightSyntax: TableSyntax[B]             = rightLink.leftSyntax
+      override def junctionSyntax: TableSyntax[Junction]   = rightLink.rightSyntax
+      override def leftJoinFields: List[(String, String)]  = leftLink.leftJoinFields
+      override def rightJoinFields: List[(String, String)] = rightLink.leftJoinFields
+      override def isJunction: Boolean                     = true
+    }
   }
 }

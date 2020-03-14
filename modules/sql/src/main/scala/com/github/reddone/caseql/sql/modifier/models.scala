@@ -31,7 +31,7 @@ object models {
   }
 
   trait Modifier[T] {
-    def toFragment: Fragment
+    def processPrimitiveModifier: Fragment
   }
 
   type ModifierOption[T] = Modifier[Option[T]]
@@ -42,7 +42,7 @@ object models {
       action: ModifierAction.Value,
       value: Option[T]
   ) extends Modifier[T] {
-    override def toFragment: Fragment = action match {
+    override def processPrimitiveModifier: Fragment = action match {
       case ModifierAction.Default =>
         const(tokens.Default)
       case ModifierAction.Set =>
@@ -55,7 +55,7 @@ object models {
       action: ModifierOptionAction.Value,
       value: Option[T]
   ) extends ModifierOption[T] {
-    override def toFragment: Fragment = action match {
+    override def processPrimitiveModifier: Fragment = action match {
       case ModifierOptionAction.Default =>
         const(tokens.Default)
       case ModifierOptionAction.Set =>

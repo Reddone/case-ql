@@ -5,6 +5,8 @@ import java.time.Instant
 
 import com.github.reddone.caseql.sql.TestModel._
 import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.wrappers.RelationFilter
+import com.github.reddone.caseql.sql.table.TableLink.Aux
 import doobie._
 import doobie.implicits._
 import javasql._
@@ -15,7 +17,35 @@ import shapeless.test.illTyped
 
 class TableFilterSpec extends AnyFlatSpec with Matchers {
 
-  implicit val table: Table[Test, TestKey] = Table.derive[Test, TestKey]()
+  implicit val table: Table[Test, TestKey] =
+    Table.derive[Test, TestKey](useTableAlias = false)
+  implicit val leftTable: Table[TestLeft, TestLeftKey] =
+    Table.derive[TestLeft, TestLeftKey](useTableAlias = false)
+  implicit val directTable: Table[TestDirect, TestDirectKey] =
+    Table.derive[TestDirect, TestDirectKey](useTableAlias = false)
+  implicit val rightTable: Table[TestRight, TestRightKey] =
+    Table.derive[TestRight, TestRightKey](useTableAlias = false)
+  implicit val junctionTable: Table[TestJunction, TestJunctionKey] =
+    Table.derive[TestJunction, TestJunctionKey](useTableAlias = false)
+
+  implicit val leftSelfLink: Aux[TestLeft, TestLeft, Unit] = TableLink.self[TestLeft](
+    FieldSet("field1"),
+    FieldSet("field3")
+  )
+  implicit val directLeftLink: Aux[TestDirect, TestLeft, Unit] = TableLink.direct[TestDirect, TestLeft](
+    FieldSet("field3"),
+    FieldSet("field1")
+  )
+  implicit val leftJunctionLink: Aux[TestLeft, TestJunction, Unit] = TableLink.direct[TestLeft, TestJunction](
+    FieldSet("field1"),
+    FieldSet("field1")
+  )
+  implicit val rightJunctionLink: Aux[TestRight, TestJunction, Unit] = TableLink.direct[TestRight, TestJunction](
+    FieldSet("field1"),
+    FieldSet("field2")
+  )
+  implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] =
+    TableLink.union(leftJunctionLink, rightJunctionLink)
 
   "TableFilter derivation" should "compile in the simple case" in {
     """TableFilter.derive[Test, TestFilter]()""" should compile
@@ -25,12 +55,14 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     """TableFilter.derive[Test, TestFilterUnordered]()""" should compile
   }
 
-  it should "compile in the other case" in {
-    """TableFilter.derive[Test, TestFilterOther]()""" should compile
+  it should "not compile in the other case" in {
+    """TableFilter.derive[Test, TestFilterOther]()""" shouldNot compile
+    illTyped { """TableFilter.derive[Test, TestFilterOther]()""" }
   }
 
-  it should "compile in the other unordered case" in {
-    """TableFilter.derive[Test, TestFilterOtherUnordered]()""" should compile
+  it should "not compile in the other unordered case" in {
+    """TableFilter.derive[Test, TestFilterOtherUnordered]()""" shouldNot compile
+    illTyped { """TableFilter.derive[Test, TestFilterOtherUnordered]()""" }
   }
 
   it should "not compile in the plus case" in {
@@ -43,14 +75,12 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     illTyped { """TableFilter.derive[Test, TestFilterPlusUnordered]()""" }
   }
 
-  it should "not compile in the less case" in {
-    """TableFilter.derive[Test, TestFilterLess]()""" shouldNot compile
-    illTyped { """TableFilter.derive[Test, TestFilterLess]()""" }
+  it should "compile in the less case" in {
+    """TableFilter.derive[Test, TestFilterLess]()""" should compile
   }
 
-  it should "not compile in the less unordered case" in {
-    """TableFilter.derive[Test, TestFilterLessUnordered]()""" shouldNot compile
-    illTyped { """TableFilter.derive[Test, TestFilterLessUnordered]()""" }
+  it should "compile in the less unordered case" in {
+    """TableFilter.derive[Test, TestFilterLessUnordered]()""" should compile
   }
 
   "TableFilter typeclass" should "work correctly with EntityFilter[_]" in {
@@ -61,7 +91,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A")))
     )
     val alias1  = "a1"
-    val result1 = tableFilter1.entityFilterFragments(filter1)
+    val result1 = tableFilter1.primitiveFilterFragments(filter1)
 
     result1(Some(alias1)).map(_.map(_.toString)) shouldBe List(
       Some("Fragment(\"(a1.field1 = ? ) AND (a1.field1 IN (?, ?) ) \")"),
@@ -77,7 +107,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3))))
     )
     val alias2  = "a2"
-    val result2 = tableFilter2.entityFilterFragments(filter2)
+    val result2 = tableFilter2.primitiveFilterFragments(filter2)
 
     result2(Some(alias2)).map(_.map(_.toString)) shouldBe List(
       None,
@@ -85,46 +115,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None,
       Some("Fragment(\"(a2.field1 = ? ) AND (a2.field1 IN (?, ?) ) \")")
     )
-
-    val tableFilter3: TableFilter[Test, TestFilterOther] =
-      TableFilter.derive[Test, TestFilterOther]()
-    val filter3 = TestFilterOther.empty.copy(
-      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3)))),
-      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
-      otherField1 = "5",
-      otherField2 = Seq(6)
-    )
-    val alias3  = "a3"
-    val result3 = tableFilter3.entityFilterFragments(filter3)
-
-    result3(Some(alias3)).map(_.map(_.toString)) shouldBe List(
-      Some("Fragment(\"(a3.field1 = ? ) AND (a3.field1 IN (?, ?) ) \")"),
-      Some("Fragment(\"(a3.field2 LIKE %?% ) \")"),
-      None,
-      None
-    )
-
-    val tableFilter4: TableFilter[Test, TestFilterOtherUnordered] =
-      TableFilter.derive[Test, TestFilterOtherUnordered]()
-    val filter4 = TestFilterOtherUnordered.empty.copy(
-      otherField2 = Seq(6),
-      field2 = Some(StringFilterOption.empty.copy(CONTAINS = Some("A"))),
-      otherField1 = "5",
-      field1 = Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(2, 3))))
-    )
-    val alias4  = "a4"
-    val result4 = tableFilter4.entityFilterFragments(filter4)
-
-    result4(Some(alias4)).map(_.map(_.toString)) shouldBe List(
-      None,
-      Some("Fragment(\"(a4.field2 LIKE %?% ) \")"),
-      None,
-      Some("Fragment(\"(a4.field1 = ? ) AND (a4.field1 IN (?, ?) ) \")")
-    )
   }
-
-  // TODO: test relation filter
-  it should "work correctly with RelationFilter[_, _, _]" in {}
 
   "TableFilter combinator" should "work correctly with an empty EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
@@ -153,7 +144,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a flat EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
-    val filter1 = TestFilter(
+    val filter = TestFilter(
       Some(IntFilter.empty.copy(EQ = Some(1), IN = Some(Seq(1, 1, 1)))),
       Some(StringFilterOption.empty.copy(EQ = Some("2"), CONTAINS = Some("2"))),
       Some(LongFilter.empty.copy(EQ = Some(3L), IN = Some(Seq(3L, 3L, 3L)))),
@@ -162,11 +153,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None,
       None
     )
-    val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(filter1, Some(alias1))
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(filter, Some(alias))
 
-    result1 shouldBe defined
-    result1.get.toString shouldBe "Fragment(\"" +
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
       "(" +
       "((a1.field1 = ? ) AND (a1.field1 IN (?, ?, ?) ) ) AND " +
       "((a1.field2 = ? ) AND (a1.field2 LIKE %?% ) ) AND " +
@@ -179,7 +170,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a nested EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
-    val filter1 = TestFilter(
+    val filter = TestFilter(
       Some(IntFilter.empty.copy(EQ = Some(11))),
       Some(StringFilterOption.empty.copy(EQ = Some("22"))),
       None,
@@ -188,20 +179,20 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None,
       None
     )
-    val nestedFilter1 = TestFilter(
+    val nestedFilter = TestFilter(
       Some(IntFilter.empty.copy(EQ = Some(1))),
       Some(StringFilterOption.empty.copy(EQ = Some("2"))),
       None,
       None,
-      AND = Some(Seq(filter1, filter1)),
-      OR = Some(Seq(filter1, filter1)),
-      NOT = Some(filter1)
+      AND = Some(Seq(filter, filter)),
+      OR = Some(Seq(filter, filter)),
+      NOT = Some(filter)
     )
-    val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(nestedFilter1, Some(alias1))
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(nestedFilter, Some(alias))
 
-    result1 shouldBe defined
-    result1.get.toString shouldBe "Fragment(\"" +
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
       "(" +
       "((a1.field1 = ? ) ) AND ((a1.field2 = ? ) ) " +
       ") " +
@@ -237,7 +228,8 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
   it should "work correctly with a deeply nested EntityFilter[_]" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
-    val deepFilter1 = TestFilter.empty.copy(OR = Some(
+    // danger: a LISP enthusiast may want to test a deeper filter
+    val deepFilter = TestFilter.empty.copy(OR = Some(
       Seq(
         TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(11)))),
         TestFilter.empty.copy(field2 = Some(StringFilterOption.empty.copy(EQ = Some("22")))),
@@ -260,11 +252,11 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     )
-    val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(deepFilter1, Some(alias1))
+    val alias  = "a1"
+    val result = tableFilter.byFilterFragment(deepFilter, Some(alias))
 
-    result1 shouldBe defined
-    result1.get.toString shouldBe "Fragment(\"" +
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
       "((" + // OR BEGIN
       "(" +
       "((a1.field1 = ? ) ) " + // FIRST FILTER INSIDE OR
@@ -295,9 +287,344 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  // TODO: test nested relation filter
-  it should "work correctly with a nested RelationFilter[_, _, _]" in {}
+  "TableFilter relation" should "work correctly with a self RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
 
-  // TODO: test deeply nested relation filter
-  it should "work correctly with a deeply nested RelationFilter[_, _, _]" in {}
+    val leftFilter = TestLeftFilter.empty.copy(
+      field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+      selfRelation = Some(
+        RelationFilter
+          .selfEmpty[TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(TestLeftFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("EVERY"))))),
+            SOME = Some(TestLeftFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("SOME"))))),
+            NONE = Some(TestLeftFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("NONE")))))
+          )
+      )
+    )
+    val alias1  = "a1"
+    val result1 = leftTableFilter.byFilterFragment(leftFilter, Some(alias1))
+
+    result1 shouldBe defined
+    result1.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN SELF RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END SELF RELATION
+      ") " +
+      "\")"
+
+    val result2 = leftTableFilter.byFilterFragment(leftFilter, None)
+
+    result2 shouldBe defined
+    result2.get.toString shouldBe "Fragment(\"" +
+      "(((test_left.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN SELF RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END SELF RELATION
+      ") " +
+      "\")"
+  }
+
+  it should "work correctly with a direct RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
+    implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
+      TableFilter.derive[TestDirect, TestDirectFilter]()
+
+    val directFilter = TestDirectFilter.empty.copy(
+      field1 = Some(StringFilter.empty.copy(EQ = Some("1"))),
+      leftRelation = Some(
+        RelationFilter
+          .empty[TestDirect, TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            SOME = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            NONE = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1)))))
+          )
+      )
+    )
+    val alias  = "a1"
+    val result = directTableFilter.byFilterFragment(directFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN DIRECT RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END DIRECT RELATION
+      ") " +
+      "\")"
+  }
+
+  it should "work correctly with a junction RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
+
+    val rightFilter = TestRightFilter.empty.copy(
+      field1 = Some(LongFilter.empty.copy(EQ = Some(1L))),
+      leftRelation = Some(
+        RelationFilter
+          .empty[TestRight, TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            SOME = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+            NONE = Some(TestLeftFilter.empty.copy(field1 = Some(IntFilter.empty.copy(EQ = Some(1)))))
+          )
+      )
+    )
+
+    val alias  = "a1"
+    val result = rightTableFilter.byFilterFragment(rightFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN JUNCTION RELATION
+      "(" + // BEGIN EVERY
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "LEFT OUTER JOIN test_left ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND IS NULL test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      ") " + // END NONE
+      ") " + // END JUNCTION RELATION
+      ") " +
+      "\")"
+  }
+
+  it should "work correctly with a nested RelationFilter[_, _, _]" in {
+    implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+      TableFilter.derive[TestLeft, TestLeftFilter]()
+    implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+      TableFilter.derive[TestRight, TestRightFilter]()
+    implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
+      TableFilter.derive[TestDirect, TestDirectFilter]()
+
+    val directNestedFilter = TestDirectFilter.empty.copy(
+      field1 = Some(StringFilter.empty.copy(EQ = Some("1"))),
+      leftRelation = Some(
+        RelationFilter
+          .empty[TestDirect, TestLeft, TestLeftFilter]
+          .copy(
+            EVERY = Some(
+              TestLeftFilter.empty.copy(
+                field1 = Some(IntFilter.empty.copy(EQ = Some(1))),
+                rightRelation = Some(
+                  RelationFilter
+                    .empty[TestLeft, TestRight, TestRightFilter]
+                    .copy(
+                      EVERY = Some(TestRightFilter.empty.copy(field1 = Some(LongFilter.empty.copy(EQ = Some(1L))))),
+                      SOME = Some(TestRightFilter.empty.copy(field1 = Some(LongFilter.empty.copy(EQ = Some(1L))))),
+                      NONE = Some(TestRightFilter.empty.copy(field1 = Some(LongFilter.empty.copy(EQ = Some(1L)))))
+                    )
+                )
+              )
+            ),
+            SOME = Some(
+              TestLeftFilter.empty.copy(
+                field1 = Some(IntFilter.empty.copy(EQ = Some(2))),
+                rightRelation = Some(
+                  RelationFilter
+                    .empty[TestLeft, TestRight, TestRightFilter]
+                    .copy(
+                      EVERY = Some(TestRightFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("2"))))),
+                      SOME = Some(TestRightFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("2"))))),
+                      NONE = Some(TestRightFilter.empty.copy(field2 = Some(StringFilter.empty.copy(EQ = Some("2")))))
+                    )
+                )
+              )
+            ),
+            NONE = Some(
+              TestLeftFilter.empty.copy(
+                field1 = Some(IntFilter.empty.copy(EQ = Some(3))),
+                rightRelation = Some(
+                  RelationFilter
+                    .empty[TestLeft, TestRight, TestRightFilter]
+                    .copy(
+                      EVERY = Some(TestRightFilter.empty.copy(field3 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+                      SOME = Some(TestRightFilter.empty.copy(field3 = Some(IntFilter.empty.copy(EQ = Some(1))))),
+                      NONE = Some(TestRightFilter.empty.copy(field3 = Some(IntFilter.empty.copy(EQ = Some(1)))))
+                    )
+                )
+              )
+            )
+          )
+      )
+    )
+    val alias  = "a1"
+    val result = directTableFilter.byFilterFragment(directNestedFilter, Some(alias))
+
+    result shouldBe defined
+    result.get.toString shouldBe "Fragment(\"" +
+      "(((a1.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN DIRECT RELATION
+      "(" + // BEGIN EVERY
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
+      "(" + // BEGIN NESTED EVERY
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      "AND IS NULL test_right.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      ") " + // END NESTED EVERY
+      "AND " +
+      "(" + // BEGIN NESTED SOME
+      "EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      ") " + // END NESTED SOME
+      "AND " +
+      "(" + // BEGIN NESTED NONE
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      ") " + // END NESTED NONE
+      ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
+      ") " +
+      ") " +
+      "= " +
+      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
+      ") " + // END EVERY
+      "AND " +
+      "(" + // BEGIN SOME
+      "EXISTS (" +
+      "SELECT 1 FROM test_left " +
+      "WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
+      "(" + // BEGIN NESTED EVERY
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      "AND IS NULL test_right.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      ") " + // END NESTED EVERY
+      "AND " +
+      "(" + // BEGIN NESTED SOME
+      "EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      ") " + // END NESTED SOME
+      "AND " +
+      "(" + // BEGIN NESTED NONE
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      ") " + // END NESTED NONE
+      ") " + // END JUNCTION RELATION INSIDE NESTED RELATION
+      ") " +
+      ") " +
+      ") " + // END SOME
+      "AND " +
+      "(" + // BEGIN NONE
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_left " +
+      "WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "AND " +
+      "(" +
+      "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
+      "(" + // BEGIN NESTED EVERY
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      "AND IS NULL test_right.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      ") " + // END NESTED EVERY
+      "AND " +
+      "(" + // BEGIN NESTED SOME
+      "EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      ") " + // END NESTED SOME
+      "AND " +
+      "(" + // BEGIN NESTED NONE
+      "NOT EXISTS (" +
+      "SELECT 1 FROM test_junction " +
+      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      ") " + // END NESTED NONE
+      ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
+      ") " +
+      ") " +
+      ") " + // END NONE
+      ") " + // END DIRECT RELATION
+      ") " +
+      "\")"
+  }
 }

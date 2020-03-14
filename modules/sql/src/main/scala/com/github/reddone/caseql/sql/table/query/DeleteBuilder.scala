@@ -12,34 +12,33 @@ sealed trait DeleteHasTable  extends DeleteBuilderState
 sealed trait DeleteHasFilter extends DeleteBuilderState
 sealed trait DeleteHasKey    extends DeleteBuilderState
 
-final class DeleteBuilder[S, T, K](
-    table: Table[T, K],
-    alias: Option[String]
-) extends QueryBuilder[T, K](table, alias) { self =>
+sealed abstract class DeleteBuilder[S, A, K](
+    table: Table[A, K]
+) extends QueryBuilder[A, K](table, None) { self =>
 
   private[this] var fragment: Fragment = const(
-    s"$Delete ${querySyntax.alias.getOrElse(querySyntax.name)} $From ${querySyntax.aliasedName}"
+    s"$Delete $From ${querySyntax.name}"
   )
 
-  def withFilter[FT <: EntityFilter[FT]](filter: FT)(
+  def withFilter[FA <: EntityFilter[FA]](filter: FA)(
       implicit
       ev: S =:= DeleteHasTable,
-      tableFilter: TableFilter[T, FT]
-  ): DeleteBuilder[S with DeleteHasFilter, T, K] = {
+      tableFilter: TableFilter[A, FA]
+  ): DeleteBuilder[S with DeleteHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, querySyntax.alias)
+      .byFilterFragment(filter, None)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
-    self.asInstanceOf[DeleteBuilder[S with DeleteHasFilter, T, K]]
+    self.asInstanceOf[DeleteBuilder[S with DeleteHasFilter, A, K]]
   }
 
   def withKey(key: K)(
       implicit ev: S =:= DeleteHasTable
-  ): DeleteBuilder[S with DeleteHasKey, T, K] = {
+  ): DeleteBuilder[S with DeleteHasKey, A, K] = {
     val whereFragment = const(Where) ++ byKeyFragment(key)
     fragment = fragment ++ whereFragment
-    self.asInstanceOf[DeleteBuilder[S with DeleteHasKey, T, K]]
+    self.asInstanceOf[DeleteBuilder[S with DeleteHasKey, A, K]]
   }
 
   def buildDelete(
@@ -75,9 +74,9 @@ final class DeleteBuilder[S, T, K](
 
 object DeleteBuilder {
 
-  def apply[T, K](alias: Option[String])(implicit table: Table[T, K]) =
-    new DeleteBuilder[DeleteHasTable, T, K](table, alias)
+  def apply[A, K](implicit table: Table[A, K]): DeleteBuilder[DeleteHasTable, A, K] =
+    new DeleteBuilder[DeleteHasTable, A, K](table) {}
 
-  def forTable[T, K](table: Table[T, K], alias: Option[String]) =
-    new DeleteBuilder[DeleteHasTable, T, K](table, alias)
+  def forTable[A, K](table: Table[A, K]): DeleteBuilder[DeleteHasTable, A, K] =
+    new DeleteBuilder[DeleteHasTable, A, K](table) {}
 }
