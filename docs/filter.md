@@ -115,14 +115,20 @@ The filter can also be created by deserializing the following JSON:
   "field1": { "IN": [11, 12, 13] },
   "field2": { "EQ": "2" },
   "OR": [
-    { "EQ": 1 },
-    { "GT": 3 }
+    { "field1": { "EQ": 1 } },
+    { "field3": { "GT": 3 } }
   ] 
 }
 ``` 
 
-This will produce the where condition 
-"WHERE (test.field1 IN (11, 12, 13)) AND (test.field2 = '2') AND ((test.field1 = 1) OR (test.field3 > 3))".
+This will produce the where condition:
+
+```sql
+WHERE (test.field1 IN (11, 12, 13)) 
+    AND (test.field2 = '2') 
+    AND ((test.field1 = 1) OR (test.field3 > 3))".
+```
+
 You can create complex where conditions by nesting AND, OR and NOT as you like: it is possible to express any kind of
 boolean condition using this approach. The NOT operator acts on a single filter, while the AND and OR operators act
 on a sequence of filters. 
@@ -130,58 +136,70 @@ on a sequence of filters.
 ## RelationFilter
 
 If you want to filter entities according to criteria on their relation, then you have to use a 
-*RelationFilter[A, B, FB <: EntityFilter[FB]]* in order to allow an *EntityFilter[FB]* to be used on entity *A* linked to 
-entity *B*. Basically, *RelationFilter* acts as a wrapper for an *EntityFilter*, allowing the latter to be used inside
-other filters.
-Consider the following example:
+*RelationFilter[A, B, FB <: EntityFilter[FB]]* in order to allow an *EntityFilter[FB]* to be used on entity *A* 
+linked to entity *B*. Basically, *RelationFilter* acts as a wrapper for an *EntityFilter*, allowing the latter to be 
+used inside other filters.
+Consider the following example which uses tables and links from the table documentation:
 
 ```scala
-case class TestDirect(
-  field1: String,
-  field2: Option[Long],
-  field3: Timestamp,
-  testField1: Int
-)
-case class TestDirectKey(
-  field1: String
-)
-
-case class TestDirectFilter(
-  field1: Option[StringFilter],
-  field2: Option[LongFilterOption],
-  field3: Option[TimestampFilter],
-  relationTest: Option[RelationFilter[TestDirect, Test, TestFilter]],
-  AND: Option[Seq[TestDirectFilter]],
-  OR: Option[Seq[TestDirectFilter]],
-  NOT: Option[TestDirectFilter]
-) extends EntityFilter[TestDirectFilter]
-
-object TestDirectFilter {
-  val empty = TestDirectFilter(None, None, None, None, None, None, None)
+// filter for left table with self relation and junction relation with right
+case class TestLeftFilter(
+    field1: Option[IntFilter],
+    field2: Option[StringFilter],
+    field3: Option[IntFilter],
+    selfRelation: Option[RelationFilter[TestLeft, TestLeft, TestLeftFilter]],
+    rightRelation: Option[RelationFilter[TestLeft, TestRight, TestRightFilter]],
+    AND: Option[Seq[TestLeftFilter]],
+    OR: Option[Seq[TestLeftFilter]],
+    NOT: Option[TestLeftFilter]
+) extends EntityFilter[TestLeftFilter]
+object TestLeftFilter {
+  val empty: TestLeftFilter = TestLeftFilter(None, None, None, None, None, None, None, None)
 }
-
-implicit val testDirectTable: Table[TestDirect, TestDirectKey] = Table.derive[TestDirect, TestDirectKey]()
-
-implicit val testTestDirectLink: TableLink[Test, TestDirect] = TableLink.direct(testTable, testDirectTable)(
-  (a, b) => NonEmptyList.of(("field1", "testField1"))
-)
+// filter for direct table with direct relation with left
+case class TestDirectFilter(
+    field1: Option[StringFilter],
+    field2: Option[TimestampFilter],
+    field3: Option[IntFilter],
+    leftRelation: Option[RelationFilter[TestDirect, TestLeft, TestLeftFilter]],
+    AND: Option[Seq[TestDirectFilter]],
+    OR: Option[Seq[TestDirectFilter]],
+    NOT: Option[TestDirectFilter]
+) extends EntityFilter[TestDirectFilter]
+object TestDirectFilter {
+  val empty: TestDirectFilter = TestDirectFilter(None, None, None, None, None, None, None)
+}
+// filter for right table with junction relation with left
+case class TestRightFilter(
+    field1: Option[LongFilter],
+    field2: Option[StringFilter],
+    field3: Option[IntFilter],
+    leftRelation: Option[RelationFilter[TestRight, TestLeft, TestLeftFilter]],
+    AND: Option[Seq[TestRightFilter]],
+    OR: Option[Seq[TestRightFilter]],
+    NOT: Option[TestRightFilter]
+) extends EntityFilter[TestRightFilter]
+object TestRightFilter {
+  val empty: TestRightFilter = TestRightFilter(None, None, None, None, None, None, None)
+}
 ```
 
-Here *TestFilter* is wrapped by *RelationFilter*, which also adds a type information regarding the link between entities.
-This type information is necessary in order to help the TableFilter derivation process, so be careful to provide types
-in the right order. Note that the field holding the *RelationFilter* is named "relationTest", but you can give it the
-name you prefer. It makes little sense to enforce a naming convention on relations because one cannot know in advance
-which relations will be included in an *EntityFilter*; for example, you can opt to don't use RelationFilter at all.
+Let's take *TestLeftFilter* as an example: here, the two *RelationFilter* fields are used to add a type information
+regarding the link between entities, in order to help the *TableFilter* derivation process. Be careful to provide types
+in the right order or the derivation will not work. The fields holding relations are named "selfRelation" and 
+"rightRelation" but you can use the name you like, since there is no check on it mainly because we cannot know in 
+advance how many relations you want to use in the filter; for example, you can opt to not use *RelationFilter* at all.
 
 The *RelationFilter* case class has three fields: EVERY, SOME and NONE. The first one checks that every related entity
 meets the filter conditions, the second one performs the check on at least one related entity and the third one checks
 that no related entity meets the filter conditions.
+
 The following:
 
 ```scala
 val testDirectFilter = TestDirectFilter.empty.copy(
-  field2 = Some(LongFilterOption.copy(EQ = Some(1L))),
-  relationTest = Some(
+  field1 = Some(StringFilter.copy(EQ = Some("1"))),
+  leftRelation = Some(
     RelationFilter.empty[TestDirect, Test, TestFilter].copy(
       SOME = Some(
         TestFilter.empty.copy(field1 = Some(IntFilter.empty.copy(IN = Some(Seq(11, 12, 13)))))
@@ -195,8 +213,8 @@ or its serialized form:
 
 ```json
 {
-  "field2": { "EQ":  1 },
-  "relationTest": {
+  "field1": { "EQ":  "1" },
+  "leftRelation": {
     "SOME": {
       "field1": { "IN": [11, 12, 13] }
     }
@@ -204,9 +222,17 @@ or its serialized form:
 }
 ```
 
-will produce the where condition 
-"WHERE (test_direct.field2 = 1) AND 
-(EXISTS (SELECT 1 FROM test_direct WHERE test.field1 = test_direct.testField1 AND test_direct.field1 IN (11, 12, 13)))".
+will produce the where condition :
+
+```sql
+WHERE (test_direct.field1 = 1) 
+    AND (EXISTS (
+        SELECT 1 FROM test_direct 
+        WHERE test_left.field1 = test_direct.field3 
+        AND test_left.field1 IN (11, 12, 13)
+    ))".
+```
+
 The operators EVERY, SOME and NONE accept a single filter.
 
 ## TableFilter

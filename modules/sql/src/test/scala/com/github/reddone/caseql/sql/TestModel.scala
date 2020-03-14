@@ -242,7 +242,7 @@ object TestModel {
 
   // RELATION TABLE
 
-  // left and self relation with left
+  // left, having a self relation and a junction relation with right
   case class TestLeft(
       field1: Int,
       field2: String,
@@ -251,7 +251,7 @@ object TestModel {
   case class TestLeftKey(
       field1: Int
   )
-  // direct relation with left
+  // direct, having a direct relation with left
   case class TestDirect(
       field1: String,
       field2: Timestamp,
@@ -260,7 +260,7 @@ object TestModel {
   case class TestDirectKey(
       field1: String
   )
-  // right
+  // right, having a junction relation with left
   case class TestRight(
       field1: Long,
       field2: String,
@@ -269,7 +269,7 @@ object TestModel {
   case class TestRightKey(
       field1: Long
   )
-  // junction relation with left and right
+  // junction table between left and right
   case class TestJunction(
       field1: Int,
       field2: Long
@@ -281,7 +281,7 @@ object TestModel {
 
   // RELATION FILTER
 
-  // simple filter for left with relation filter on left and right
+  // filter for left table with self relation and junction relation with right
   case class TestLeftFilter(
       field1: Option[IntFilter],
       field2: Option[StringFilter],
@@ -295,7 +295,7 @@ object TestModel {
   object TestLeftFilter {
     val empty: TestLeftFilter = TestLeftFilter(None, None, None, None, None, None, None, None)
   }
-  // simple filter for direct with relation filter on left
+  // filter for direct table with direct relation with left
   case class TestDirectFilter(
       field1: Option[StringFilter],
       field2: Option[TimestampFilter],
@@ -308,7 +308,7 @@ object TestModel {
   object TestDirectFilter {
     val empty: TestDirectFilter = TestDirectFilter(None, None, None, None, None, None, None)
   }
-  // simple filter for right with relation filter on left
+  // filter for right table with junction relation with left
   case class TestRightFilter(
       field1: Option[LongFilter],
       field2: Option[StringFilter],
@@ -321,7 +321,7 @@ object TestModel {
   object TestRightFilter {
     val empty: TestRightFilter = TestRightFilter(None, None, None, None, None, None, None)
   }
-  // simple filter for junction with relation filter on left and right
+  // filter for junction table in case you want to apply a filter on it
   case class TestJunctionFilter(
       field1: Option[IntFilter],
       field2: Option[LongFilter],

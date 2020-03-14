@@ -113,7 +113,9 @@ The modifier can also be created by deserializing the following JSON:
 
 In the case of INSERT, this will produce the statement:
  
-"INSERT INTO test (field1, field2, field3, field4) VALUES (DEFAULT, "2", 3, NULL)". 
+ ```sql
+INSERT INTO test (field1, field2, field3, field4) VALUES (DEFAULT, "2", 3, NULL)
+```
 
 Empty options are converted into DEFAULT, because this statement mandates that all columns are provided. 
 Please note that in standard SQL, if you don't provide a column in an insert statement then its value will be DEFAULT. 

@@ -95,7 +95,7 @@ the *TableLink* class and you can use *TableLink.Aux[A, B, C]* to refer to it.
 Suppose you have the following tables:
 
 ```scala
-// left and self relation with left
+// left, having a self relation and a junction relation with right
 case class TestLeft(
     field1: Int,
     field2: String,
@@ -104,7 +104,7 @@ case class TestLeft(
 case class TestLeftKey(
     field1: Int
 )
-// direct relation with left
+// direct, having a direct relation with left
 case class TestDirect(
     field1: String,
     field2: Timestamp,
@@ -113,7 +113,7 @@ case class TestDirect(
 case class TestDirectKey(
     field1: String
 )
-// right
+// right, having a junction relation with left
 case class TestRight(
     field1: Long,
     field2: String,
@@ -122,7 +122,7 @@ case class TestRight(
 case class TestRightKey(
     field1: Long
 )
-// junction relation with left and right
+// junction table between left and right
 case class TestJunction(
     field1: Int,
     field2: Long
