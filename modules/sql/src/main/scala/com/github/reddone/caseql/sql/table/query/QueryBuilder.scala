@@ -17,7 +17,6 @@ abstract class QueryBuilder[A, K](table: Table[A, K], alias: Option[String]) {
           .map(col => s"$col = $Placeholder")
           .mkString(s" $And ")
       )
-
 }
 
 trait SQLFragment {
