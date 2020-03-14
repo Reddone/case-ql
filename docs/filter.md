@@ -237,9 +237,9 @@ The operators EVERY, SOME and NONE accept a single filter.
 
 ## TableFilter
 
-An *EntityFilter[FA]* with an arbitrary number of *RelationFilter[A, B, FB]* can be used to produce a where condition in select, 
-update or delete queries on a *Table[A, K]* only
-if we have an implicit instance of *TableFilter[A, FA]* in scope. The typeclass TableFilter guarantees that:
+An *EntityFilter[FA]* with an arbitrary number of *RelationFilter[A, B, FB]* can be used to produce a where condition 
+in a select, update or delete queries on a *Table[A, K]* only if we have an implicit instance of *TableFilter[A, FA]* 
+in scope. The typeclass *TableFilter* guarantees that:
 
 - an implicit *TableSyntax[A]* exists for *A*
 
@@ -258,5 +258,22 @@ These conditions are sufficient to generate a type-safe where condition. To crea
 ```scala
 implicit val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 ```
+
+or in the case of relations:
+
+```scala
+implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
+    TableFilter.derive[TestLeft, TestLeftFilter]()
+
+implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
+    TableFilter.derive[TestRight, TestRightFilter]()
+
+implicit val directTableFilter: TableFilter[TestDirect, TestDirectFilter] =
+    TableFilter.derive[TestDirect, TestDirectFilter]()
+```
+
+The use of "implicit lazy val" is necessary because there is a circular reference between left and right filters, i.e.
+the right filter can use the left filter and the right filter can use the left filter. This is not uncommon when
+dealing with circular references in implicit derivation.
 
 If the code compiles then you can be 100% sure that your filter can be used with your entity.
