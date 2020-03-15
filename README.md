@@ -109,7 +109,6 @@ For a full explanation read the [documentation](./docs/intro.md).
 - [ ] add aggregations inside select queries (help appreciated)
 - [ ] abstract over Fragment in order to include scalalikejdbc support (proposals accepted)
 - [ ] fix spacing inside queries
-- [ ] add a logo if I get 10 stars
 
 ## Inspiration
 
