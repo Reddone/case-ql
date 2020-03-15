@@ -1,6 +1,4 @@
-<div style="text-align:center">
-  <img src="./logo.png" alt="logo" width="600" height="400"/>
-</div>
+<img src="./logo.png" alt="logo" width="600" height="400" align="center"/>
 
 # Case QL
 
