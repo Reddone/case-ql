@@ -2,7 +2,6 @@
   <img src="./logo.png" alt="logo" width="480" height="320" />
 </p>
 
----
 CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
 It provides basic CRUD operations for entities and it offers a powerful filter mechanism to enable querying an
 entity and its relations.
@@ -19,7 +18,8 @@ produce the desired effect when used to query or modify the entity.
 See the "example" sub project to see it in action! It is still an experiment but it helped me a lot!!!
 **I am writing examples along with tests and documentation these month, so please wait a little. If you want you can 
 explore the source code, the core is located inside the "table" package of the "sql" module. If you want to see some
-action please consult the TableFilterSpec test class of the same module.**
+action please consult the TableFilterSpec test class of the same module.** For the moment, take the develop branch as
+a reference for the future stable release version.
 
 [Full documentation](./docs/intro.md)
 
