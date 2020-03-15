@@ -1,4 +1,4 @@
-![](./logo.png)
+![](./logo.png =400x400)
 
 # Case QL
 
