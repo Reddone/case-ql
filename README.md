@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo.png" alt="logo" width="480" height="320" />
+  <img src="./logo.png" alt="logo" width="480" height="360" />
 </p>
 
 CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
