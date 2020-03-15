@@ -2,12 +2,13 @@
   <img src="./logo.png" alt="logo" width="480" height="320" />
 </p>
 
+---
 CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
 It provides basic CRUD operations for entities and it offers a powerful filter mechanism to enable querying an
 entity and its relations.
 
 The basic idea is that case classes used to represent filters and modifications are checked at compile time
-against the case class representing the data model. This library provides powerful combinator to express almost any
+against case classes representing the data model. This library provides powerful combinator to express almost any
 kind of condition, taking into account also relations between entities.
 
 Queries are built using implicit instances of special objects which can be derived only if the type checking succeeds.
@@ -54,7 +55,7 @@ and I wanted to write a Scala library for doing similar things using JSON object
 of using code generation from a supplied schema, I wanted the code to dictate the rules on what we can do on an entity.
 So the entire project can be summarized with: 
 
-**"You write the code, and the code itself will tell you if you can do
+**"You write the code, and the code itself will dictate you if you can do
 certain operations, with the promise that everything will be serializable"**
 
 You are responsible for writing case classes for entities, filters, modifiers and links; in exchange, you get a compile 
@@ -103,12 +104,15 @@ For a full explanation read the [documentation](./docs/intro.md).
 
 ## TODO
 
-- [ ] setup an easy build and release process and move to sonatype (it's my first open source project)
-- [ ] provide support for caliban
+- [ ] provide support for caliban (I have to study the project and ZIO)
+
 - [ ] add joins inside select queries (help appreciated)
+
 - [ ] add aggregations inside select queries (help appreciated)
+
 - [ ] abstract over Fragment in order to include scalalikejdbc support (proposals accepted)
-- [ ] fix spacing inside queries
+
+- [ ] fix spacing inside queries (nice to have for readability)
 
 ## Inspiration
 

@@ -1,7 +1,7 @@
 ## Introduction
 
 Here we report the basic concepts behind CaseQL. For an in depth explanation, please follow the documentation links
-at the end of each section. If you have any question which doesn't find an answer in the documentation, feel free
+at the end of each section. If you have any question for which you can't find an answer in the documentation, feel free
 to open an issue or to write an e-mail.
 
 Before reading the documentation, I suggest you to become familiar with Doobie, by reading the "book of doobie" at
@@ -16,12 +16,12 @@ examples at https://github.com/tpolecat/doobie/tree/master/modules/example/src/m
 A *Table[A, K]* is a wrapper for a type *A* having a key *K*. Both *A* and *K* are case classes. Scala fields are 
 converted to SQL columns using a camel case to snake case converter; if you want to override the mapping, you can 
 provide a custom mapper in the form of a *Map[String, String]*, where each entry is in the form 
-(Scala field -> SQL table column). In order to make a case class *T* work with this library, you need to create an 
+(Scala field -> SQL table column). In order to make a case class *A* work with this library, you need to create an 
 implicit instance of *Table* using the appropriate derivation method.
 
-Tables can be linked together using the *Link[A, B]* class. If you want to use relations, you have to provide and
-implicit *Link* instance using one of the link factory methods. This needs to be done only once, i.e. if you have a
-*Link[A, B]* you don't have to define a *Link[B, A]*.
+Tables can be linked together using the *TableLink[A, B]* class. If you want to use relations, you have to provide and
+implicit *TableLink* instance using one of the link factory methods. This needs to be done only once, i.e. if you have 
+a *TableLink[A, B]* you don't have to define a *TableLink[B, A]*.
 
 Basically, tables and links are the entry point for other concepts. They are used at compile time to enforce the 
 structure of *Filter* and *Modifier*, meaning that you won't be allowed to compile the code if you want to use a non
@@ -31,7 +31,7 @@ compliant filter to query a table.
 
 ### Filter
 
-A *Filter[T]* is a wrapper for a type *T* on which it's possible to express filter expressions. The library provides
+A *Filter[T]* is a wrapper for a type *T* on which it's possible to express filter expressions. This library provides
 instances of various *Filter*, for *T* and *Option[T]*: they only differ in the is nullable condition. For example, 
 on an *IntFilter* you can use the following expressions: EQ, NOT_EQ, IN, NOT_IN, LT, LTE, GT, GTE.
 
@@ -48,7 +48,7 @@ efficient SQL query. Filters can be used inside select, update and delete statem
 
 ### Modifier
 
-A *Modifier[T]* is a wrapper for a type *T* on which it's possible to set values. The library provides instances of
+A *Modifier[T]* is a wrapper for a type *T* on which it's possible to set values. This library provides instances of
 various *Modifier*, for *T* and *Option[T]*: they only differ in the possibility to set a NULL value. For example, 
 on an *IntModifier* you can either set DEFAULT or a value of type *Int* and on a *StringModifierOption* you can set 
 DEFAULT, NULL or a value of type *String*.
@@ -105,7 +105,7 @@ There are some interesting utilities, which can be useful depending on the scena
 - possibility to work with raw values in the form of a *Map[String, Any]*. Maybe you don't want to provide a *Read* or 
 *Write* instance but you want to read data as it is. You can do this using the *Read[Row]* and *Write[Row]* implicit
 instances inside the *Raw* object. For example, if you have a huge table and you want to use Sangria projections, now
-you can. Use it at your own risk because they remove the type safe layer introduced by doobie.
+you can. Use it at your own risk because they remove the type safe layer introduced by Doobie.
 
 - test utilities which can save you some time. There is a *GenericRepository* which exposes common operations in an
 unsafe manner, but it removes many of the test boilerplate, and there is a *TestTransactors* factory to create a
@@ -119,7 +119,7 @@ Doobie transactor backed by different pools.
 For example, you can transform the raw result according to a *Projector* and then you can map your intermediate
 result to a case class before the final mapping step with the GraphQL object.
 
-- SQL tokens and functions used inside the project to avoid repetitions. Maybe you can use them too.
+- SQL tokens and functions used internally in the project to avoid repetitions. Maybe you can use them too.
 
 [Util documentation](./util.md)
 

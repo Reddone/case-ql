@@ -38,7 +38,7 @@ than the field mapper, so if you want to fully customize column names you can pr
 
 Please note that this part of code it's not typesafe. This library ensure type safety at the case class level, the user
 must provide a valid mapping to table column names (many JDBC libraries leave this responsibility to the user). However,
-type *K* is checked against *T* using shapeless record *Extractor*.
+type *K* is checked against *A* using shapeless record *Extractor* to ensure that the table has the key fields.
 
 The last argument is used to enable unique aliases in the form "xN" where "x" is a constant prefix and "N" is a
 counter. It defaults to true, but if you can disable it.
@@ -89,8 +89,8 @@ There are three kinds of link:
 
 - direct link, in the form *TableLink[A, B]*. It indicates that *A* and *B* are connected by one or more fields.
 
-- junction link signals that *A* and *B* are linked together via a junction table *C*. The type *C* is encoded inside 
-the *TableLink* class and you can use *TableLink.Aux[A, B, C]* to refer to it.
+- junction link, which signals that *A* and *B* are linked together via a junction table *C*. The type *C* is encoded 
+inside the *TableLink* class and you can use *TableLink.Aux[A, B, C]* to refer to it.
 
 Suppose you have the following tables:
 
@@ -174,8 +174,8 @@ implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] = TableLink.u
 )
 ```
 
-There is also a *TableLink.junction* factory method, which you can use if you want to create a link without using an
-intermediate table:
+There is also a *TableLink.junction* factory method, which you can use if you want to create a link without using
+intermediate direct links with the junction table:
 
 ```scala
 implicit val leftRightLink: Aux[TestLeft, TestRight, TestJunction] = 

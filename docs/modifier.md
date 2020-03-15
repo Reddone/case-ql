@@ -18,8 +18,8 @@ val stringModifierOption = StringModifierOption(ModifierOptionAction.Null, None)
 
 will create a modifier which set an INT field to 1 and a modifier which set a nullable VARCHAR field to NULL.
 
-This library provides *Modifier[A]* and *ModifierOption[A]* for most of the types covered by Doobie Meta. In details, 
-the following modifiers are provided:
+This library provides *Modifier[A]* and *ModifierOption[A]* for most of the types covered by Doobie *Meta[T]*. 
+In details, the following modifiers are provided:
 
 - *Enum* and *Option[Enum]*: *EnumModifier* and *EnumModifierOption*
 
