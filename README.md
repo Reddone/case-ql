@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./logo-crop.png" alt="logo" width="600" height="400" />
+  <img src="./logo-crop.png" alt="logo" width="480" height="320" />
 </p>
 
 # Case QL
