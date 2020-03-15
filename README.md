@@ -1,3 +1,5 @@
+![](./logo.png)
+
 # Case QL
 
 CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
@@ -9,7 +11,7 @@ against the case class representing the data model. This library provides powerf
 kind of condition, taking into account also relations between entities.
 
 Queries are built using implicit instances of special objects which can be derived only if the type checking succeeds.
-These objects act as a glue between the serializable word and the type-safe world, i.e. if you can derive the right
+These objects act as a glue between the serializable world and the type-safe world, i.e. if you can derive the right
 implicit instance you can be sure that your serializable case class representing a filter or a modification will 
 produce the desired effect when used to query or modify the entity.
 
