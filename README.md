@@ -1,6 +1,8 @@
-<p align="center">
-  <img src="./logo.png" alt="logo" width="480" height="320" />
-</p>
+<!-- <p align="center">
+    <img src="./logo.png" alt="logo" width="480" height="320" />
+</p> -->
+
+# CaseQL
 
 CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
 It provides basic CRUD operations for entities and it offers a powerful filter mechanism to enable querying an

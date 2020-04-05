@@ -18,7 +18,7 @@ import io.circe.generic.semiauto.deriveDecoder
 
 object ItTestModel {
 
-  // developer: entity, filter, modifier
+  // DEVELOPER ENTITY AND LINK
 
   final case class Developer(
       id: Long,
@@ -28,12 +28,19 @@ object ItTestModel {
   )
 
   object Developer {
-    implicit val decoder: Decoder[Developer]           = deriveDecoder[Developer]
-    implicit val table: Table[Developer, DeveloperKey] = Table.derive[Developer, DeveloperKey]()
-    implicit val selfLink: Aux[Developer, Developer, Unit] = TableLink.self[Developer](
-      FieldSet("id"),
-      FieldSet("teamLeaderId")
-    )
+    implicit val decoder: Decoder[Developer] = deriveDecoder[Developer]
+    implicit val table: Table[Developer, DeveloperKey] =
+      Table.derive[Developer, DeveloperKey]()
+    implicit val selfLink: Aux[Developer, Developer, Unit] =
+      TableLink.self[Developer](
+        FieldSet("id"),
+        FieldSet("teamLeaderId")
+      )
+    implicit val projectLink: Aux[Developer, DeveloperProjectLink, Unit] =
+      TableLink.direct[Developer, DeveloperProjectLink](
+        FieldSet("id"),
+        FieldSet("developerId")
+      )
   }
 
   final case class DeveloperKey(id: Long)
@@ -42,12 +49,15 @@ object ItTestModel {
     implicit val decoder: Decoder[DeveloperKey] = deriveDecoder[DeveloperKey]
   }
 
+  // DEVELOPER FILTER
+
   final case class DeveloperFilter(
       id: Option[LongFilter],
       fullName: Option[StringFilter],
       age: Option[IntFilter],
       teamLeaderId: Option[LongFilterOption],
-      selfRelation: RelationFilter[Developer, Developer, DeveloperFilter],
+      selfRelation: Option[RelationFilter[Developer, Developer, DeveloperFilter]],
+      projectRelation: Option[RelationFilter[Developer, Project, ProjectFilter]],
       AND: Option[Seq[DeveloperFilter]],
       OR: Option[Seq[DeveloperFilter]],
       NOT: Option[DeveloperFilter]
@@ -59,10 +69,13 @@ object ItTestModel {
       TableFilter.derive[Developer, DeveloperFilter]()
   }
 
+  // DEVELOPER MODIFIER
+
   final case class DeveloperModifier(
       id: Option[LongModifier],
       fullName: Option[StringModifier],
-      age: Option[IntModifier]
+      age: Option[IntModifier],
+      teamLeaderId: Option[LongModifierOption]
   ) extends EntityModifier[DeveloperModifier]
 
   object DeveloperModifier {
@@ -71,7 +84,7 @@ object ItTestModel {
       TableModifier.derive[Developer, DeveloperModifier]()
   }
 
-  // project entity, filter, modifier
+  // PROJECT ENTITY AND LINK
 
   final case class Project(
       id: Long,
@@ -82,8 +95,19 @@ object ItTestModel {
   )
 
   object Project {
-    implicit val decoder: Decoder[Project]         = deriveDecoder[Project]
-    implicit val table: Table[Project, ProjectKey] = Table.derive[Project, ProjectKey]()
+    implicit val decoder: Decoder[Project] = deriveDecoder[Project]
+    implicit val table: Table[Project, ProjectKey] =
+      Table.derive[Project, ProjectKey]()
+    implicit val developerLink: Aux[Project, DeveloperProjectLink, Unit] =
+      TableLink.direct[Project, DeveloperProjectLink](
+        FieldSet("id"),
+        FieldSet("projectId")
+      )
+    implicit val taskLink: Aux[Project, Task, Unit] =
+      TableLink.direct[Project, Task](
+        FieldSet("id"),
+        FieldSet("projectId")
+      )
   }
 
   final case class ProjectKey(id: Long)
@@ -92,12 +116,15 @@ object ItTestModel {
     implicit val decoder: Decoder[ProjectKey] = deriveDecoder[ProjectKey]
   }
 
+  // PROJECT FILTER
+
   final case class ProjectFilter(
       id: Option[LongFilter],
       title: Option[StringFilter],
       description: Option[StringFilterOption],
       createdAt: Option[TimestampFilter],
       updatedAt: Option[TimestampFilter],
+      taskRelation: Option[RelationFilter[Project, Task, TaskFilter]],
       AND: Option[Seq[ProjectFilter]],
       OR: Option[Seq[ProjectFilter]],
       NOT: Option[ProjectFilter]
@@ -108,6 +135,8 @@ object ItTestModel {
     implicit val tableFilter: TableFilter[Project, ProjectFilter] =
       TableFilter.derive[Project, ProjectFilter]()
   }
+
+  // PROJECT MODIFIER
 
   final case class ProjectModifier(
       id: Option[LongModifier],
@@ -123,7 +152,7 @@ object ItTestModel {
       TableModifier.derive[Project, ProjectModifier]()
   }
 
-  // developer_project entity
+  // DEVELOPER_PROJECT_LINK ENTITY AND LINK
 
   final case class DeveloperProjectLink(
       developerId: Long,
@@ -134,6 +163,8 @@ object ItTestModel {
     implicit val decoder: Decoder[DeveloperProjectLink] = deriveDecoder[DeveloperProjectLink]
     implicit val table: Table[DeveloperProjectLink, DeveloperProjectLinkKey] =
       Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
+    implicit val developerProjectLink: Aux[Developer, Project, DeveloperProjectLink] =
+      TableLink.union(Developer.projectLink, Project.developerLink)
   }
 
   final case class DeveloperProjectLinkKey(developerId: Long, projectId: Long)
@@ -141,6 +172,8 @@ object ItTestModel {
   object DeveloperProjectLinkKey {
     implicit val decoder: Decoder[DeveloperProjectLinkKey] = deriveDecoder[DeveloperProjectLinkKey]
   }
+
+  // DEVELOPER_PROJECT_LINK FILTER
 
   final case class DeveloperProjectLinkFilter(
       developerId: Option[LongFilter],
@@ -156,6 +189,8 @@ object ItTestModel {
       TableFilter.derive[DeveloperProjectLink, DeveloperProjectLinkFilter]()
   }
 
+  // DEVELOPER_PROJECT_LINK MODIFIER
+
   final case class DeveloperProjectLinkModifier(
       developerId: Option[LongModifier],
       projectId: Option[LongModifier]
@@ -167,5 +202,60 @@ object ItTestModel {
       TableModifier.derive[DeveloperProjectLink, DeveloperProjectLinkModifier]()
   }
 
-  // task: entity, filter, modifier
+  // TASK ENTITY
+
+  final case class Task(
+      id: Long,
+      label: String,
+      description: String,
+      duration: Timestamp,
+      projectId: Long
+  )
+
+  object Task {
+    implicit val decoder: Decoder[Task] = deriveDecoder[Task]
+    implicit val table: Table[Task, TaskKey] =
+      Table.derive[Task, TaskKey]()
+  }
+
+  final case class TaskKey(id: Long)
+
+  object TaskKey {
+    implicit val decoder: Decoder[TaskKey] = deriveDecoder[TaskKey]
+  }
+
+  // TASK FILTER
+
+  final case class TaskFilter(
+      id: Option[LongFilter],
+      label: Option[StringFilter],
+      description: Option[StringFilter],
+      duration: Option[TimestampFilter],
+      projectId: Option[LongFilter],
+      AND: Option[Seq[TaskFilter]],
+      OR: Option[Seq[TaskFilter]],
+      NOT: Option[TaskFilter]
+  ) extends EntityFilter[TaskFilter]
+
+  object TaskFilter {
+    implicit val decoder: Decoder[TaskFilter] = deriveDecoder[TaskFilter]
+    implicit val tableFilter: TableFilter[Task, TaskFilter] =
+      TableFilter.derive[Task, TaskFilter]()
+  }
+
+  // TASK MODIFIER
+
+  final case class TaskModifier(
+      id: Option[LongModifier],
+      label: Option[StringModifier],
+      description: Option[StringModifier],
+      duration: Option[TimestampModifier],
+      projectId: Option[LongModifier]
+  ) extends EntityModifier[TaskModifier]
+
+  object TaskModifier {
+    implicit val decoder: Decoder[TaskModifier] = deriveDecoder[TaskModifier]
+    implicit val tableModifier: TableModifier[Task, TaskModifier] =
+      TableModifier.derive[Task, TaskModifier]()
+  }
 }
