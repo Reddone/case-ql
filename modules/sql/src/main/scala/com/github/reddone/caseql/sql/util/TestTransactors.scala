@@ -19,7 +19,7 @@ object TestTransactors {
     val Sync: BlockerMode.Value   = Value("sync")
   }
 
-  def convertToRollingBack[F[_]: Async: ContextShift](xa: Transactor[F]): Transactor[F] = {
+  def rollingBack[F[_]: Async: ContextShift](xa: Transactor[F]): Transactor[F] = {
     Transactor.after.set(xa, HC.rollback)
   }
 

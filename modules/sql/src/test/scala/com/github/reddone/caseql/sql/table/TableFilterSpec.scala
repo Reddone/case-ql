@@ -83,7 +83,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     """TableFilter.derive[Test, TestFilterLessUnordered]()""" should compile
   }
 
-  "TableFilter typeclass" should "work correctly with EntityFilter[_]" in {
+  "TableFilter typeclass" should "work correctly with EntityFilter" in {
     val tableFilter1: TableFilter[Test, TestFilter] =
       TableFilter.derive[Test, TestFilter]()
     val filter1 = TestFilter.empty.copy(
@@ -117,7 +117,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     )
   }
 
-  "TableFilter combinator" should "work correctly with an empty EntityFilter[_]" in {
+  "TableFilter combinator" should "work correctly with an empty EntityFilter" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
     val filter1 = TestFilter.empty
@@ -141,7 +141,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     result2 shouldBe None
   }
 
-  it should "work correctly with a flat EntityFilter[_]" in {
+  it should "work correctly with a flat EntityFilter" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
     val filter = TestFilter(
@@ -167,7 +167,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  it should "work correctly with a nested EntityFilter[_]" in {
+  it should "work correctly with a nested EntityFilter" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
     val filter = TestFilter(
@@ -225,7 +225,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  it should "work correctly with a deeply nested EntityFilter[_]" in {
+  it should "work correctly with a deeply nested EntityFilter" in {
     val tableFilter: TableFilter[Test, TestFilter] = TableFilter.derive[Test, TestFilter]()
 
     // danger: a LISP enthusiast may want to test a deeper filter
@@ -287,7 +287,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  "TableFilter relation" should "work correctly with a self RelationFilter[_, _, _]" in {
+  "TableFilter relation" should "work correctly with a self RelationFilter" in {
     implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
       TableFilter.derive[TestLeft, TestLeftFilter]()
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
@@ -357,7 +357,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  it should "work correctly with a direct RelationFilter[_, _, _]" in {
+  it should "work correctly with a direct RelationFilter" in {
     implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
       TableFilter.derive[TestLeft, TestLeftFilter]()
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
@@ -404,7 +404,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  it should "work correctly with a junction RelationFilter[_, _, _]" in {
+  it should "work correctly with a junction RelationFilter" in {
     implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
       TableFilter.derive[TestLeft, TestLeftFilter]()
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =
@@ -457,7 +457,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "\")"
   }
 
-  it should "work correctly with a nested RelationFilter[_, _, _]" in {
+  it should "work correctly with a nested RelationFilter" in {
     implicit lazy val leftTableFilter: TableFilter[TestLeft, TestLeftFilter] =
       TableFilter.derive[TestLeft, TestLeftFilter]()
     implicit lazy val rightTableFilter: TableFilter[TestRight, TestRightFilter] =

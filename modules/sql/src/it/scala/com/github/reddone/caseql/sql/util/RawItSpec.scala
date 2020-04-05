@@ -10,6 +10,7 @@ import doobie.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
 import com.github.reddone.caseql.sql.ItTestData._
 import com.github.reddone.caseql.sql.util.Raw._
+import com.github.reddone.caseql.sql.util.TestTransactors._
 
 import scala.collection.mutable
 
@@ -52,7 +53,7 @@ class RawItSpec extends PgAnyWordSpec {
           .processRaw(s"SELECT * FROM $testSchema.$developerTableName")
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result1 shouldBe rawDevelopers
@@ -61,7 +62,7 @@ class RawItSpec extends PgAnyWordSpec {
           .processRaw(s"SELECT * FROM $testSchema.$projectTableName")
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result2 shouldBe rawProjects
@@ -73,14 +74,14 @@ class RawItSpec extends PgAnyWordSpec {
       "succeed to execute a query returning ConnectionIO" in {
         val result1 = testRepository
           .select[Unit, Row](developerTableName, List("*"), "", ())
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result1 shouldBe rawDevelopers
 
         val result2 = testRepository
           .select[Unit, Row](projectTableName, List("*"), "", ())
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result2 shouldBe rawProjects
@@ -91,7 +92,7 @@ class RawItSpec extends PgAnyWordSpec {
           .selectStream[Unit, Row](developerTableName, List("*"), "", ())
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result1 shouldBe rawDevelopers
@@ -100,7 +101,7 @@ class RawItSpec extends PgAnyWordSpec {
           .selectStream[Unit, Row](projectTableName, List("*"), "", ())
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result2 shouldBe rawProjects
@@ -115,14 +116,11 @@ class RawItSpec extends PgAnyWordSpec {
         builder1 += ("param_2" -> 42)
         val parameters1: Row = builder1.result()
 
-        val nextId = (for {
+        val (nextId, result1) = (for {
           _  <- testRepository.insert(developerTableName, developerColsNoId, parameters1)
           id <- nextDeveloperId.getAndIncrement().pure[ConnectionIO]
-        } yield id).transact(xa).unsafeRunSync()
-        val result1 = (for {
-          dev <- testRepository.select[Unit, Row](developerTableName, List("*"), s"WHERE id = $nextId", ())
-          _   <- testRepository.delete(developerTableName, s"WHERE id = $nextId", ())
-        } yield dev).transact(xa).unsafeRunSync()
+          dev <- testRepository.select[Unit, Row](developerTableName, List("*"), s"WHERE id = $id", ())
+        } yield (id, dev)).transact(rollingBack(xa)).unsafeRunSync()
 
         result1 shouldBe List(Map("id" -> nextId, "full_name" -> "tasty the tester", "age" -> 42))
       }
@@ -136,7 +134,7 @@ class RawItSpec extends PgAnyWordSpec {
 
         val thrown1 = the[IllegalArgumentException] thrownBy testRepository
           .insert(developerTableName, developerColsNoId, parameters1)
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         thrown1.getMessage shouldBe "You are trying to set 2 parameters using 3 values"
@@ -147,7 +145,7 @@ class RawItSpec extends PgAnyWordSpec {
 
         val thrown2 = the[IllegalArgumentException] thrownBy testRepository
           .insert(developerTableName, developerColsNoId, parameters2)
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         thrown2.getMessage shouldBe "You are trying to set 2 parameters using 1 values"

@@ -3,7 +3,6 @@ package com.github.reddone.caseql.sql
 import cats.effect.{ContextShift, IO}
 import com.github.reddone.caseql.sql.util.{GenericRepository, TestTransactors}
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import com.typesafe.config.ConfigFactory
 import doobie.util.transactor.Transactor.Aux
 import doobie._
 import doobie.implicits._
@@ -32,20 +31,13 @@ trait PgSetup { self: Suite with ForAllTestContainer =>
     val url          = container.jdbcUrl
     val user         = container.username
     val password     = container.password
-    val config       = ConfigFactory.parseString(s"""|doobie {
-                                                 |  numThreads = 10
-                                                 |  driverClassName = "org.postgresql.Driver"
-                                                 |  url = "$url"
-                                                 |  user = "$user"
-                                                 |  password = "$password"
-                                                 |}""".stripMargin)
-    val doobieConfig = DoobieConfig.valueOf(config)
+
+    val doobieConfig = new DoobieConfig(10, "org.postgresql.Driver", url, user, password) {}
     _xa = TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Cached)
 
     val y = _xa.yolo
     import y._
 
-    // TODO: do not use GenericRepository here because it breaks testing rules
     val testRepository: GenericRepository = GenericRepository.forSchema(testSchema)
 
     val initPg = testRepository.createSchema() *>

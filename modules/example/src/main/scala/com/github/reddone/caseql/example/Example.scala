@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, IO, IOApp, Resource, Timer}
 import cats.implicits._
-import com.github.reddone.caseql.example.repository.TransactorResource
+import com.github.reddone.caseql.example.resource.TransactorResource
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.logging.log4j.scala.Logging
 import sangria.execution.deferred.{DeferredResolver, Fetcher}

@@ -51,7 +51,7 @@ class TableModifierSpec extends AnyFlatSpec with Matchers {
     """TableModifier.derive[Test, TestModifierLessUnordered]()""" should compile
   }
 
-  "TableModifier typeclass" should "work correctly with EntityModifier[_]" in {
+  "TableModifier typeclass" should "work correctly with EntityModifier" in {
     val tableModifier1: TableModifier[Test, TestModifier] =
       TableModifier.derive[Test, TestModifier]()
     val modifier1 = TestModifier(

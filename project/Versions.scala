@@ -14,7 +14,7 @@ object Versions {
   val sangriaVersion                = "1.4.2"
   val scalatestVersion              = "3.1.1"
   val testcontainersPostgresVersion = "1.13.0"
-  val testcontainersScalaVersion    = "0.36.0"
+  val testcontainersScalaVersion    = "0.36.1"
   val slf4jVersion                  = "1.7.30"
   val akkaVersion                   = "2.6.4"
   val akkaHttpVersion               = "10.1.11"

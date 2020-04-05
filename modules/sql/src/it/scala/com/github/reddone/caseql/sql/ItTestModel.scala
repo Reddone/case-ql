@@ -3,10 +3,11 @@ package com.github.reddone.caseql.sql
 import java.sql.Timestamp
 
 import com.github.reddone.caseql.sql.filter.models._
-import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableModifier}
+import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
+import com.github.reddone.caseql.sql.table.{FieldSet, Table, TableFilter, TableLink, TableModifier}
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
+import com.github.reddone.caseql.sql.table.TableLink.Aux
 import com.github.reddone.caseql.sql.util.CirceDecoders._
 import doobie._
 import doobie.implicits._
@@ -17,17 +18,22 @@ import io.circe.generic.semiauto.deriveDecoder
 
 object ItTestModel {
 
-  // developer entity, filter, modifier
+  // developer: entity, filter, modifier
 
   final case class Developer(
       id: Long,
       fullName: String,
-      age: Int
+      age: Int,
+      teamLeaderId: Option[Long]
   )
 
   object Developer {
     implicit val decoder: Decoder[Developer]           = deriveDecoder[Developer]
     implicit val table: Table[Developer, DeveloperKey] = Table.derive[Developer, DeveloperKey]()
+    implicit val selfLink: Aux[Developer, Developer, Unit] = TableLink.self[Developer](
+      FieldSet("id"),
+      FieldSet("teamLeaderId")
+    )
   }
 
   final case class DeveloperKey(id: Long)
@@ -40,6 +46,8 @@ object ItTestModel {
       id: Option[LongFilter],
       fullName: Option[StringFilter],
       age: Option[IntFilter],
+      teamLeaderId: Option[LongFilterOption],
+      selfRelation: RelationFilter[Developer, Developer, DeveloperFilter],
       AND: Option[Seq[DeveloperFilter]],
       OR: Option[Seq[DeveloperFilter]],
       NOT: Option[DeveloperFilter]
@@ -158,4 +166,6 @@ object ItTestModel {
     implicit val tableModifier: TableModifier[DeveloperProjectLink, DeveloperProjectLinkModifier] =
       TableModifier.derive[DeveloperProjectLink, DeveloperProjectLinkModifier]()
   }
+
+  // task: entity, filter, modifier
 }
