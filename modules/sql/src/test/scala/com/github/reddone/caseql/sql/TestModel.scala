@@ -12,30 +12,30 @@ object TestModel {
   // TABLE
 
   // test model
-  case class Test(
+  final case class Test(
       field1: Int,
       field2: Option[String],
       field3: Long,
       field4: Option[Timestamp]
   )
   // simple case, should compile
-  case class TestKey(
+  final case class TestKey(
       field1: Int,
       field3: Long
   )
   // simple case but unordered, should compile
-  case class TestKeyUnordered(
+  final case class TestKeyUnordered(
       field3: Long,
       field1: Int
   )
   // with other field, should not compile
-  case class TestKeyOther(
+  final case class TestKeyOther(
       field1: Int,
       field3: Long,
       field5: Option[String]
   )
   // with other field and unordered, should not compile
-  case class TestKeyOtherUnordered(
+  final case class TestKeyOtherUnordered(
       field5: Option[String],
       field3: Long,
       field1: Int
@@ -44,7 +44,7 @@ object TestModel {
   // FILTER
 
   // simple case, should compile
-  case class TestFilter(
+  final case class TestFilter(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
@@ -57,7 +57,7 @@ object TestModel {
     val empty: TestFilter = TestFilter(None, None, None, None, None, None, None)
   }
   // simple case but unordered, should compile
-  case class TestFilterUnordered(
+  final case class TestFilterUnordered(
       field4: Option[TimestampFilterOption],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
@@ -70,7 +70,7 @@ object TestModel {
     val empty: TestFilterUnordered = TestFilterUnordered(None, None, None, None, None, None, None)
   }
   // with other fields, should not compile
-  case class TestFilterOther(
+  final case class TestFilterOther(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
@@ -85,7 +85,7 @@ object TestModel {
     val empty: TestFilterOther = TestFilterOther(None, None, None, None, "", Seq.empty, None, None, None)
   }
   // with other fields and unordered, should not compile
-  case class TestFilterOtherUnordered(
+  final case class TestFilterOtherUnordered(
       otherField2: Seq[Int],
       field4: Option[TimestampFilterOption],
       field2: Option[StringFilterOption],
@@ -101,7 +101,7 @@ object TestModel {
       TestFilterOtherUnordered(Seq.empty, None, None, None, "", None, None, None, None)
   }
   // one more field, should not compile
-  case class TestFilterPlus(
+  final case class TestFilterPlus(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
@@ -115,7 +115,7 @@ object TestModel {
     val empty: TestFilterPlus = TestFilterPlus(None, None, None, None, None, None, None, None)
   }
   // one more field and unordered, should not compile
-  case class TestFilterPlusUnordered(
+  final case class TestFilterPlusUnordered(
       field1: Option[IntFilter],
       field5: Option[StringFilter],
       field4: Option[TimestampFilterOption],
@@ -129,7 +129,7 @@ object TestModel {
     val empty: TestFilterPlusUnordered = TestFilterPlusUnordered(None, None, None, None, None, None, None, None)
   }
   // one less field, should compile
-  case class TestFilterLess(
+  final case class TestFilterLess(
       field1: Option[IntFilter],
       field2: Option[StringFilterOption],
       field3: Option[LongFilter],
@@ -141,7 +141,7 @@ object TestModel {
     val empty: TestFilterLess = TestFilterLess(None, None, None, None, None, None)
   }
   // one less field and unordered, should compile
-  case class TestFilterLessUnordered(
+  final case class TestFilterLessUnordered(
       field2: Option[StringFilterOption],
       field1: Option[IntFilter],
       field3: Option[LongFilter],
@@ -156,7 +156,7 @@ object TestModel {
   // MODIFIER
 
   // simple case, should compile
-  case class TestModifier(
+  final case class TestModifier(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
@@ -166,7 +166,7 @@ object TestModel {
     val empty: TestModifier = TestModifier(None, None, None, None)
   }
   // simple case but unordered, should compile
-  case class TestModifierUnordered(
+  final case class TestModifierUnordered(
       field4: Option[TimestampModifierOption],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
@@ -176,7 +176,7 @@ object TestModel {
     val empty: TestModifierUnordered = TestModifierUnordered(None, None, None, None)
   }
   // with other fields, should not compile
-  case class TestModifierOther(
+  final case class TestModifierOther(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
@@ -188,7 +188,7 @@ object TestModel {
     val empty: TestModifierOther = TestModifierOther(None, None, None, None, "", Seq.empty)
   }
   // with other fields and unordered, should not compile
-  case class TestModifierOtherUnordered(
+  final case class TestModifierOtherUnordered(
       otherField2: Seq[Int],
       field4: Option[TimestampModifierOption],
       field2: Option[StringModifierOption],
@@ -200,7 +200,7 @@ object TestModel {
     val empty: TestModifierOtherUnordered = TestModifierOtherUnordered(Seq.empty, None, None, None, "", None)
   }
   // one more field, should not compile
-  case class TestModifierPlus(
+  final case class TestModifierPlus(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier],
@@ -211,7 +211,7 @@ object TestModel {
     val empty: TestModifierPlus = TestModifierPlus(None, None, None, None, None)
   }
   // one more field and unordered, should not compile
-  case class TestModifierPlusUnordered(
+  final case class TestModifierPlusUnordered(
       field1: Option[IntModifier],
       field5: Option[StringModifier],
       field4: Option[TimestampModifierOption],
@@ -222,7 +222,7 @@ object TestModel {
     val empty: TestModifierPlusUnordered = TestModifierPlusUnordered(None, None, None, None, None)
   }
   // one less field, should compile
-  case class TestModifierLess(
+  final case class TestModifierLess(
       field1: Option[IntModifier],
       field2: Option[StringModifierOption],
       field3: Option[LongModifier]
@@ -231,7 +231,7 @@ object TestModel {
     val empty: TestModifierLess = TestModifierLess(None, None, None)
   }
   // one less field and unordered, should compile
-  case class TestModifierLessUnordered(
+  final case class TestModifierLessUnordered(
       field2: Option[StringModifierOption],
       field1: Option[IntModifier],
       field3: Option[LongModifier]
@@ -243,38 +243,38 @@ object TestModel {
   // RELATION TABLE
 
   // left, having a self relation and a junction relation with right
-  case class TestLeft(
+  final case class TestLeft(
       field1: Int,
       field2: String,
       field3: Int
   )
-  case class TestLeftKey(
+  final case class TestLeftKey(
       field1: Int
   )
   // direct, having a direct relation with left
-  case class TestDirect(
+  final case class TestDirect(
       field1: String,
       field2: Timestamp,
       field3: Int
   )
-  case class TestDirectKey(
+  final case class TestDirectKey(
       field1: String
   )
   // right, having a junction relation with left
-  case class TestRight(
+  final case class TestRight(
       field1: Long,
       field2: String,
       field3: Int
   )
-  case class TestRightKey(
+  final case class TestRightKey(
       field1: Long
   )
   // junction table between left and right
-  case class TestJunction(
+  final case class TestJunction(
       field1: Int,
       field2: Long
   )
-  case class TestJunctionKey(
+  final case class TestJunctionKey(
       field1: Int,
       field2: Long
   )
@@ -282,7 +282,7 @@ object TestModel {
   // RELATION FILTER
 
   // filter for left table with self relation and junction relation with right
-  case class TestLeftFilter(
+  final case class TestLeftFilter(
       field1: Option[IntFilter],
       field2: Option[StringFilter],
       field3: Option[IntFilter],
@@ -296,7 +296,7 @@ object TestModel {
     val empty: TestLeftFilter = TestLeftFilter(None, None, None, None, None, None, None, None)
   }
   // filter for direct table with direct relation with left
-  case class TestDirectFilter(
+  final case class TestDirectFilter(
       field1: Option[StringFilter],
       field2: Option[TimestampFilter],
       field3: Option[IntFilter],
@@ -309,7 +309,7 @@ object TestModel {
     val empty: TestDirectFilter = TestDirectFilter(None, None, None, None, None, None, None)
   }
   // filter for right table with junction relation with left
-  case class TestRightFilter(
+  final case class TestRightFilter(
       field1: Option[LongFilter],
       field2: Option[StringFilter],
       field3: Option[IntFilter],
@@ -322,7 +322,7 @@ object TestModel {
     val empty: TestRightFilter = TestRightFilter(None, None, None, None, None, None, None)
   }
   // filter for junction table in case you want to apply a filter on it
-  case class TestJunctionFilter(
+  final case class TestJunctionFilter(
       field1: Option[IntFilter],
       field2: Option[LongFilter],
       leftRelation: Option[RelationFilter[TestJunction, TestLeft, TestLeftFilter]],

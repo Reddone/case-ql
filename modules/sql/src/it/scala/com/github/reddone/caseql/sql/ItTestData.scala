@@ -15,9 +15,10 @@ object ItTestData {
   val developerTableName: String = "developer"
 
   val developerTableDefinition: String =
-    """|id        BIGSERIAL PRIMARY KEY,
-       |full_name VARCHAR(255) NOT NULL,
-       |age       INTEGER NOT NULL
+    """|id             BIGSERIAL PRIMARY KEY,
+       |full_name      VARCHAR(255) NOT NULL,
+       |age            INTEGER NOT NULL,
+       |team_leader_id BIGINT NULL REFERENCES test.developer (id) ON DELETE SET NULL
        |""".stripMargin
 
   val developerCols: List[String] = List("id", "full_name", "age")
@@ -25,12 +26,12 @@ object ItTestData {
   val developerColsNoId: List[String] = developerCols.tail
 
   val developers: List[Developer] = List(
-    Developer(1L, "Eddy Pasterino", 999),
-    Developer(2L, "Donger", 1),
-    Developer(3L, "Reddone", 32)
+    Developer(1L, "Eddy Pasterino", 999, None),
+    Developer(2L, "Donger", 1, Some(1L)),
+    Developer(3L, "Reddone", 32, None)
   )
 
-  val developersNoId: List[(String, Int)] = developers.map(Generic[Developer].to(_).tail.tupled)
+  val developersNoId: List[(String, Int, Option[Long])] = developers.map(Generic[Developer].to(_).tail.tupled)
 
   // project
 

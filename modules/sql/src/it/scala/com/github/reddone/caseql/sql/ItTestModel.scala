@@ -15,6 +15,7 @@ import javasql._
 import javatime._
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
+import shapeless.{cachedImplicit, LabelledGeneric, TypeOf}
 
 object ItTestModel {
 
@@ -28,25 +29,21 @@ object ItTestModel {
   )
 
   object Developer {
-    implicit val decoder: Decoder[Developer] = deriveDecoder[Developer]
+    implicit val lgen: TypeOf.`LabelledGeneric[Developer]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[Developer] =
+      deriveDecoder[Developer]
     implicit val table: Table[Developer, DeveloperKey] =
       Table.derive[Developer, DeveloperKey]()
-    implicit val selfLink: Aux[Developer, Developer, Unit] =
-      TableLink.self[Developer](
-        FieldSet("id"),
-        FieldSet("teamLeaderId")
-      )
-    implicit val projectLink: Aux[Developer, DeveloperProjectLink, Unit] =
-      TableLink.direct[Developer, DeveloperProjectLink](
-        FieldSet("id"),
-        FieldSet("developerId")
-      )
   }
 
   final case class DeveloperKey(id: Long)
 
   object DeveloperKey {
-    implicit val decoder: Decoder[DeveloperKey] = deriveDecoder[DeveloperKey]
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperKey]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperKey] =
+      deriveDecoder[DeveloperKey]
   }
 
   // DEVELOPER FILTER
@@ -64,8 +61,11 @@ object ItTestModel {
   ) extends EntityFilter[DeveloperFilter]
 
   object DeveloperFilter {
-    implicit val decoder: Decoder[DeveloperFilter] = deriveDecoder[DeveloperFilter]
-    implicit val tableFilter: TableFilter[Developer, DeveloperFilter] =
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperFilter]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperFilter] =
+      deriveDecoder[DeveloperFilter]
+    implicit lazy val tableFilter: TableFilter[Developer, DeveloperFilter] =
       TableFilter.derive[Developer, DeveloperFilter]()
   }
 
@@ -79,7 +79,10 @@ object ItTestModel {
   ) extends EntityModifier[DeveloperModifier]
 
   object DeveloperModifier {
-    implicit val decoder: Decoder[DeveloperModifier] = deriveDecoder[DeveloperModifier]
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperModifier]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperModifier] =
+      deriveDecoder[DeveloperModifier]
     implicit val tableModifier: TableModifier[Developer, DeveloperModifier] =
       TableModifier.derive[Developer, DeveloperModifier]()
   }
@@ -95,25 +98,21 @@ object ItTestModel {
   )
 
   object Project {
-    implicit val decoder: Decoder[Project] = deriveDecoder[Project]
+    implicit val lgen: TypeOf.`LabelledGeneric[Project]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[Project] =
+      deriveDecoder[Project]
     implicit val table: Table[Project, ProjectKey] =
       Table.derive[Project, ProjectKey]()
-    implicit val developerLink: Aux[Project, DeveloperProjectLink, Unit] =
-      TableLink.direct[Project, DeveloperProjectLink](
-        FieldSet("id"),
-        FieldSet("projectId")
-      )
-    implicit val taskLink: Aux[Project, Task, Unit] =
-      TableLink.direct[Project, Task](
-        FieldSet("id"),
-        FieldSet("projectId")
-      )
   }
 
   final case class ProjectKey(id: Long)
 
   object ProjectKey {
-    implicit val decoder: Decoder[ProjectKey] = deriveDecoder[ProjectKey]
+    implicit val lgen: TypeOf.`LabelledGeneric[ProjectKey]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[ProjectKey] =
+      deriveDecoder[ProjectKey]
   }
 
   // PROJECT FILTER
@@ -131,7 +130,10 @@ object ItTestModel {
   ) extends EntityFilter[ProjectFilter]
 
   object ProjectFilter {
-    implicit val decoder: Decoder[ProjectFilter] = deriveDecoder[ProjectFilter]
+    implicit val lgen: TypeOf.`LabelledGeneric[ProjectFilter]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[ProjectFilter] =
+      deriveDecoder[ProjectFilter]
     implicit val tableFilter: TableFilter[Project, ProjectFilter] =
       TableFilter.derive[Project, ProjectFilter]()
   }
@@ -147,7 +149,10 @@ object ItTestModel {
   ) extends EntityModifier[ProjectModifier]
 
   object ProjectModifier {
-    implicit val decoder: Decoder[ProjectModifier] = deriveDecoder[ProjectModifier]
+    implicit val lgen: TypeOf.`LabelledGeneric[ProjectModifier]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[ProjectModifier] =
+      deriveDecoder[ProjectModifier]
     implicit val tableModifier: TableModifier[Project, ProjectModifier] =
       TableModifier.derive[Project, ProjectModifier]()
   }
@@ -160,17 +165,21 @@ object ItTestModel {
   )
 
   object DeveloperProjectLink {
-    implicit val decoder: Decoder[DeveloperProjectLink] = deriveDecoder[DeveloperProjectLink]
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLink]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperProjectLink] =
+      deriveDecoder[DeveloperProjectLink]
     implicit val table: Table[DeveloperProjectLink, DeveloperProjectLinkKey] =
       Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
-    implicit val developerProjectLink: Aux[Developer, Project, DeveloperProjectLink] =
-      TableLink.union(Developer.projectLink, Project.developerLink)
   }
 
   final case class DeveloperProjectLinkKey(developerId: Long, projectId: Long)
 
   object DeveloperProjectLinkKey {
-    implicit val decoder: Decoder[DeveloperProjectLinkKey] = deriveDecoder[DeveloperProjectLinkKey]
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkKey]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperProjectLinkKey] =
+      deriveDecoder[DeveloperProjectLinkKey]
   }
 
   // DEVELOPER_PROJECT_LINK FILTER
@@ -184,7 +193,10 @@ object ItTestModel {
   ) extends EntityFilter[DeveloperProjectLinkFilter]
 
   object DeveloperProjectLinkFilter {
-    implicit val decoder: Decoder[DeveloperProjectLinkFilter] = deriveDecoder[DeveloperProjectLinkFilter]
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkFilter]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperProjectLinkFilter] =
+      deriveDecoder[DeveloperProjectLinkFilter]
     implicit val tableFilter: TableFilter[DeveloperProjectLink, DeveloperProjectLinkFilter] =
       TableFilter.derive[DeveloperProjectLink, DeveloperProjectLinkFilter]()
   }
@@ -197,7 +209,10 @@ object ItTestModel {
   ) extends EntityModifier[DeveloperProjectLinkModifier]
 
   object DeveloperProjectLinkModifier {
-    implicit val decoder: Decoder[DeveloperProjectLinkModifier] = deriveDecoder[DeveloperProjectLinkModifier]
+    implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkModifier]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[DeveloperProjectLinkModifier] =
+      deriveDecoder[DeveloperProjectLinkModifier]
     implicit val tableModifier: TableModifier[DeveloperProjectLink, DeveloperProjectLinkModifier] =
       TableModifier.derive[DeveloperProjectLink, DeveloperProjectLinkModifier]()
   }
@@ -213,7 +228,10 @@ object ItTestModel {
   )
 
   object Task {
-    implicit val decoder: Decoder[Task] = deriveDecoder[Task]
+    implicit val lgen: TypeOf.`LabelledGeneric[Task]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[Task] =
+      deriveDecoder[Task]
     implicit val table: Table[Task, TaskKey] =
       Table.derive[Task, TaskKey]()
   }
@@ -221,7 +239,10 @@ object ItTestModel {
   final case class TaskKey(id: Long)
 
   object TaskKey {
-    implicit val decoder: Decoder[TaskKey] = deriveDecoder[TaskKey]
+    implicit val lgen: TypeOf.`LabelledGeneric[TaskKey]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[TaskKey] =
+      deriveDecoder[TaskKey]
   }
 
   // TASK FILTER
@@ -238,7 +259,10 @@ object ItTestModel {
   ) extends EntityFilter[TaskFilter]
 
   object TaskFilter {
-    implicit val decoder: Decoder[TaskFilter] = deriveDecoder[TaskFilter]
+    implicit val lgen: TypeOf.`LabelledGeneric[TaskFilter]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[TaskFilter] =
+      deriveDecoder[TaskFilter]
     implicit val tableFilter: TableFilter[Task, TaskFilter] =
       TableFilter.derive[Task, TaskFilter]()
   }
@@ -254,8 +278,38 @@ object ItTestModel {
   ) extends EntityModifier[TaskModifier]
 
   object TaskModifier {
-    implicit val decoder: Decoder[TaskModifier] = deriveDecoder[TaskModifier]
+    implicit val lgen: TypeOf.`LabelledGeneric[TaskModifier]`.type =
+      cachedImplicit
+    implicit val decoder: Decoder[TaskModifier] =
+      deriveDecoder[TaskModifier]
     implicit val tableModifier: TableModifier[Task, TaskModifier] =
       TableModifier.derive[Task, TaskModifier]()
   }
+
+  // LINKS
+
+  implicit val selfLink: Aux[Developer, Developer, Unit] =
+    TableLink.self[Developer](
+      FieldSet("id"),
+      FieldSet("teamLeaderId")
+    )
+  implicit val projectLink: Aux[Developer, DeveloperProjectLink, Unit] =
+    TableLink.direct[Developer, DeveloperProjectLink](
+      FieldSet("id"),
+      FieldSet("developerId")
+    )
+
+  implicit val developerLink: Aux[Project, DeveloperProjectLink, Unit] =
+    TableLink.direct[Project, DeveloperProjectLink](
+      FieldSet("id"),
+      FieldSet("projectId")
+    )
+  implicit val taskLink: Aux[Project, Task, Unit] =
+    TableLink.direct[Project, Task](
+      FieldSet("id"),
+      FieldSet("projectId")
+    )
+
+  implicit val developerProjectLink: Aux[Developer, Project, DeveloperProjectLink] =
+    TableLink.union(projectLink, developerLink)
 }

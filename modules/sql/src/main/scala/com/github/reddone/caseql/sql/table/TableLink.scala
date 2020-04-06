@@ -54,7 +54,7 @@ object TableLink {
           lgenA: LabelledGeneric.Aux[A, ReprA],
           fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
           fieldSelectionAJ: Lazy[FieldSelection.Aux[ReprA, ReprJ, ValuesJ]],
-          sameValuesKJ: ValuesK =:= ValuesJ
+          sameValuesKJ: EqualNoOption[ValuesK, ValuesJ]
       ): Aux[A, A, Unit] = new TableLink[A, A] {
         override type Junction = Unit
 
@@ -93,7 +93,7 @@ object TableLink {
           lgenB: LabelledGeneric.Aux[B, ReprB],
           fieldSelectionAK: Lazy[FieldSelection.Aux[ReprA, ReprK, ValuesK]],
           fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ]],
-          sameValuesKJ: ValuesK =:= ValuesJ
+          sameValuesKJ: EqualNoOption[ValuesK, ValuesJ]
       ): Aux[A, B, Unit] = new TableLink[A, B] {
         override type Junction = Unit
 
@@ -141,8 +141,8 @@ object TableLink {
           fieldSelectionCIL: Lazy[FieldSelection.Aux[ReprC, ReprIL, ValuesIL]],
           fieldSelectionBJ: Lazy[FieldSelection.Aux[ReprB, ReprJ, ValuesJ]],
           fieldSelectionCIR: Lazy[FieldSelection.Aux[ReprC, ReprIR, ValuesIR]],
-          sameValuesKIL: ValuesK =:= ValuesIL,
-          sameValuesJIR: ValuesJ =:= ValuesIR
+          sameValuesKIL: EqualNoOption[ValuesK, ValuesIL],
+          sameValuesJIR: EqualNoOption[ValuesJ, ValuesIR]
       ): Aux[A, B, C] = new TableLink[A, B] {
         override type Junction = C
 
