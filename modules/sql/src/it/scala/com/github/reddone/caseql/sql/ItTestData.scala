@@ -5,12 +5,15 @@ import java.time.Instant
 
 import com.github.reddone.caseql.sql.ItTestModel._
 import shapeless._
+import shapeless.Generic
 
 object ItTestData {
 
   val testSchema: String = "test"
 
   // developer
+
+  implicit val developerGeneric: TypeOf.`Generic[Developer]`.type = cachedImplicit
 
   val developerTableName: String = "developer"
 
@@ -21,7 +24,7 @@ object ItTestData {
        |team_leader_id BIGINT NULL REFERENCES test.developer (id) ON DELETE SET NULL
        |""".stripMargin
 
-  val developerCols: List[String] = List("id", "full_name", "age")
+  val developerCols: List[String] = List("id", "full_name", "age", "team_leader_id")
 
   val developerColsNoId: List[String] = developerCols.tail
 
@@ -31,9 +34,12 @@ object ItTestData {
     Developer(3L, "Reddone", 32, None)
   )
 
-  val developersNoId: List[(String, Int, Option[Long])] = developers.map(Generic[Developer].to(_).tail.tupled)
+  val developersNoId: List[(String, Int, Option[Long])] =
+    developers.map(developerGeneric.to(_).tail.tupled)
 
   // project
+
+  implicit val projectGeneric: TypeOf.`Generic[Project]`.type = cachedImplicit
 
   val projectTableName: String = "project"
 
@@ -67,7 +73,7 @@ object ItTestData {
   )
 
   val projectsNoId: List[(String, Option[String], Timestamp, Timestamp)] =
-    projects.map(Generic[Project].to(_).tail.tupled)
+    projects.map(projectGeneric.to(_).tail.tupled)
 
   // developer_project_link
 
@@ -86,4 +92,8 @@ object ItTestData {
     DeveloperProjectLink(3L, 1L),
     DeveloperProjectLink(3L, 2L)
   )
+
+  // task
+
+  // TODO: add task data
 }
