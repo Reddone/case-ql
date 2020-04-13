@@ -27,7 +27,7 @@ object ItTestModel {
 
   final case class Developer(
       id: Long,
-      fullName: String,
+      name: String,
       age: Int,
       teamLeaderId: Option[Long]
   )
@@ -50,7 +50,7 @@ object ItTestModel {
 
   final case class DeveloperFilter(
       id: Option[LongFilter],
-      fullName: Option[StringFilter],
+      name: Option[StringFilter],
       age: Option[IntFilter],
       teamLeaderId: Option[LongFilterOption],
       selfRelation: Option[RelationFilter[Developer, Developer, DeveloperFilter]],
@@ -69,7 +69,7 @@ object ItTestModel {
 
   final case class DeveloperModifier(
       id: Option[LongModifier],
-      fullName: Option[StringModifier],
+      name: Option[StringModifier],
       age: Option[IntModifier],
       teamLeaderId: Option[LongModifierOption]
   ) extends EntityModifier[DeveloperModifier]
@@ -86,9 +86,7 @@ object ItTestModel {
   final case class Project(
       id: Long,
       title: String,
-      description: Option[String],
-      createdAt: Timestamp,
-      updatedAt: Timestamp
+      description: Option[String]
   )
 
   object Project {
@@ -111,8 +109,6 @@ object ItTestModel {
       id: Option[LongFilter],
       title: Option[StringFilter],
       description: Option[StringFilterOption],
-      createdAt: Option[TimestampFilter],
-      updatedAt: Option[TimestampFilter],
       taskRelation: Option[RelationFilter[Project, Task, TaskFilter]],
       AND: Option[Seq[ProjectFilter]],
       OR: Option[Seq[ProjectFilter]],
@@ -129,9 +125,7 @@ object ItTestModel {
   final case class ProjectModifier(
       id: Option[LongModifier],
       title: Option[StringModifier],
-      description: Option[StringModifierOption],
-      createdAt: Option[TimestampModifier],
-      updatedAt: Option[TimestampModifier]
+      description: Option[StringModifierOption]
   ) extends EntityModifier[ProjectModifier]
 
   object ProjectModifier {
@@ -197,7 +191,7 @@ object ItTestModel {
       id: Long,
       label: String,
       description: String,
-      duration: Timestamp,
+      deadline: Timestamp,
       projectId: Long
   )
 
@@ -221,7 +215,7 @@ object ItTestModel {
       id: Option[LongFilter],
       label: Option[StringFilter],
       description: Option[StringFilter],
-      duration: Option[TimestampFilter],
+      deadline: Option[TimestampFilter],
       projectId: Option[LongFilter],
       AND: Option[Seq[TaskFilter]],
       OR: Option[Seq[TaskFilter]],
@@ -239,7 +233,7 @@ object ItTestModel {
       id: Option[LongModifier],
       label: Option[StringModifier],
       description: Option[StringModifier],
-      duration: Option[TimestampModifier],
+      deadline: Option[TimestampModifier],
       projectId: Option[LongModifier]
   ) extends EntityModifier[TaskModifier]
 

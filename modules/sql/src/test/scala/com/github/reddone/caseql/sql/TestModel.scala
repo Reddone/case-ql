@@ -6,6 +6,7 @@ import com.github.reddone.caseql.sql.filter.models._
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
+import shapeless.{cachedImplicit, LabelledGeneric, TypeOf}
 
 object TestModel {
 
@@ -18,28 +19,48 @@ object TestModel {
       field3: Long,
       field4: Option[Timestamp]
   )
+  object Test {
+    implicit val lgen: TypeOf.`LabelledGeneric[Test]`.type =
+      cachedImplicit
+  }
   // simple case, should compile
   final case class TestKey(
       field1: Int,
       field3: Long
   )
+  object TestKey {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestKey]`.type =
+      cachedImplicit
+  }
   // simple case but unordered, should compile
   final case class TestKeyUnordered(
       field3: Long,
       field1: Int
   )
+  object TestKeyUnordered {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestKeyUnordered]`.type =
+      cachedImplicit
+  }
   // with other field, should not compile
   final case class TestKeyOther(
       field1: Int,
       field3: Long,
       field5: Option[String]
   )
+  object TestKeyOther {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestKeyOther]`.type =
+      cachedImplicit
+  }
   // with other field and unordered, should not compile
   final case class TestKeyOtherUnordered(
       field5: Option[String],
       field3: Long,
       field1: Int
   )
+  object TestKeyOtherUnordered {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestKeyOtherUnordered]`.type =
+      cachedImplicit
+  }
 
   // FILTER
 
@@ -55,6 +76,9 @@ object TestModel {
   ) extends EntityFilter[TestFilter]
   object TestFilter {
     val empty: TestFilter = TestFilter(None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilter]`.type =
+      cachedImplicit
   }
   // simple case but unordered, should compile
   final case class TestFilterUnordered(
@@ -68,6 +92,9 @@ object TestModel {
   ) extends EntityFilter[TestFilterUnordered]
   object TestFilterUnordered {
     val empty: TestFilterUnordered = TestFilterUnordered(None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterUnordered]`.type =
+      cachedImplicit
   }
   // with other fields, should not compile
   final case class TestFilterOther(
@@ -83,6 +110,9 @@ object TestModel {
   ) extends EntityFilter[TestFilterOther]
   object TestFilterOther {
     val empty: TestFilterOther = TestFilterOther(None, None, None, None, "", Seq.empty, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterOther]`.type =
+      cachedImplicit
   }
   // with other fields and unordered, should not compile
   final case class TestFilterOtherUnordered(
@@ -99,6 +129,9 @@ object TestModel {
   object TestFilterOtherUnordered {
     val empty: TestFilterOtherUnordered =
       TestFilterOtherUnordered(Seq.empty, None, None, None, "", None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterOtherUnordered]`.type =
+      cachedImplicit
   }
   // one more field, should not compile
   final case class TestFilterPlus(
@@ -113,6 +146,9 @@ object TestModel {
   ) extends EntityFilter[TestFilterPlus]
   object TestFilterPlus {
     val empty: TestFilterPlus = TestFilterPlus(None, None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterPlus]`.type =
+      cachedImplicit
   }
   // one more field and unordered, should not compile
   final case class TestFilterPlusUnordered(
@@ -127,6 +163,9 @@ object TestModel {
   ) extends EntityFilter[TestFilterPlusUnordered]
   object TestFilterPlusUnordered {
     val empty: TestFilterPlusUnordered = TestFilterPlusUnordered(None, None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterPlusUnordered]`.type =
+      cachedImplicit
   }
   // one less field, should compile
   final case class TestFilterLess(
@@ -139,6 +178,9 @@ object TestModel {
   ) extends EntityFilter[TestFilterLess]
   object TestFilterLess {
     val empty: TestFilterLess = TestFilterLess(None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterLess]`.type =
+      cachedImplicit
   }
   // one less field and unordered, should compile
   final case class TestFilterLessUnordered(
@@ -151,6 +193,9 @@ object TestModel {
   ) extends EntityFilter[TestFilterLessUnordered]
   object TestFilterLessUnordered {
     val empty: TestFilterLessUnordered = TestFilterLessUnordered(None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestFilterLessUnordered]`.type =
+      cachedImplicit
   }
 
   // MODIFIER
@@ -164,6 +209,9 @@ object TestModel {
   ) extends EntityModifier[TestModifier]
   object TestModifier {
     val empty: TestModifier = TestModifier(None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifier]`.type =
+      cachedImplicit
   }
   // simple case but unordered, should compile
   final case class TestModifierUnordered(
@@ -174,6 +222,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierUnordered]
   object TestModifierUnordered {
     val empty: TestModifierUnordered = TestModifierUnordered(None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierUnordered]`.type =
+      cachedImplicit
   }
   // with other fields, should not compile
   final case class TestModifierOther(
@@ -186,6 +237,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierOther]
   object TestModifierOther {
     val empty: TestModifierOther = TestModifierOther(None, None, None, None, "", Seq.empty)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierOther]`.type =
+      cachedImplicit
   }
   // with other fields and unordered, should not compile
   final case class TestModifierOtherUnordered(
@@ -198,6 +252,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierOtherUnordered]
   object TestModifierOtherUnordered {
     val empty: TestModifierOtherUnordered = TestModifierOtherUnordered(Seq.empty, None, None, None, "", None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierOtherUnordered]`.type =
+      cachedImplicit
   }
   // one more field, should not compile
   final case class TestModifierPlus(
@@ -209,6 +266,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierPlus]
   object TestModifierPlus {
     val empty: TestModifierPlus = TestModifierPlus(None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierPlus]`.type =
+      cachedImplicit
   }
   // one more field and unordered, should not compile
   final case class TestModifierPlusUnordered(
@@ -220,6 +280,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierPlusUnordered]
   object TestModifierPlusUnordered {
     val empty: TestModifierPlusUnordered = TestModifierPlusUnordered(None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierPlusUnordered]`.type =
+      cachedImplicit
   }
   // one less field, should compile
   final case class TestModifierLess(
@@ -229,6 +292,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierLess]
   object TestModifierLess {
     val empty: TestModifierLess = TestModifierLess(None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierLess]`.type =
+      cachedImplicit
   }
   // one less field and unordered, should compile
   final case class TestModifierLessUnordered(
@@ -238,6 +304,9 @@ object TestModel {
   ) extends EntityModifier[TestModifierLessUnordered]
   object TestModifierLessUnordered {
     val empty: TestModifierLessUnordered = TestModifierLessUnordered(None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestModifierLessUnordered]`.type =
+      cachedImplicit
   }
 
   // RELATION TABLE
@@ -248,36 +317,68 @@ object TestModel {
       field2: String,
       field3: Int
   )
+  object TestLeft {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestLeft]`.type =
+      cachedImplicit
+  }
   final case class TestLeftKey(
       field1: Int
   )
+  object TestLeftKey {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestLeftKey]`.type =
+      cachedImplicit
+  }
   // direct, having a direct relation with left
   final case class TestDirect(
       field1: String,
       field2: Timestamp,
       field3: Int
   )
+  object TestDirect {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestDirect]`.type =
+      cachedImplicit
+  }
   final case class TestDirectKey(
       field1: String
   )
+  object TestDirectKey {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestDirectKey]`.type =
+      cachedImplicit
+  }
   // right, having a junction relation with left
   final case class TestRight(
       field1: Long,
       field2: String,
       field3: Int
   )
+  object TestRight {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestRight]`.type =
+      cachedImplicit
+  }
   final case class TestRightKey(
       field1: Long
   )
+  object TestRightKey {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestRightKey]`.type =
+      cachedImplicit
+  }
   // junction table between left and right
   final case class TestJunction(
       field1: Int,
       field2: Long
   )
+  object TestJunction {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestJunction]`.type =
+      cachedImplicit
+  }
   final case class TestJunctionKey(
       field1: Int,
       field2: Long
   )
+  object TestJunctionKey {
+    implicit val lgen: TypeOf.`LabelledGeneric[TestJunctionKey]`.type =
+      cachedImplicit
+  }
 
   // RELATION FILTER
 
@@ -294,6 +395,9 @@ object TestModel {
   ) extends EntityFilter[TestLeftFilter]
   object TestLeftFilter {
     val empty: TestLeftFilter = TestLeftFilter(None, None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestLeftFilter]`.type =
+      cachedImplicit
   }
   // filter for direct table with direct relation with left
   final case class TestDirectFilter(
@@ -307,6 +411,9 @@ object TestModel {
   ) extends EntityFilter[TestDirectFilter]
   object TestDirectFilter {
     val empty: TestDirectFilter = TestDirectFilter(None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestDirectFilter]`.type =
+      cachedImplicit
   }
   // filter for right table with junction relation with left
   final case class TestRightFilter(
@@ -320,6 +427,9 @@ object TestModel {
   ) extends EntityFilter[TestRightFilter]
   object TestRightFilter {
     val empty: TestRightFilter = TestRightFilter(None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestRightFilter]`.type =
+      cachedImplicit
   }
   // filter for junction table in case you want to apply a filter on it
   final case class TestJunctionFilter(
@@ -333,5 +443,8 @@ object TestModel {
   ) extends EntityFilter[TestJunctionFilter]
   object TestJunctionFilter {
     val empty: TestJunctionFilter = TestJunctionFilter(None, None, None, None, None, None, None)
+
+    implicit val lgen: TypeOf.`LabelledGeneric[TestJunctionFilter]`.type =
+      cachedImplicit
   }
 }

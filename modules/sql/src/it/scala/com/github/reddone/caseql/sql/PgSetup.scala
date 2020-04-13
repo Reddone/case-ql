@@ -28,12 +28,12 @@ trait PgSetup { self: Suite with ForAllTestContainer =>
   lazy val container: PostgreSQLContainer = PostgreSQLContainer("postgres:9.6.8")
 
   override def afterStart(): Unit = {
-    val url          = container.jdbcUrl
-    val user         = container.username
-    val password     = container.password
+    val url      = container.jdbcUrl
+    val user     = container.username
+    val password = container.password
 
-    val doobieConfig = new DoobieConfig(10, "org.postgresql.Driver", url, user, password) {}
-    _xa = TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Cached)
+    val config = new DoobieConfig(10, "org.postgresql.Driver", url, user, password) {}
+    _xa = TestTransactors.valueOf[IO](config, TestTransactors.BlockerMode.Cached)
 
     val y = _xa.yolo
     import y._
@@ -44,13 +44,14 @@ trait PgSetup { self: Suite with ForAllTestContainer =>
       testRepository.createTable(developerTableName, developerTableDefinition) *>
       testRepository.createTable(projectTableName, projectTableDefinition) *>
       testRepository.createTable(developerProjectLinkTableName, developerProjectLinkTableDefinition) *>
+      testRepository.createTable(taskTableName, taskTableDefinition) *>
       "Finished creating tables".pure[ConnectionIO]
 
-    val populatePg =
-      testRepository.insertMany(developerTableName, developerColsNoId, developersNoId) *>
-        testRepository.insertMany(projectTableName, projectColsNoId, projectsNoId) *>
-        testRepository.insertMany(developerProjectLinkTableName, developerProjectLinkCols, developerProjectLinks) *>
-        "Finished populating tables".pure[ConnectionIO]
+    val populatePg = testRepository.insertMany(developerTableName, developerColsNoId, developersNoId) *>
+      testRepository.insertMany(projectTableName, projectColsNoId, projectsNoId) *>
+      testRepository.insertMany(developerProjectLinkTableName, developerProjectLinkCols, developerProjectLinks) *>
+      testRepository.insertMany(taskTableName, taskColsNoId, tasksNoId) *>
+      "Finished populating tables".pure[ConnectionIO]
 
     (initPg.quick *> populatePg.quick).unsafeRunSync()
   }
