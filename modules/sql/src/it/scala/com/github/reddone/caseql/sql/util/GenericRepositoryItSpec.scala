@@ -2,8 +2,11 @@ package com.github.reddone.caseql.sql.util
 
 import java.util.concurrent.atomic.AtomicLong
 
+import cats.implicits._
 import com.github.reddone.caseql.sql.ItTestData.{developers, projects, testSchema}
 import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
+import com.github.reddone.caseql.sql.util.TestTransactors._
+import doobie._
 import doobie.implicits._
 
 class GenericRepositoryItSpec extends PgAnyWordSpec {
@@ -21,41 +24,34 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
     "using schema DDL" should {
 
       "succeed to create a schema" in {
-        anotherTestRepository
-          .createSchema()
-          .transact(xa)
-          .unsafeRunSync()
+        val createSchema = anotherTestRepository.createSchema()
+        val checkSchema  = PgHelper.checkSchema(anotherTestSchema).option
 
-        PgHelper
-          .checkSchema(anotherTestSchema)
-          .option
-          .transact(xa)
-          .unsafeRunSync() shouldBe defined
+        val createAndCheckSchema = for {
+          createCount <- createSchema
+          schema      <- checkSchema
+        } yield schema
 
-        PgHelper
-          .dropSchema(anotherTestSchema)
-          .run
-          .transact(xa)
-          .unsafeRunSync()
+        val maybeSchema = createAndCheckSchema.transact(rollingBack(xa)).unsafeRunSync()
+
+        maybeSchema shouldBe defined
+        maybeSchema.get shouldBe anotherTestSchema
       }
 
       "succeed to delete a schema" in {
-        PgHelper
-          .createSchema(anotherTestSchema)
-          .run
-          .transact(xa)
-          .unsafeRunSync()
+        val createSchema = PgHelper.createSchema(anotherTestSchema).run
+        val deleteSchema = anotherTestRepository.dropSchema()
+        val checkSchema  = PgHelper.checkSchema(anotherTestSchema).option
 
-        anotherTestRepository
-          .dropSchema()
-          .transact(xa)
-          .unsafeRunSync()
+        val deleteAndCheckSchema = for {
+          createCount <- createSchema
+          deleteCount <- deleteSchema
+          schema      <- checkSchema
+        } yield schema
 
-        PgHelper
-          .checkSchema(anotherTestSchema)
-          .option
-          .transact(xa)
-          .unsafeRunSync() shouldBe empty
+        val maybeSchema = deleteAndCheckSchema.transact(rollingBack(xa)).unsafeRunSync()
+
+        maybeSchema shouldBe empty
       }
     }
 

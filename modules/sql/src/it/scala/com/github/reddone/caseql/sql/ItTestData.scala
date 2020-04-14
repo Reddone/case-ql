@@ -51,21 +51,9 @@ object ItTestData {
   val projectColsNoId: List[String] = projectCols.tail
 
   val projects: List[Project] = List(
-    Project(
-      1L,
-      "Topdeckin N' Wreckin",
-      Some("Kripp most loved hobby")
-    ),
-    Project(
-      2L,
-      "Random Pasta",
-      None
-    ),
-    Project(
-      3L,
-      "Welcome to Summoner Rift",
-      Some("Fedding like there's no tomorrow")
-    )
+    Project(1L, "Topdeckin N' Wreckin", Some("Kripp most loved hobby")),
+    Project(2L, "Random Pasta", None),
+    Project(3L, "Welcome to Summoner Rift", Some("Fedding like there's no tomorrow"))
   )
 
   val projectsNoId: List[(String, Option[String])] =
@@ -107,48 +95,48 @@ object ItTestData {
 
   val taskCols: List[String] = List("id", "label", "description", "deadline", "project_id")
 
-  val taskColsNoId: List[String] = projectCols.tail
+  val taskColsNoId: List[String] = taskCols.tail
 
   val tasks: List[Task] = List(
     Task(
       1L,
-      "",
-      "",
+      "POC of Top Decking script",
+      "Description of what to do is deducible with ease from the task label",
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 1)),
       1L
     ),
     Task(
       2L,
-      "",
-      "",
+      "Implementation of Top Decking script",
+      "Description of what to do is deducible with ease from the task label",
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 1)),
       1L
     ),
     Task(
       3L,
-      "",
-      "",
+      "Copy pasta some random text ",
+      "Description of what to do is deducible with ease from the task label",
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 2)),
       2L
     ),
     Task(
       4L,
-      "",
-      "",
+      "Super automated copy pasta with donger bot",
+      "Description of what to do is deducible with ease from the task label",
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 2)),
       2L
     ),
     Task(
       5L,
-      "",
-      "",
+      "First blood or ragequit at 15",
+      "Description of what to do is deducible with ease from the task label",
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 3)),
       3L
     ),
     Task(
       6L,
-      "",
-      "",
+      "Report all teammates",
+      "Description of what to do is deducible with ease from the task label",
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 3)),
       3L
     )
