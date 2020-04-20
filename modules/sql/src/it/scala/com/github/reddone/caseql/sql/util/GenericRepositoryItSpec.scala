@@ -3,7 +3,8 @@ package com.github.reddone.caseql.sql.util
 import java.util.concurrent.atomic.AtomicLong
 
 import cats.implicits._
-import com.github.reddone.caseql.sql.ItTestData.{developers, projects, testSchema}
+import com.github.reddone.caseql.sql.ItTestData._
+import com.github.reddone.caseql.sql.ItTestModel._
 import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie._
@@ -11,7 +12,9 @@ import doobie.implicits._
 
 class GenericRepositoryItSpec extends PgAnyWordSpec {
 
-  val anotherTestSchema = "another"
+  val anotherTestSchema = "another_schema"
+  val anotherTable = "another_table"
+  val anotherSequence = "another_sequence"
 
   val testRepository: GenericRepository        = GenericRepository.forSchema(testSchema)
   val anotherTestRepository: GenericRepository = GenericRepository.forSchema(anotherTestSchema)
@@ -27,15 +30,17 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
         val createSchema = anotherTestRepository.createSchema()
         val checkSchema  = PgHelper.checkSchema(anotherTestSchema).option
 
-        val createAndCheckSchema = for {
-          createCount <- createSchema
-          schema      <- checkSchema
-        } yield schema
+        val action = for {
+          _                 <- createSchema
+          schemaAfterCreate <- checkSchema
+        } yield schemaAfterCreate
 
-        val maybeSchema = createAndCheckSchema.transact(rollingBack(xa)).unsafeRunSync()
+        val maybeSchemaAfterCreate = action
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
 
-        maybeSchema shouldBe defined
-        maybeSchema.get shouldBe anotherTestSchema
+        maybeSchemaAfterCreate shouldBe defined
+        maybeSchemaAfterCreate.get shouldBe anotherTestSchema
       }
 
       "succeed to delete a schema" in {
@@ -43,107 +48,132 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
         val deleteSchema = anotherTestRepository.dropSchema()
         val checkSchema  = PgHelper.checkSchema(anotherTestSchema).option
 
-        val deleteAndCheckSchema = for {
-          createCount <- createSchema
-          deleteCount <- deleteSchema
-          schema      <- checkSchema
-        } yield schema
+        val action = for {
+          _                 <- createSchema
+          schemaAfterCreate <- checkSchema
+          _                 <- deleteSchema
+          schemaAfterDelete <- checkSchema
+        } yield (schemaAfterCreate, schemaAfterDelete)
 
-        val maybeSchema = deleteAndCheckSchema.transact(rollingBack(xa)).unsafeRunSync()
+        val (maybeSchemaAfterCreate, maybeSchemaAfterDelete) = action
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
 
-        maybeSchema shouldBe empty
+        maybeSchemaAfterCreate shouldBe defined
+        maybeSchemaAfterCreate.get shouldBe anotherTestSchema
+        maybeSchemaAfterDelete shouldBe empty
       }
     }
 
     "using table DDL" should {
 
       "succeed to create a table" in {
-        testRepository
-          .createTable("anotherTable", "id BIGINT PRIMARY KEY")
-          .transact(xa)
+        val createTable  = testRepository.createTable(anotherTable, "id BIGINT PRIMARY KEY")
+        val checkTable   = PgHelper.checkTable(testSchema, anotherTable).option
+
+        val action = for {
+          _                <- createTable
+          tableAfterCreate <- checkTable
+        } yield tableAfterCreate
+
+        val maybeTableAfterCreate = action
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        PgHelper
-          .checkTable(testSchema, "anotherTable")
-          .option
-          .transact(xa)
-          .unsafeRunSync()
-          .flatten shouldBe defined
-
-        PgHelper
-          .dropTable(testSchema, "anotherTable")
-          .run
-          .transact(xa)
-          .unsafeRunSync()
+        maybeTableAfterCreate shouldBe defined
+        maybeTableAfterCreate.get shouldBe defined
+        maybeTableAfterCreate.get.get shouldBe anotherTable
       }
 
       "succeed to delete a table" in {
-        PgHelper
-          .createTable(testSchema, "anotherTable")
-          .run
-          .transact(xa)
+        val createTable  = PgHelper.createTable(testSchema, anotherTable).run
+        val deleteTable  = testRepository.dropTable(anotherTable)
+        val checkTable   = PgHelper.checkTable(testSchema, anotherTable).option
+
+        val action = for {
+          _                <- createTable
+          tableAfterCreate <- checkTable
+          _                <- deleteTable
+          tableAfterDelete <- checkTable
+        } yield (tableAfterCreate, tableAfterDelete)
+
+        val (maybeTableAfterCreate, maybeTableAfterDelete) = action
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        testRepository
-          .dropTable("anotherTable")
-          .transact(xa)
-          .unsafeRunSync()
-
-        PgHelper
-          .checkTable(testSchema, "anotherTable")
-          .option
-          .transact(xa)
-          .unsafeRunSync()
-          .flatten shouldBe empty
+        maybeTableAfterCreate shouldBe defined
+        maybeTableAfterCreate.get shouldBe defined
+        maybeTableAfterCreate.get.get shouldBe anotherTable
+        maybeTableAfterDelete shouldBe defined
+        maybeTableAfterDelete.get shouldBe empty
       }
     }
 
     "using sequence DDL" should {
 
       "succeed to create a sequence" in {
-        testRepository
-          .createSequence("anotherSequence", "START WITH 1 INCREMENT BY 1 NO CYCLE")
-          .transact(xa)
+        val createSequence = testRepository.createSequence(anotherSequence, "START WITH 1 INCREMENT BY 1 NO CYCLE")
+        val checkSequence = PgHelper.checkSequence(testSchema, anotherSequence).option
+
+        val action = for {
+          _ <- createSequence
+          sequenceAfterCreate <- checkSequence
+        } yield sequenceAfterCreate
+
+        val maybeSequenceAfterCreate = action
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        PgHelper
-          .checkSequence(testSchema, "anotherSequence")
-          .option
-          .transact(xa)
-          .unsafeRunSync()
-          .flatten shouldBe defined
-
-        PgHelper
-          .dropSequence(testSchema, "anotherSequence")
-          .run
-          .transact(xa)
-          .unsafeRunSync()
+        maybeSequenceAfterCreate shouldBe defined
+        maybeSequenceAfterCreate.get shouldBe defined
+        maybeSequenceAfterCreate.get.get shouldBe anotherSequence
       }
 
       "succeed to delete a sequence" in {
-        PgHelper
-          .createSequence(testSchema, "anotherSequence")
-          .run
-          .transact(xa)
+        val createSequence = PgHelper.createSequence(testSchema, anotherSequence).run
+        val deleteSequence = testRepository.dropSequence(anotherSequence)
+        val checkSequence = PgHelper.checkSequence(testSchema, anotherSequence).option
+
+        val action = for {
+         _ <- createSequence
+         sequenceAfterCreate <- checkSequence
+         _ <- deleteSequence
+         sequenceAfterDelete <- checkSequence
+        } yield (sequenceAfterCreate, sequenceAfterDelete)
+
+        val (maybeSequenceAfterCreate, maybeSequenceAfterDelete) = action
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        testRepository
-          .dropSequence("anotherSequence")
-          .transact(xa)
-          .unsafeRunSync()
-
-        PgHelper
-          .checkSequence(testSchema, "anotherSequence")
-          .option
-          .transact(xa)
-          .unsafeRunSync()
-          .flatten shouldBe empty
+        maybeSequenceAfterCreate shouldBe defined
+        maybeSequenceAfterCreate.get shouldBe defined
+        maybeSequenceAfterCreate.get.get shouldBe anotherSequence
+        maybeSequenceAfterDelete shouldBe defined
+        maybeSequenceAfterDelete.get shouldBe empty
       }
     }
 
     "using select DML" should {
 
-      "succeed to execute a query returning ConnectionIO" in {}
+      "succeed to execute a query returning ConnectionIO" in {
+        val selectDevelopers = testRepository.select[(String, Int), Developer](
+          developerTableName,
+          "*" :: Nil,
+          "where name=? or age=?",
+          ("Reddone", 1)
+        )
+
+        val developers = selectDevelopers
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        developers.length shouldBe 3
+        developers should contain theSameElementsAs List(
+          Developer(1L, "Reddone", 32, None),
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+        )
+      }
 
       "succeed to execute an update returning Stream" in {}
     }
