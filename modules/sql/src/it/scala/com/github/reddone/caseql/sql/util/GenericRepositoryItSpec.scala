@@ -13,14 +13,14 @@ import doobie.implicits._
 class GenericRepositoryItSpec extends PgAnyWordSpec {
 
   val anotherTestSchema = "another_schema"
-  val anotherTable = "another_table"
-  val anotherSequence = "another_sequence"
+  val anotherTable      = "another_table"
+  val anotherSequence   = "another_sequence"
 
   val testRepository: GenericRepository        = GenericRepository.forSchema(testSchema)
   val anotherTestRepository: GenericRepository = GenericRepository.forSchema(anotherTestSchema)
 
-  val nextDeveloperId = new AtomicLong(developers.length + 1L)
-  val nextProjectId   = new AtomicLong(projects.length + 1L)
+  val currentDeveloperId = new AtomicLong(developers.length.toLong)
+  val currentProjectId   = new AtomicLong(projects.length.toLong)
 
   "GenericRepository" when {
 
@@ -68,8 +68,8 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
     "using table DDL" should {
 
       "succeed to create a table" in {
-        val createTable  = testRepository.createTable(anotherTable, "id BIGINT PRIMARY KEY")
-        val checkTable   = PgHelper.checkTable(testSchema, anotherTable).option
+        val createTable = testRepository.createTable(anotherTable, "id BIGINT PRIMARY KEY")
+        val checkTable  = PgHelper.checkTable(testSchema, anotherTable).option
 
         val action = for {
           _                <- createTable
@@ -86,9 +86,9 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
       }
 
       "succeed to delete a table" in {
-        val createTable  = PgHelper.createTable(testSchema, anotherTable).run
-        val deleteTable  = testRepository.dropTable(anotherTable)
-        val checkTable   = PgHelper.checkTable(testSchema, anotherTable).option
+        val createTable = PgHelper.createTable(testSchema, anotherTable).run
+        val deleteTable = testRepository.dropTable(anotherTable)
+        val checkTable  = PgHelper.checkTable(testSchema, anotherTable).option
 
         val action = for {
           _                <- createTable
@@ -113,10 +113,10 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
 
       "succeed to create a sequence" in {
         val createSequence = testRepository.createSequence(anotherSequence, "START WITH 1 INCREMENT BY 1 NO CYCLE")
-        val checkSequence = PgHelper.checkSequence(testSchema, anotherSequence).option
+        val checkSequence  = PgHelper.checkSequence(testSchema, anotherSequence).option
 
         val action = for {
-          _ <- createSequence
+          _                   <- createSequence
           sequenceAfterCreate <- checkSequence
         } yield sequenceAfterCreate
 
@@ -132,13 +132,13 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
       "succeed to delete a sequence" in {
         val createSequence = PgHelper.createSequence(testSchema, anotherSequence).run
         val deleteSequence = testRepository.dropSequence(anotherSequence)
-        val checkSequence = PgHelper.checkSequence(testSchema, anotherSequence).option
+        val checkSequence  = PgHelper.checkSequence(testSchema, anotherSequence).option
 
         val action = for {
-         _ <- createSequence
-         sequenceAfterCreate <- checkSequence
-         _ <- deleteSequence
-         sequenceAfterDelete <- checkSequence
+          _                   <- createSequence
+          sequenceAfterCreate <- checkSequence
+          _                   <- deleteSequence
+          sequenceAfterDelete <- checkSequence
         } yield (sequenceAfterCreate, sequenceAfterDelete)
 
         val (maybeSequenceAfterCreate, maybeSequenceAfterDelete) = action
@@ -171,31 +171,111 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
         developers should contain theSameElementsAs List(
           Developer(1L, "Reddone", 32, None),
           Developer(2L, "Eddy Pasterino", 1, Some(1L)),
-          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L))
         )
       }
 
-      "succeed to execute an update returning Stream" in {}
+      "succeed to execute an update returning Stream" in {
+        val selectDevelopers = testRepository.selectStream[(String, Int), Developer](
+          developerTableName,
+          "*" :: Nil,
+          "where name=? or age=?",
+          ("Reddone", 1)
+        )
+
+        val developers = selectDevelopers
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        developers.length shouldBe 3
+        developers should contain theSameElementsAs List(
+          Developer(1L, "Reddone", 32, None),
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L))
+        )
+      }
     }
 
     "using insert DML" should {
 
-      "succeed to execute an update returning ConnectionIO of affected rows" in {}
+      "succeed to execute an insert returning ConnectionIO of affected row" in {
+        val insertDeveloper = testRepository.insert[Developer](
+          developerTableName,
+          developerCols,
+          Developer(currentDeveloperId.incrementAndGet(), "Young Donger", 1, None)
+        )
 
-      "succeed to execute an update returning Stream of unique keys" in {}
+        val affectedRows = insertDeveloper
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
 
-      "succeed to execute an update returning Stream of keys" in {}
+        affectedRows shouldBe 1
+      }
 
-      "succeed to execute a batch update returning ConnectionIO of affected rows" in {}
+      "succeed to execute an insert returning ConnectionIO of unique key" in {
+        val nextDeveloperId = currentDeveloperId.incrementAndGet()
 
-      "succeed to execute a batch update returning Stream of keys" in {}
+        val insertDeveloperReturningKey = testRepository.insertReturningKey[Developer, Long](
+          developerTableName,
+          developerCols,
+          Developer(nextDeveloperId, "Young Donger", 1, None),
+          developerCols.head :: Nil
+        )
+
+        val generatedKey = insertDeveloperReturningKey
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        generatedKey shouldBe nextDeveloperId
+      }
+
+      "succeed to execute a batch insert returning ConnectionIO of affected rows" in {
+        val nextDeveloperId1 = currentDeveloperId.incrementAndGet()
+        val nextDeveloperId2 = currentDeveloperId.incrementAndGet()
+
+        val insertDevelopers = testRepository.insertMany[Developer](
+          developerTableName,
+          developerCols,
+          Developer(nextDeveloperId1, "Young Donger", 1, None) ::
+            Developer(nextDeveloperId2, "Old Donger", 2, Some(4L)) :: Nil
+        )
+
+        val affectedRows = insertDevelopers
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 2
+      }
+
+      "succeed to execute a batch insert returning Stream of keys" in {
+        val nextDeveloperId1 = currentDeveloperId.incrementAndGet()
+        val nextDeveloperId2 = currentDeveloperId.incrementAndGet()
+
+        val insertDevelopers = testRepository.insertManyReturningKeys[Developer, Long](
+          developerTableName,
+          developerCols,
+          Developer(nextDeveloperId1, "Young Donger", 1, None) ::
+            Developer(nextDeveloperId2, "Old Donger", 2, Some(4L)) :: Nil,
+          developerCols.head :: Nil
+        )
+
+        val generatedKeys = insertDevelopers
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        generatedKeys should contain theSameElementsAs List(nextDeveloperId1, nextDeveloperId2)
+      }
     }
 
     "using update DML" should {
 
-      "succeed to execute an update returning ConnectionIO of affected rows" in {}
-
-      "succeed to execute an update returning Stream of unique keys" in {}
+      "succeed to execute an update returning ConnectionIO of affected rows" in {
+        val updateDeveloper = testRepository
+      }
 
       "succeed to execute an update returning Stream of keys" in {}
 
@@ -206,15 +286,13 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
 
     "using delete DML" should {
 
-      "succeed to execute an update returning ConnectionIO of affected rows" in {}
+      "succeed to execute a delete returning ConnectionIO of affected rows" in {}
 
-      "succeed to execute an update returning Stream of unique keys" in {}
+      "succeed to execute a delete returning Stream of keys" in {}
 
-      "succeed to execute an update returning Stream of keys" in {}
+      "succeed to execute a batch delete returning ConnectionIO of affected rows" in {}
 
-      "succeed to execute a batch update returning ConnectionIO of affected rows" in {}
-
-      "succeed to execute a batch update returning Stream of keys" in {}
+      "succeed to execute a batch delete returning Stream of keys" in {}
     }
   }
 }
