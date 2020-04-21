@@ -253,7 +253,7 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
         val nextDeveloperId1 = currentDeveloperId.incrementAndGet()
         val nextDeveloperId2 = currentDeveloperId.incrementAndGet()
 
-        val insertDevelopers = testRepository.insertManyReturningKeys[Developer, Long](
+        val insertDevelopersReturningKeys = testRepository.insertManyReturningKeys[Developer, Long](
           developerTableName,
           developerCols,
           Developer(nextDeveloperId1, "Young Donger", 1, None) ::
@@ -261,7 +261,7 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
           developerCols.head :: Nil
         )
 
-        val generatedKeys = insertDevelopers
+        val generatedKeys = insertDevelopersReturningKeys
           .transact(rollingBack(xa))
           .compile
           .toList
@@ -274,14 +274,74 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
     "using update DML" should {
 
       "succeed to execute an update returning ConnectionIO of affected rows" in {
-        val updateDeveloper = testRepository
+        val updateDeveloper = testRepository.update[(String, Int, Option[Long], Long)](
+          developerTableName,
+          developerColsNoId,
+          "where id=?",
+          ("Minimus Lambdacus Spamicus", 1, Some(1L), 4L)
+        )
+
+        val affectedRows = updateDeveloper
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 1
       }
 
-      "succeed to execute an update returning Stream of keys" in {}
+      "succeed to execute an update returning Stream of keys" in {
+        val updateDeveloperReturningKeys =
+          testRepository.updateReturningKeys[(String, Int, Option[Long], Long), Long](
+            developerTableName,
+            developerColsNoId,
+            "where id=?",
+            ("Minimus Lambdacus Spamicus", 1, Some(1L), 4L),
+            developerCols.head :: Nil
+          )
 
-      "succeed to execute a batch update returning ConnectionIO of affected rows" in {}
+        val generatedKeys = updateDeveloperReturningKeys
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
 
-      "succeed to execute a batch update returning Stream of keys" in {}
+        generatedKeys should contain theSameElementsAs List(4L)
+      }
+
+      "succeed to execute a batch update returning ConnectionIO of affected rows" in {
+        val updateDevelopers = testRepository.updateMany[(String, Int, Option[Long], Long)](
+          developerTableName,
+          developerColsNoId,
+          "where id=?",
+          ("Minimus Lambdacus Spamicus", 1, Some(1L), 4L) ::
+            ("Luigi Spaghetti", 1, None, 6L) :: Nil
+        )
+
+        val affectedRows = updateDevelopers
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 2
+      }
+
+      "succeed to execute a batch update returning Stream of keys" in {
+        val updateDevelopersReturningKeys =
+          testRepository.updateManyReturningKeys[(String, Int, Option[Long], Long), Long](
+            developerTableName,
+            developerColsNoId,
+            "where id=?",
+            ("Minimus Lambdacus Spamicus", 1, Some(1L), 4L) ::
+              ("Luigi Spaghetti", 1, None, 6L) :: Nil,
+            developerCols.head :: Nil
+          )
+
+        val generatedKeys = updateDevelopersReturningKeys
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        generatedKeys should contain theSameElementsAs List(4L, 6L)
+      }
     }
 
     "using delete DML" should {
