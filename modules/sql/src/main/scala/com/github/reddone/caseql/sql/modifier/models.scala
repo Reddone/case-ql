@@ -4,7 +4,6 @@ import java.sql.{Date, Time, Timestamp}
 import java.time._
 
 import com.github.reddone.caseql.sql.tokens
-import com.github.reddone.caseql.sql.util.CirceDecoders._
 import doobie._
 import doobie.implicits._
 import Fragment._

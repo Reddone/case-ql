@@ -1,10 +1,10 @@
-package com.github.reddone.caseql.sql.util
+package com.github.reddone.caseql.circe.util
 
 import java.sql.{Date, Time, Timestamp}
 
 import io.circe.Decoder
 
-object CirceDecoders {
+object decoders {
 
   implicit val dateDecoder: Decoder[Date] = Decoder[String].map(Date.valueOf)
 

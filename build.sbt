@@ -11,43 +11,63 @@ lazy val root = project
     noPublishSettings,
     releaseSettings
   )
-  .aggregate(sql, gql, example)
+  .aggregate(
+    `case-ql-sql`,
+    `case-ql-gql`,
+    `case-ql-circe`,
+    `case-ql-example`
+  )
 
-lazy val sql = project
+lazy val `case-ql-sql` = project
   .in(file("modules/sql"))
   .settings(settings)
   .settings(
     name := "case-ql-sql",
-    libraryDependencies ++= Dependencies.Jars.`sql`,
+    libraryDependencies ++= Dependencies.Jars.`case-ql-sql`,
     publishSettings,
     Defaults.itSettings
   )
   .configs(IntegrationTest)
 
-lazy val gql = project
+lazy val `case-ql-gql` = project
   .in(file("modules/gql"))
   .dependsOn(
-    sql % "test->test;compile->compile"
+    `case-ql-sql` % "test->test;compile->compile"
   )
   .settings(settings)
   .settings(
     name := "case-ql-gql",
-    libraryDependencies ++= Dependencies.Jars.`gql`,
+    libraryDependencies ++= Dependencies.Jars.`case-ql-gql`,
     publishSettings,
     Defaults.itSettings
   )
   .configs(IntegrationTest)
 
-lazy val example = project
+lazy val `case-ql-circe` = project
+  .in(file("modules/circe"))
+  .dependsOn(
+    `case-ql-sql` % "test->test;compile->compile"
+  )
+  .settings(settings)
+  .settings(
+    name := "case-ql-circe",
+    libraryDependencies ++= Dependencies.Jars.`case-ql-circe`,
+    publishSettings,
+    Defaults.itSettings
+  )
+  .configs(IntegrationTest)
+
+lazy val `case-ql-example` = project
   .in(file("modules/example"))
   .dependsOn(
-    sql,
-    gql
+    `case-ql-sql`,
+    `case-ql-gql`,
+    `case-ql-circe`
   )
   .settings(settings)
   .settings(
     name := "case-ql-example",
-    libraryDependencies ++= Dependencies.Jars.`example`,
+    libraryDependencies ++= Dependencies.Jars.`case-ql-example`,
     noPublishSettings,
     javaOptions in Compile += "-Dlog4j.configurationFile=src/main/resources/log4j2.yml",
     javaOptions in Test += "-Dlog4j.configurationFile=src/test/resources/log4j2-test.yml",

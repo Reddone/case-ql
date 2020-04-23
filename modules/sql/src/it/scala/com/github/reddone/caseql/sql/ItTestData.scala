@@ -142,6 +142,6 @@ object ItTestData {
     )
   )
 
-  val tasksNoId: List[(String, String, Timestamp, Long)] =
+  val tasksNoId: List[(String, Option[String], Timestamp, Long)] =
     tasks.map(t => (t.label, t.description, t.deadline, t.projectId))
 }

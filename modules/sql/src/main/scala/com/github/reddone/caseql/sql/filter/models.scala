@@ -1,19 +1,16 @@
 package com.github.reddone.caseql.sql.filter
 
 import java.sql.{Date, Time, Timestamp}
-import java.time.temporal.Temporal
 import java.time._
+import java.time.temporal.Temporal
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.table.TableSyntax
-import com.github.reddone.caseql.sql.util.CirceDecoders._
 import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._
 import doobie.implicits._
 import javasql._
 import javatime._
-import io.circe.Decoder
-import io.circe.generic.semiauto.deriveDecoder
 
 object models {
 
@@ -196,12 +193,8 @@ object models {
 
   object EnumFilter {
     // format: off
-    def empty[E <: Enumeration#Value: Put]: EnumFilter[E] =
-      EnumFilter[E](None, None, None, None)
+    def empty[E <: Enumeration#Value: Put]: EnumFilter[E] = EnumFilter[E](None, None, None, None)
     // format: on
-
-    implicit def decoder[E <: Enumeration#Value: Decoder: Put]: Decoder[EnumFilter[E]] =
-      deriveDecoder[EnumFilter[E]]
   }
 
   final case class EnumFilterOption[E <: Enumeration#Value: Put](
@@ -222,12 +215,8 @@ object models {
 
   object EnumFilterOption {
     // format: off
-    def empty[E <: Enumeration#Value: Decoder: Put]: EnumFilterOption[E] =
-      EnumFilterOption[E](None, None, None, None, None)
+    def empty[E <: Enumeration#Value: Put]: EnumFilterOption[E] = EnumFilterOption[E](None, None, None, None, None)
     // format: on
-
-    implicit def decoder[E <: Enumeration#Value: Decoder: Put]: Decoder[EnumFilterOption[E]] =
-      deriveDecoder[EnumFilterOption[E]]
   }
 
   // Boolean
@@ -244,8 +233,6 @@ object models {
     // format: off
     val empty: BooleanFilter = BooleanFilter(None)
     // format: on
-
-    implicit val decoder: Decoder[BooleanFilter] = deriveDecoder[BooleanFilter]
   }
 
   final case class BooleanFilterOption(
@@ -262,8 +249,6 @@ object models {
     // format: off
     val empty: BooleanFilterOption = BooleanFilterOption(None, None)
     // format: on
-
-    implicit val decoder: Decoder[BooleanFilterOption] = deriveDecoder[BooleanFilterOption]
   }
 
   // Byte
@@ -282,8 +267,6 @@ object models {
     // format: off
     val empty: ByteFilter = ByteFilter(None, None)
     // format: on
-
-    implicit val decoder: Decoder[ByteFilter] = deriveDecoder[ByteFilter]
   }
 
   final case class ByteFilterOption(
@@ -302,8 +285,6 @@ object models {
     // format: off
     val empty: ByteFilterOption = ByteFilterOption(None, None, None)
     // format: on
-
-    implicit val decoder: Decoder[ByteFilterOption] = deriveDecoder[ByteFilterOption]
   }
 
   // Array[Byte]
@@ -322,8 +303,6 @@ object models {
     // format: off
     val empty: ByteArrayFilter = ByteArrayFilter(None, None)
     // format: on
-
-    implicit val decoder: Decoder[ByteArrayFilter] = deriveDecoder[ByteArrayFilter]
   }
 
   final case class ByteArrayFilterOption(
@@ -342,8 +321,6 @@ object models {
     // format: off
     val empty: ByteArrayFilterOption = ByteArrayFilterOption(None, None, None)
     // format: on
-
-    implicit val decoder: Decoder[ByteArrayFilterOption] = deriveDecoder[ByteArrayFilterOption]
   }
 
   // Int
@@ -365,8 +342,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[IntFilter] = deriveDecoder[IntFilter]
   }
 
   final case class IntFilterOption(
@@ -387,8 +362,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[IntFilterOption] = deriveDecoder[IntFilterOption]
   }
 
   // Long
@@ -410,8 +383,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LongFilter] = deriveDecoder[LongFilter]
   }
 
   final case class LongFilterOption(
@@ -432,8 +403,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LongFilterOption] = deriveDecoder[LongFilterOption]
   }
 
   // Double
@@ -455,8 +424,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[DoubleFilter] = deriveDecoder[DoubleFilter]
   }
 
   final case class DoubleFilterOption(
@@ -477,8 +444,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[DoubleFilterOption] = deriveDecoder[DoubleFilterOption]
   }
 
   // BigDecimal
@@ -500,8 +465,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[BigDecimalFilter] = deriveDecoder[BigDecimalFilter]
   }
 
   final case class BigDecimalFilterOption(
@@ -522,8 +485,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[BigDecimalFilterOption] = deriveDecoder[BigDecimalFilterOption]
   }
 
   // String
@@ -556,8 +517,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[StringFilter] = deriveDecoder[StringFilter]
   }
 
   final case class StringFilterOption(
@@ -590,8 +549,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[StringFilterOption] = deriveDecoder[StringFilterOption]
   }
 
   // Instant
@@ -613,8 +570,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[InstantFilter] = deriveDecoder[InstantFilter]
   }
 
   final case class InstantFilterOption(
@@ -635,8 +590,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[InstantFilterOption] = deriveDecoder[InstantFilterOption]
   }
 
   // LocalDate
@@ -658,8 +611,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LocalDateFilter] = deriveDecoder[LocalDateFilter]
   }
 
   final case class LocalDateFilterOption(
@@ -680,8 +631,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LocalDateFilterOption] = deriveDecoder[LocalDateFilterOption]
   }
 
   // LocalTime
@@ -703,8 +652,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LocalTimeFilter] = deriveDecoder[LocalTimeFilter]
   }
 
   final case class LocalTimeFilterOption(
@@ -725,8 +672,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LocalTimeFilterOption] = deriveDecoder[LocalTimeFilterOption]
   }
 
   // LocalDateTime
@@ -748,8 +693,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LocalDateTimeFilter] = deriveDecoder[LocalDateTimeFilter]
   }
 
   final case class LocalDateTimeFilterOption(
@@ -770,8 +713,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[LocalDateTimeFilterOption] = deriveDecoder[LocalDateTimeFilterOption]
   }
 
   // OffsetTime
@@ -793,8 +734,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[OffsetTimeFilter] = deriveDecoder[OffsetTimeFilter]
   }
 
   final case class OffsetTimeFilterOption(
@@ -815,8 +754,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[OffsetTimeFilterOption] = deriveDecoder[OffsetTimeFilterOption]
   }
 
   // OffsetDateTime
@@ -838,8 +775,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[OffsetDateTimeFilter] = deriveDecoder[OffsetDateTimeFilter]
   }
 
   final case class OffsetDateTimeFilterOption(
@@ -860,8 +795,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[OffsetDateTimeFilterOption] = deriveDecoder[OffsetDateTimeFilterOption]
   }
 
   // ZonedDateTime
@@ -883,8 +816,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[ZonedDateTimeFilter] = deriveDecoder[ZonedDateTimeFilter]
   }
 
   final case class ZonedDateTimeFilterOption(
@@ -905,8 +836,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[ZonedDateTimeFilterOption] = deriveDecoder[ZonedDateTimeFilterOption]
   }
 
   // Date
@@ -928,8 +857,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[DateFilter] = deriveDecoder[DateFilter]
   }
 
   final case class DateFilterOption(
@@ -950,8 +877,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[DateFilterOption] = deriveDecoder[DateFilterOption]
   }
 
   // Time
@@ -973,8 +898,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[TimeFilter] = deriveDecoder[TimeFilter]
   }
 
   final case class TimeFilterOption(
@@ -995,8 +918,6 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[TimeFilterOption] = deriveDecoder[TimeFilterOption]
   }
 
   // Timestamp
@@ -1018,8 +939,6 @@ object models {
       None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[TimestampFilter] = deriveDecoder[TimestampFilter]
   }
 
   final case class TimestampFilterOption(
@@ -1040,7 +959,5 @@ object models {
       None, None, None, None, None, None, None, None, None
     )
     // format: on
-
-    implicit val decoder: Decoder[TimestampFilterOption] = deriveDecoder[TimestampFilterOption]
   }
 }

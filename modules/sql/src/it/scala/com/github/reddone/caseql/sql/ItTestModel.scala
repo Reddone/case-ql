@@ -8,7 +8,6 @@ import com.github.reddone.caseql.sql.table.{FieldSet, Table, TableFilter, TableL
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.TableLink.Aux
-import com.github.reddone.caseql.sql.util.CirceDecoders._
 import doobie._
 import doobie.implicits._
 import javasql._
