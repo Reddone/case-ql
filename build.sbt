@@ -47,7 +47,7 @@ lazy val `case-ql-gql` = project
   .in(file("modules/gql"))
   .dependsOn(
     `case-ql-sql` % "test->test;compile->compile",
-    `case-ql-circe` % "test->test;compile->compile"
+    `case-ql-circe` % "test->test"
   )
   .settings(settings)
   .settings(

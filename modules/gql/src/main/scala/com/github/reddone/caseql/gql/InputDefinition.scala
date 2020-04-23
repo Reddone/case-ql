@@ -1357,8 +1357,8 @@ object InputDefinition {
         )
     )
 
-  def makeRelationFilterInputType[A, B, FB <: EntityFilter[FB]: TypeTag](
-      inputType: InputObjectType[FB]
+  implicit def relationFilterInputType[A, B, FB <: EntityFilter[FB]: TypeTag](
+      implicit inputType: InputObjectType[FB]
   ): InputObjectType[RelationFilter[A, B, FB]] =
     InputObjectType[RelationFilter[A, B, FB]](
       s"RelationFilter for ${typeOf[FB].typeSymbol.name.toString}",
