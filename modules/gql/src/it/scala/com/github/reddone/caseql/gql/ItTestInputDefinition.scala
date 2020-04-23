@@ -2,10 +2,12 @@ package com.github.reddone.caseql.gql
 
 import com.github.reddone.caseql.gql.InputDefinition._
 import com.github.reddone.caseql.sql.ItTestModel._
-import sangria.macros.derive._
+import sangria.macros.derive.{InputObjectTypeDescription, InputObjectTypeName, deriveInputObjectType}
 import sangria.schema.InputObjectType
 
-object TestInputDefinition {
+object ItTestInputDefinition {
+
+  // FILTER
 
   implicit val DeveloperFilterType: InputObjectType[DeveloperFilter] =
     deriveInputObjectType[DeveloperFilter](
@@ -30,6 +32,8 @@ object TestInputDefinition {
       InputObjectTypeName("TaskFilter"),
       InputObjectTypeDescription("Filter for Task")
     )
+
+  // MODIFIER
 
   implicit val DeveloperModifierType: InputObjectType[DeveloperModifier] =
     deriveInputObjectType[DeveloperModifier](
