@@ -23,7 +23,7 @@ object TestDecoders {
   implicit val testModifierDecoder: Decoder[TestModifier] =
     deriveDecoder[TestModifier]
 
-  // RELATION FILTER
+  // RELATION FILTER TEST
 
   implicit val testLeftDecoder: Decoder[TestLeft] =
     deriveDecoder[TestLeft]
