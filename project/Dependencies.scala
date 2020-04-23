@@ -3,11 +3,6 @@ import sbt._
 
 object Dependencies {
 
-  object typesafe {
-    lazy val namespace = "com.typesafe"
-    lazy val config    = namespace % "config" % configVersion
-  }
-
   object shapeless {
     lazy val namespace = "com.chuusai"
     lazy val core      = namespace %% "shapeless" % shapelessVersion
@@ -62,9 +57,9 @@ object Dependencies {
     lazy val core      = namespace %% "testcontainers-scala" % testcontainersScalaVersion
   }
 
-  object slf4j {
-    lazy val namespace = "org.slf4j"
-    lazy val api       = namespace % "slf4j-api" % slf4jVersion
+  object typesafe {
+    lazy val namespace = "com.typesafe"
+    lazy val config    = namespace % "config" % configVersion
   }
 
   object akka {
@@ -78,6 +73,11 @@ object Dependencies {
   object akkaHttpCirce {
     lazy val namespace = "de.heikoseeberger"
     lazy val core      = namespace %% "akka-http-circe" % akkaHttpCirceVersion
+  }
+
+  object slf4j {
+    lazy val namespace = "org.slf4j"
+    lazy val api       = namespace % "slf4j-api" % slf4jVersion
   }
 
   object log4j {
@@ -99,6 +99,7 @@ object Dependencies {
   }
 
   object Jars {
+
     lazy val `shared`: Seq[ModuleID] = Seq(
       scalatest.core           % "it, test",
       testcontainers.postgres  % "it",
@@ -106,7 +107,6 @@ object Dependencies {
     )
 
     lazy val `sql`: Seq[ModuleID] = Seq(
-      typesafe.config  % "compile",
       shapeless.core   % "compile",
       circe.core       % "compile",
       circe.parser     % "compile",

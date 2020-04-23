@@ -17,19 +17,19 @@ trait TableFilter[A, FA <: EntityFilter[FA]] {
     FragmentUtils.optionalAndOpt(
       // AND between all Option[Filter[_]]
       FragmentUtils.optionalAndOpt(primitiveFilterFragments(filter)(alias): _*),
-      // AND between all Option[RelationFilter[T, _, _]]
+      // AND between all Option[RelationFilter[_, _, _]]
       FragmentUtils.optionalAndOpt(relationFilterFragments(filter)(alias): _*),
-      // AND between all Option[EntityFilter[T]] using self recursive type
+      // AND between all Option[EntityFilter[_]] using self recursive type
       filter.AND.flatMap { and =>
         val recs = and.map(byFilterFragment(_, alias))
         FragmentUtils.optionalAndOpt(recs: _*)
       },
-      // OR between all Option[EntityFilter[T]] using self recursive type
+      // OR between all Option[EntityFilter[_]] using self recursive type
       filter.OR.flatMap { or =>
         val recs = or.map(byFilterFragment(_, alias))
         FragmentUtils.optionalOrOpt(recs: _*)
       },
-      // NOT for one Option[EntityFilter[T]] using self recursive type
+      // NOT for one Option[EntityFilter[_]] using self recursive type
       filter.NOT.flatMap { not =>
         val rec = byFilterFragment(not, alias)
         FragmentUtils.optionalNotOpt(rec)

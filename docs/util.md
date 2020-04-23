@@ -26,8 +26,8 @@ builder += ("param_1" -> "tasty the tester")
 builder += ("param_2" -> 42)
 val parameters: Row = builder.result()
 
-val insertString          = s"INSERT INTO developer (?, ?)"                       // statement with placeholders
-val ar: ConnectionIO[Int] = write.toFragment(parameters, insertString).update.run // set placeholders using parameters
+val insertString          = s"INSERT INTO developer (?, ?)"                        // statement with placeholders
+val afr: ConnectionIO[Int] = write.toFragment(parameters, insertString).update.run // set placeholders using parameters
 
 val selectString                  = s"SELECT full_name, age FROM developer" 
 val data: ConnectionIO[List[Row]] = Fragment.const(selectString).query[Row](read).to[List]

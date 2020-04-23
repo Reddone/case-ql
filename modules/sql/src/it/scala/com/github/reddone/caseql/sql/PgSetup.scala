@@ -3,7 +3,6 @@ package com.github.reddone.caseql.sql
 import cats.effect.{ContextShift, IO}
 import com.github.reddone.caseql.sql.util.{GenericRepository, TestTransactors}
 import com.dimafeng.testcontainers.{ForAllTestContainer, PostgreSQLContainer}
-import com.typesafe.config.ConfigFactory
 import doobie.util.transactor.Transactor.Aux
 import doobie._
 import doobie.implicits._
@@ -29,36 +28,30 @@ trait PgSetup { self: Suite with ForAllTestContainer =>
   lazy val container: PostgreSQLContainer = PostgreSQLContainer("postgres:9.6.8")
 
   override def afterStart(): Unit = {
-    val url          = container.jdbcUrl
-    val user         = container.username
-    val password     = container.password
-    val config       = ConfigFactory.parseString(s"""|doobie {
-                                                 |  numThreads = 10
-                                                 |  driverClassName = "org.postgresql.Driver"
-                                                 |  url = "$url"
-                                                 |  user = "$user"
-                                                 |  password = "$password"
-                                                 |}""".stripMargin)
-    val doobieConfig = DoobieConfig.valueOf(config)
-    _xa = TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Cached)
+    val url      = container.jdbcUrl
+    val user     = container.username
+    val password = container.password
+
+    val config = new DoobieConfig(10, "org.postgresql.Driver", url, user, password) {}
+    _xa = TestTransactors.valueOf[IO](config, TestTransactors.BlockerMode.Cached)
 
     val y = _xa.yolo
     import y._
 
-    // TODO: do not use GenericRepository here because it breaks testing rules
     val testRepository: GenericRepository = GenericRepository.forSchema(testSchema)
 
     val initPg = testRepository.createSchema() *>
       testRepository.createTable(developerTableName, developerTableDefinition) *>
       testRepository.createTable(projectTableName, projectTableDefinition) *>
       testRepository.createTable(developerProjectLinkTableName, developerProjectLinkTableDefinition) *>
+      testRepository.createTable(taskTableName, taskTableDefinition) *>
       "Finished creating tables".pure[ConnectionIO]
 
-    val populatePg =
-      testRepository.insertMany(developerTableName, developerColsNoId, developersNoId) *>
-        testRepository.insertMany(projectTableName, projectColsNoId, projectsNoId) *>
-        testRepository.insertMany(developerProjectLinkTableName, developerProjectLinkCols, developerProjectLinks) *>
-        "Finished populating tables".pure[ConnectionIO]
+    val populatePg = testRepository.insertMany(developerTableName, developerColsNoId, developersNoId) *>
+      testRepository.insertMany(projectTableName, projectColsNoId, projectsNoId) *>
+      testRepository.insertMany(developerProjectLinkTableName, developerProjectLinkCols, developerProjectLinks) *>
+      testRepository.insertMany(taskTableName, taskColsNoId, tasksNoId) *>
+      "Finished populating tables".pure[ConnectionIO]
 
     (initPg.quick *> populatePg.quick).unsafeRunSync()
   }

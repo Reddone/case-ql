@@ -1,7 +1,5 @@
 package com.github.reddone.caseql.sql.util
 
-import java.sql.Timestamp
-import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 
 import cats.implicits._
@@ -10,6 +8,7 @@ import doobie.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
 import com.github.reddone.caseql.sql.ItTestData._
 import com.github.reddone.caseql.sql.util.Raw._
+import com.github.reddone.caseql.sql.util.TestTransactors._
 
 import scala.collection.mutable
 
@@ -21,26 +20,18 @@ class RawItSpec extends PgAnyWordSpec {
   val nextProjectId   = new AtomicLong(projects.length + 1L)
 
   val rawDevelopers: List[Map[String, Any]] = List(
-    Map("id" -> 1, "full_name" -> "Eddy Pasterino", "age" -> 999),
-    Map("id" -> 2, "full_name" -> "Donger", "age"         -> 1),
-    Map("id" -> 3, "full_name" -> "Reddone", "age"        -> 32)
+    Map("id" -> 1L, "name" -> "Reddone", "age"                   -> 32, "team_leader_id" -> None),
+    Map("id" -> 2L, "name" -> "Eddy Pasterino", "age"            -> 1, "team_leader_id"  -> Some(1L)),
+    Map("id" -> 3L, "name" -> "Tasty the Tester", "age"          -> 1, "team_leader_id"  -> Some(1L)),
+    Map("id" -> 4L, "name" -> "Maximus Kappacus Spamicus", "age" -> 23, "team_leader_id" -> None),
+    Map("id" -> 5L, "name" -> "Cyberino Matterino", "age"        -> 2, "team_leader_id"  -> Some(4L)),
+    Map("id" -> 6L, "name" -> "Mario Rigatone", "age"            -> 2, "team_leader_id"  -> Some(4L))
   )
 
   val rawProjects: List[Map[String, Any]] = List(
-    Map(
-      "id"          -> 1,
-      "title"       -> "Topdeckin N' Wreckin",
-      "description" -> Some("Kripp most loved hobby"),
-      "created_at"  -> Timestamp.from(Instant.EPOCH),
-      "updated_at"  -> Timestamp.from(Instant.EPOCH.plusSeconds(3600L))
-    ),
-    Map(
-      "id"          -> 2,
-      "title"       -> "Welcome to Summoner Rift",
-      "description" -> None,
-      "created_at"  -> Timestamp.from(Instant.EPOCH),
-      "updated_at"  -> Timestamp.from(Instant.EPOCH.plusSeconds(7200L))
-    )
+    Map("id" -> 1L, "title" -> "Topdeckin N' Wreckin", "description"     -> Some("Kripp most loved hobby")),
+    Map("id" -> 2L, "title" -> "Random Pasta", "description"             -> None),
+    Map("id" -> 3L, "title" -> "Welcome to Summoner Rift", "description" -> Some("Fedding like there's no tomorrow"))
   )
 
   "Raw" when {
@@ -52,7 +43,7 @@ class RawItSpec extends PgAnyWordSpec {
           .processRaw(s"SELECT * FROM $testSchema.$developerTableName")
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result1 shouldBe rawDevelopers
@@ -61,7 +52,7 @@ class RawItSpec extends PgAnyWordSpec {
           .processRaw(s"SELECT * FROM $testSchema.$projectTableName")
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result2 shouldBe rawProjects
@@ -73,14 +64,14 @@ class RawItSpec extends PgAnyWordSpec {
       "succeed to execute a query returning ConnectionIO" in {
         val result1 = testRepository
           .select[Unit, Row](developerTableName, List("*"), "", ())
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result1 shouldBe rawDevelopers
 
         val result2 = testRepository
           .select[Unit, Row](projectTableName, List("*"), "", ())
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result2 shouldBe rawProjects
@@ -91,7 +82,7 @@ class RawItSpec extends PgAnyWordSpec {
           .selectStream[Unit, Row](developerTableName, List("*"), "", ())
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result1 shouldBe rawDevelopers
@@ -100,7 +91,7 @@ class RawItSpec extends PgAnyWordSpec {
           .selectStream[Unit, Row](projectTableName, List("*"), "", ())
           .compile
           .toList
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
         result2 shouldBe rawProjects
@@ -111,46 +102,48 @@ class RawItSpec extends PgAnyWordSpec {
 
       "succeed to execute an update when parameters are correct" in {
         val builder1 = mutable.LinkedHashMap.newBuilder[String, Any]
-        builder1 += ("param_1" -> "tasty the tester")
+        builder1 += ("param_1" -> "A random Donger appears")
         builder1 += ("param_2" -> 42)
+        builder1 += ("param_3" -> None)
         val parameters1: Row = builder1.result()
 
-        val nextId = (for {
-          _  <- testRepository.insert(developerTableName, developerColsNoId, parameters1)
-          id <- nextDeveloperId.getAndIncrement().pure[ConnectionIO]
-        } yield id).transact(xa).unsafeRunSync()
-        val result1 = (for {
-          dev <- testRepository.select[Unit, Row](developerTableName, List("*"), s"WHERE id = $nextId", ())
-          _   <- testRepository.delete(developerTableName, s"WHERE id = $nextId", ())
-        } yield dev).transact(xa).unsafeRunSync()
+        val (nextId, result1) = (for {
+          _   <- testRepository.insert(developerTableName, developerColsNoId, parameters1)
+          id  <- nextDeveloperId.getAndIncrement().pure[ConnectionIO]
+          dev <- testRepository.select[Unit, Row](developerTableName, List("*"), s"WHERE id = $id", ())
+        } yield (id, dev)).transact(rollingBack(xa)).unsafeRunSync()
 
-        result1 shouldBe List(Map("id" -> nextId, "full_name" -> "tasty the tester", "age" -> 42))
+        result1 shouldBe List(
+          Map("id" -> nextId, "name" -> "A random Donger appears", "age" -> 42, "team_leader_id" -> None)
+        )
       }
 
       "fail to execute an update when parameters are wrong" in {
         val builder1 = mutable.LinkedHashMap.newBuilder[String, Any]
-        builder1 += ("param_1" -> "tasty the tester")
+        builder1 += ("param_1" -> "A random Donger appears")
         builder1 += ("param_2" -> 42)
-        builder1 += ("param_3" -> "Kaboom")
+        builder1 += ("param_3" -> None)
+        builder1 += ("param_4" -> "Kaboom")
         val parameters1: Row = builder1.result()
 
         val thrown1 = the[IllegalArgumentException] thrownBy testRepository
           .insert(developerTableName, developerColsNoId, parameters1)
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        thrown1.getMessage shouldBe "You are trying to set 2 parameters using 3 values"
+        thrown1.getMessage shouldBe "You are trying to set 3 parameters using 4 values"
 
         val builder2 = mutable.LinkedHashMap.newBuilder[String, Any]
-        builder2 += ("param_1" -> "Kaboom")
+        builder2 += ("param_1" -> "A random Donger appears")
+        builder2 += ("param_2" -> "Kaboom")
         val parameters2: Row = builder2.result()
 
         val thrown2 = the[IllegalArgumentException] thrownBy testRepository
           .insert(developerTableName, developerColsNoId, parameters2)
-          .transact(xa)
+          .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        thrown2.getMessage shouldBe "You are trying to set 2 parameters using 1 values"
+        thrown2.getMessage shouldBe "You are trying to set 3 parameters using 2 values"
       }
     }
   }

@@ -228,7 +228,7 @@ object GenericRepository {
       val updateFragment = update_query(table, Some(schema), columns, whereStatement)
       FragmentUtils
         .wrapInUpdate[W](updateFragment)
-        .withGeneratedKeys(columns: _*)(valueAndWhereParameters)
+        .withGeneratedKeys(returningColumns: _*)(valueAndWhereParameters)
     }
 
     override def updateMany[W: Write](
@@ -253,7 +253,7 @@ object GenericRepository {
       val updateFragment = update_query(table, Some(schema), columns, whereStatement)
       FragmentUtils
         .wrapInUpdate[W](updateFragment)
-        .updateManyWithGeneratedKeys(columns: _*)(valueAndWhereParametersList)
+        .updateManyWithGeneratedKeys(returningColumns: _*)(valueAndWhereParametersList)
     }
 
     // DELETE
