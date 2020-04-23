@@ -10,7 +10,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def select[FA <: EntityFilter[FA]](filter: FA, alias: Option[String] = None)(
       implicit tableFilter: TableFilter[A, FA]
-  ): SQLStreamingAction[A] = {
+  ): SqlStreamingAction[A] = {
     val builder = SelectBuilder
       .forTable(table, alias)
       .withFilter(filter)
@@ -18,7 +18,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
     builder.buildSelect
   }
 
-  final def selectByKey(key: K, alias: Option[String] = None): SQLAction[Option[A]] = {
+  final def selectByKey(key: K, alias: Option[String] = None): SqlAction[Option[A]] = {
     val builder = SelectBuilder
       .forTable(table, alias)
       .withKey(key)
@@ -30,7 +30,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def insert[MA <: EntityModifier[MA]](modifier: MA)(
       implicit tableModifier: TableModifier[A, MA]
-  ): SQLAction[Int] = {
+  ): SqlAction[Int] = {
     val builder = InsertBuilder
       .forTable(table)
       .withModifier(modifier)
@@ -40,7 +40,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def insertReturningKey[MA <: EntityModifier[MA]](modifier: MA)(
       implicit tableModifier: TableModifier[A, MA]
-  ): SQLAction[K] = {
+  ): SqlAction[K] = {
     val builder = InsertBuilder
       .forTable(table)
       .withModifier(modifier)
@@ -54,7 +54,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
       implicit
       tableModifier: TableModifier[A, MA],
       tableFilter: TableFilter[A, FA]
-  ): SQLAction[Int] = {
+  ): SqlAction[Int] = {
     val builder = UpdateBuilder
       .forTable(table)
       .withModifier(modifier)
@@ -67,7 +67,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
       implicit
       tableModifier: TableModifier[A, MA],
       tableFilter: TableFilter[A, FA]
-  ): SQLStreamingAction[K] = {
+  ): SqlStreamingAction[K] = {
     val builder = UpdateBuilder
       .forTable(table)
       .withModifier(modifier)
@@ -78,7 +78,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def updateByKey[MA <: EntityModifier[MA]](modifier: MA, key: K)(
       implicit tableModifier: TableModifier[A, MA]
-  ): SQLAction[Int] = {
+  ): SqlAction[Int] = {
     val builder = UpdateBuilder
       .forTable(table)
       .withModifier(modifier)
@@ -89,7 +89,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def updateByKeyReturningKeys[MA <: EntityModifier[MA]](modifier: MA, key: K)(
       implicit tableModifier: TableModifier[A, MA]
-  ): SQLStreamingAction[K] = {
+  ): SqlStreamingAction[K] = {
     val builder = UpdateBuilder
       .forTable(table)
       .withModifier(modifier)
@@ -102,7 +102,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def delete[FA <: EntityFilter[FA]](filter: FA)(
       implicit tableFilter: TableFilter[A, FA]
-  ): SQLAction[Int] = {
+  ): SqlAction[Int] = {
     val builder = DeleteBuilder
       .forTable(table)
       .withFilter(filter)
@@ -112,7 +112,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
 
   final def deleteReturningKeys[FA <: EntityFilter[FA]](filter: FA)(
       implicit tableFilter: TableFilter[A, FA]
-  ): SQLStreamingAction[K] = {
+  ): SqlStreamingAction[K] = {
     val builder = DeleteBuilder
       .forTable(table)
       .withFilter(filter)
@@ -120,7 +120,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
     builder.buildDeleteReturningKeys
   }
 
-  final def deleteByKey(key: K): SQLAction[Int] = {
+  final def deleteByKey(key: K): SqlAction[Int] = {
     val builder = DeleteBuilder
       .forTable(table)
       .withKey(key)
@@ -128,7 +128,7 @@ trait TableQuery[A, K] { table: Table[A, K] =>
     builder.buildDeleteByKey
   }
 
-  final def deleteByKeyReturningKeys(key: K): SQLStreamingAction[K] = {
+  final def deleteByKeyReturningKeys(key: K): SqlStreamingAction[K] = {
     val builder = DeleteBuilder
       .forTable(table)
       .withKey(key)

@@ -88,7 +88,7 @@ object ItTestData {
   val taskTableDefinition: String =
     """|id          BIGSERIAL PRIMARY KEY,
        |label       VARCHAR(255) NOT NULL,
-       |description TEXT NOT NULL,
+       |description TEXT NULL DEFAULT 'EAZY PEAZY',
        |deadline    TIMESTAMP NOT NULL,
        |project_id  BIGINT NOT NULL REFERENCES test.project (id) ON UPDATE CASCADE ON DELETE CASCADE
        |""".stripMargin
@@ -101,42 +101,42 @@ object ItTestData {
     Task(
       1L,
       "POC of Top Decking script",
-      "Description of what to do is deducible with ease from the task label",
+      None,
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 1)),
       1L
     ),
     Task(
       2L,
       "Implementation of Top Decking script",
-      "Description of what to do is deducible with ease from the task label",
+      Some("Description of what to do is deducible with ease from the task label"),
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 1)),
       1L
     ),
     Task(
       3L,
       "Copy pasta some random text ",
-      "Description of what to do is deducible with ease from the task label",
+      Some("Description of what to do is deducible with ease from the task label"),
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 2)),
       2L
     ),
     Task(
       4L,
       "Super automated copy pasta with donger bot",
-      "Description of what to do is deducible with ease from the task label",
+      None,
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 2)),
       2L
     ),
     Task(
       5L,
       "First blood or ragequit at 15",
-      "Description of what to do is deducible with ease from the task label",
+      Some("Description of what to do is deducible with ease from the task label"),
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 3)),
       3L
     ),
     Task(
       6L,
       "Report all teammates",
-      "Description of what to do is deducible with ease from the task label",
+      Some("Description of what to do is deducible with ease from the task label"),
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 3)),
       3L
     )

@@ -19,18 +19,18 @@ abstract class QueryBuilder[A, K](table: Table[A, K], alias: Option[String]) {
       )
 }
 
-trait SQLFragment {
+trait SqlFragment {
   def toFragment: Fragment
 }
 
-trait SQLAction[R] extends SQLFragment {
+trait SqlAction[R] extends SqlFragment {
   def execute: ConnectionIO[R]
 }
 
-trait SQLStreamingAction[R] extends SQLFragment { self =>
+trait SqlStreamingAction[R] extends SqlFragment { self =>
   def execute: Stream[ConnectionIO, R]
 
-  final def asSQLAction: SQLAction[List[R]] = new SQLAction[List[R]] {
+  final def asSqlAction: SqlAction[List[R]] = new SqlAction[List[R]] {
     def toFragment: Fragment           = self.toFragment
     def execute: ConnectionIO[List[R]] = self.execute.compile.toList
   }

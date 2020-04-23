@@ -44,16 +44,16 @@ sealed abstract class SelectBuilder[S, A, K](
 
   def buildSelect(
       implicit ev: S =:= SelectHasTable with SelectHasFilter
-  ): SQLStreamingAction[A] =
-    new SQLStreamingAction[A] {
+  ): SqlStreamingAction[A] =
+    new SqlStreamingAction[A] {
       override def toFragment: Fragment             = fragment
       override def execute: Stream[ConnectionIO, A] = fragment.query[A](table.read).stream
     }
 
   def buildSelectByKey(
       implicit ev: S =:= SelectHasTable with SelectHasKey
-  ): SQLAction[Option[A]] =
-    new SQLAction[Option[A]] {
+  ): SqlAction[Option[A]] =
+    new SqlAction[Option[A]] {
       override def toFragment: Fragment             = fragment
       override def execute: ConnectionIO[Option[A]] = fragment.query[A](table.read).option
     }

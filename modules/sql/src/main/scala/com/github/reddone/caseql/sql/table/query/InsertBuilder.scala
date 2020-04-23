@@ -38,16 +38,16 @@ sealed abstract class InsertBuilder[S <: InsertBuilderState, A, K](
 
   def buildInsertOne(
       implicit ev: S =:= InsertHasTable with InsertHasModifier
-  ): SQLAction[Int] =
-    new SQLAction[Int] {
+  ): SqlAction[Int] =
+    new SqlAction[Int] {
       override def toFragment: Fragment       = fragment
       override def execute: ConnectionIO[Int] = fragment.update.run
     }
 
   def buildInsertOneReturningKey(
       implicit ev: S =:= InsertHasTable with InsertHasModifier
-  ): SQLAction[K] =
-    new SQLAction[K] {
+  ): SqlAction[K] =
+    new SqlAction[K] {
       override def toFragment: Fragment = fragment
       override def execute: ConnectionIO[K] =
         fragment.update.withUniqueGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)

@@ -63,14 +63,14 @@ sealed abstract class UpdateBuilder[S <: UpdateBuilderState, A, K](
 
   def buildUpdate(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasFilter
-  ): SQLAction[Int] = new SQLAction[Int] {
+  ): SqlAction[Int] = new SqlAction[Int] {
     override def toFragment: Fragment       = fragment
     override def execute: ConnectionIO[Int] = fragment.update.run
   }
 
   def buildUpdateReturningKeys(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasFilter
-  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+  ): SqlStreamingAction[K] = new SqlStreamingAction[K] {
     override def toFragment: Fragment = fragment
     override def execute: Stream[ConnectionIO, K] =
       fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
@@ -78,14 +78,14 @@ sealed abstract class UpdateBuilder[S <: UpdateBuilderState, A, K](
 
   def buildUpdateByKey(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasKey
-  ): SQLAction[Int] = new SQLAction[Int] {
+  ): SqlAction[Int] = new SqlAction[Int] {
     override def toFragment: Fragment       = fragment
     override def execute: ConnectionIO[Int] = fragment.update.run
   }
 
   def buildUpdateByKeyReturningKeys(
       implicit ev: S =:= UpdateHasTable with UpdateHasModifier with UpdateHasKey
-  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+  ): SqlStreamingAction[K] = new SqlStreamingAction[K] {
     override def toFragment: Fragment = fragment
     override def execute: Stream[ConnectionIO, K] =
       fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)

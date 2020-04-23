@@ -190,7 +190,7 @@ object ItTestModel {
   final case class Task(
       id: Long,
       label: String,
-      description: String,
+      description: Option[String],
       deadline: Timestamp,
       projectId: Long
   )
@@ -214,7 +214,7 @@ object ItTestModel {
   final case class TaskFilter(
       id: Option[LongFilter],
       label: Option[StringFilter],
-      description: Option[StringFilter],
+      description: Option[StringFilterOption],
       deadline: Option[TimestampFilter],
       projectId: Option[LongFilter],
       AND: Option[Seq[TaskFilter]],
@@ -232,7 +232,7 @@ object ItTestModel {
   final case class TaskModifier(
       id: Option[LongModifier],
       label: Option[StringModifier],
-      description: Option[StringModifier],
+      description: Option[StringModifierOption],
       deadline: Option[TimestampModifier],
       projectId: Option[LongModifier]
   ) extends EntityModifier[TaskModifier]

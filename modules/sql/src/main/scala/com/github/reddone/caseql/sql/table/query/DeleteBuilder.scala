@@ -43,14 +43,14 @@ sealed abstract class DeleteBuilder[S, A, K](
 
   def buildDelete(
       implicit ev: S =:= DeleteHasTable with DeleteHasFilter
-  ): SQLAction[Int] = new SQLAction[Int] {
+  ): SqlAction[Int] = new SqlAction[Int] {
     override def toFragment: Fragment       = fragment
     override def execute: ConnectionIO[Int] = fragment.update.run
   }
 
   def buildDeleteReturningKeys(
       implicit ev: S =:= DeleteHasTable with DeleteHasFilter
-  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+  ): SqlStreamingAction[K] = new SqlStreamingAction[K] {
     override def toFragment: Fragment = fragment
     override def execute: Stream[ConnectionIO, K] =
       fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
@@ -58,14 +58,14 @@ sealed abstract class DeleteBuilder[S, A, K](
 
   def buildDeleteByKey(
       implicit ev: S =:= DeleteHasTable with DeleteHasKey
-  ): SQLAction[Int] = new SQLAction[Int] {
+  ): SqlAction[Int] = new SqlAction[Int] {
     override def toFragment: Fragment       = fragment
     override def execute: ConnectionIO[Int] = fragment.update.run
   }
 
   def buildDeleteByKeyReturningKeys(
       implicit ev: S =:= DeleteHasTable with DeleteHasKey
-  ): SQLStreamingAction[K] = new SQLStreamingAction[K] {
+  ): SqlStreamingAction[K] = new SqlStreamingAction[K] {
     override def toFragment: Fragment = fragment
     override def execute: Stream[ConnectionIO, K] =
       fragment.update.withGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)
