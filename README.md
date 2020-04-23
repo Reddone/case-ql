@@ -9,7 +9,7 @@ It provides basic CRUD operations for entities and it offers a powerful filter m
 entity and its relations.
 
 The basic idea is that case classes used to represent filters and modifications are checked at compile time
-against case classes representing the data model. This library provides powerful combinator to express almost any
+against case classes representing the data model. This library provides powerful combinators to express almost any
 kind of condition, taking into account also relations between entities.
 
 Queries are built using implicit instances of special objects which can be derived only if the type checking succeeds.

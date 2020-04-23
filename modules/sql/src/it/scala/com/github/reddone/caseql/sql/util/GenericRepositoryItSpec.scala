@@ -2,12 +2,10 @@ package com.github.reddone.caseql.sql.util
 
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.implicits._
 import com.github.reddone.caseql.sql.ItTestData._
 import com.github.reddone.caseql.sql.ItTestModel._
 import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
 import com.github.reddone.caseql.sql.util.TestTransactors._
-import doobie._
 import doobie.implicits._
 
 class GenericRepositoryItSpec extends PgAnyWordSpec {
@@ -224,11 +222,11 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
           developerCols.head :: Nil
         )
 
-        val generatedKey = insertDeveloperReturningKey
+        val returnedKey = insertDeveloperReturningKey
           .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        generatedKey shouldBe nextDeveloperId
+        returnedKey shouldBe nextDeveloperId
       }
 
       "succeed to execute a batch insert returning ConnectionIO of affected rows" in {
@@ -261,13 +259,13 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
           developerCols.head :: Nil
         )
 
-        val generatedKeys = insertDevelopersReturningKeys
+        val returnedKeys = insertDevelopersReturningKeys
           .transact(rollingBack(xa))
           .compile
           .toList
           .unsafeRunSync()
 
-        generatedKeys should contain theSameElementsAs List(nextDeveloperId1, nextDeveloperId2)
+        returnedKeys should contain theSameElementsAs List(nextDeveloperId1, nextDeveloperId2)
       }
     }
 
@@ -298,13 +296,13 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
             developerCols.head :: Nil
           )
 
-        val generatedKeys = updateDeveloperReturningKeys
+        val returnedKeys = updateDeveloperReturningKeys
           .transact(rollingBack(xa))
           .compile
           .toList
           .unsafeRunSync()
 
-        generatedKeys should contain theSameElementsAs List(4L)
+        returnedKeys should contain theSameElementsAs List(4L)
       }
 
       "succeed to execute a batch update returning ConnectionIO of affected rows" in {
@@ -334,25 +332,79 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
             developerCols.head :: Nil
           )
 
-        val generatedKeys = updateDevelopersReturningKeys
+        val returnedKeys = updateDevelopersReturningKeys
           .transact(rollingBack(xa))
           .compile
           .toList
           .unsafeRunSync()
 
-        generatedKeys should contain theSameElementsAs List(4L, 6L)
+        returnedKeys should contain theSameElementsAs List(4L, 6L)
       }
     }
 
     "using delete DML" should {
 
-      "succeed to execute a delete returning ConnectionIO of affected rows" in {}
+      "succeed to execute a delete returning ConnectionIO of affected rows" in {
+        val deleteDeveloper = testRepository.delete[Long](
+          developerTableName,
+          "where id=?",
+          4L
+        )
 
-      "succeed to execute a delete returning Stream of keys" in {}
+        val affectedRows = deleteDeveloper
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
 
-      "succeed to execute a batch delete returning ConnectionIO of affected rows" in {}
+        affectedRows shouldBe 1
+      }
 
-      "succeed to execute a batch delete returning Stream of keys" in {}
+      "succeed to execute a delete returning Stream of keys" in {
+        val deleteDeveloperReturningKeys = testRepository.deleteReturningKeys[Long, Long](
+          developerTableName,
+          "where id=?",
+          4L,
+          developerCols.head :: Nil
+        )
+
+        val returnedKeys = deleteDeveloperReturningKeys
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        returnedKeys should contain theSameElementsAs List(4L)
+      }
+
+      "succeed to execute a batch delete returning ConnectionIO of affected rows" in {
+        val deleteDevelopers = testRepository.deleteMany[Int](
+          developerTableName,
+          "where age=?",
+          2 :: Nil
+        )
+
+        val affectedRows = deleteDevelopers
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 2
+      }
+
+      "succeed to execute a batch delete returning Stream of keys" in {
+        val deleteDevelopersReturningKeys = testRepository.deleteManyReturningKeys[Int, Long](
+          developerTableName,
+          "where age=?",
+          2 :: Nil,
+          developerCols.head :: Nil
+        )
+
+        val returnedKeys = deleteDevelopersReturningKeys
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        returnedKeys should contain theSameElementsAs List(5L, 6L)
+      }
     }
   }
 }
