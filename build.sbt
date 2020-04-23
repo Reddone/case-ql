@@ -13,8 +13,8 @@ lazy val root = project
   )
   .aggregate(
     `case-ql-sql`,
-    `case-ql-gql`,
     `case-ql-circe`,
+    `case-ql-gql`,
     `case-ql-example`
   )
 
@@ -24,20 +24,6 @@ lazy val `case-ql-sql` = project
   .settings(
     name := "case-ql-sql",
     libraryDependencies ++= Dependencies.Jars.`case-ql-sql`,
-    publishSettings,
-    Defaults.itSettings
-  )
-  .configs(IntegrationTest)
-
-lazy val `case-ql-gql` = project
-  .in(file("modules/gql"))
-  .dependsOn(
-    `case-ql-sql` % "test->test;compile->compile"
-  )
-  .settings(settings)
-  .settings(
-    name := "case-ql-gql",
-    libraryDependencies ++= Dependencies.Jars.`case-ql-gql`,
     publishSettings,
     Defaults.itSettings
   )
@@ -57,12 +43,27 @@ lazy val `case-ql-circe` = project
   )
   .configs(IntegrationTest)
 
+lazy val `case-ql-gql` = project
+  .in(file("modules/gql"))
+  .dependsOn(
+    `case-ql-sql` % "test->test;compile->compile",
+    `case-ql-circe` % "test->test;compile->compile"
+  )
+  .settings(settings)
+  .settings(
+    name := "case-ql-gql",
+    libraryDependencies ++= Dependencies.Jars.`case-ql-gql`,
+    publishSettings,
+    Defaults.itSettings
+  )
+  .configs(IntegrationTest)
+
 lazy val `case-ql-example` = project
   .in(file("modules/example"))
   .dependsOn(
-    `case-ql-sql`,
-    `case-ql-gql`,
-    `case-ql-circe`
+    `case-ql-sql` % "test->compile;compile->compile",
+    `case-ql-gql` % "test->compile;compile->compile",
+    `case-ql-circe` % "test->compile;compile->compile"
   )
   .settings(settings)
   .settings(

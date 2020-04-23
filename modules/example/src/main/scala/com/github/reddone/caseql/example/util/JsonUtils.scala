@@ -1,4 +1,4 @@
-package com.github.reddone.caseql.sql.util
+package com.github.reddone.caseql.example.util
 
 import io.circe.{Json, parser}
 

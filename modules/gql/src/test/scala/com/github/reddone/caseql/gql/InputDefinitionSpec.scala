@@ -1,6 +1,7 @@
 package com.github.reddone.caseql.gql
 
 import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.circe.filter.decoders._
 import io.circe._
 import io.circe.generic.semiauto._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -19,9 +20,9 @@ class InputDefinitionSpec extends AnyFlatSpec with Matchers {
 
   object InputFilter {
     implicit val dec1: Decoder[Filter[Boolean]] =
-      BooleanFilter.decoder.map(_.asInstanceOf[Filter[Boolean]])
+      booleanFilterDecoder.map(_.asInstanceOf[Filter[Boolean]])
     implicit val dec2: Decoder[FilterOption[Boolean]] =
-      BooleanFilterOption.decoder.map(_.asInstanceOf[FilterOption[Boolean]])
+      booleanFilterOptionDecoder.map(_.asInstanceOf[FilterOption[Boolean]])
     implicit val decoder: Decoder[InputFilter] = deriveDecoder[InputFilter]
   }
 

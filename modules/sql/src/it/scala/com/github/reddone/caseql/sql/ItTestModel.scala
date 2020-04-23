@@ -8,12 +8,9 @@ import com.github.reddone.caseql.sql.table.{FieldSet, Table, TableFilter, TableL
 import com.github.reddone.caseql.sql.modifier.models._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import com.github.reddone.caseql.sql.table.TableLink.Aux
-import doobie._
 import doobie.implicits._
 import javasql._
 import javatime._
-import io.circe.Decoder
-import io.circe.generic.semiauto.deriveDecoder
 import shapeless.{cachedImplicit, LabelledGeneric, TypeOf}
 
 object ItTestModel {
@@ -34,8 +31,6 @@ object ItTestModel {
   object Developer {
     implicit val lgen: TypeOf.`LabelledGeneric[Developer]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[Developer] =
-      deriveDecoder[Developer]
   }
 
   final case class DeveloperKey(id: Long)
@@ -43,8 +38,6 @@ object ItTestModel {
   object DeveloperKey {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperKey]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperKey] =
-      deriveDecoder[DeveloperKey]
   }
 
   final case class DeveloperFilter(
@@ -62,8 +55,6 @@ object ItTestModel {
   object DeveloperFilter {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperFilter]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperFilter] =
-      deriveDecoder[DeveloperFilter]
   }
 
   final case class DeveloperModifier(
@@ -76,8 +67,6 @@ object ItTestModel {
   object DeveloperModifier {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperModifier]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperModifier] =
-      deriveDecoder[DeveloperModifier]
   }
 
   // PROJECT
@@ -91,8 +80,6 @@ object ItTestModel {
   object Project {
     implicit val lgen: TypeOf.`LabelledGeneric[Project]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[Project] =
-      deriveDecoder[Project]
   }
 
   final case class ProjectKey(id: Long)
@@ -100,8 +87,6 @@ object ItTestModel {
   object ProjectKey {
     implicit val lgen: TypeOf.`LabelledGeneric[ProjectKey]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[ProjectKey] =
-      deriveDecoder[ProjectKey]
   }
 
   final case class ProjectFilter(
@@ -117,8 +102,6 @@ object ItTestModel {
   object ProjectFilter {
     implicit val lgen: TypeOf.`LabelledGeneric[ProjectFilter]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[ProjectFilter] =
-      deriveDecoder[ProjectFilter]
   }
 
   final case class ProjectModifier(
@@ -130,8 +113,6 @@ object ItTestModel {
   object ProjectModifier {
     implicit val lgen: TypeOf.`LabelledGeneric[ProjectModifier]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[ProjectModifier] =
-      deriveDecoder[ProjectModifier]
   }
 
   // DEVELOPER_PROJECT_LINK
@@ -144,8 +125,6 @@ object ItTestModel {
   object DeveloperProjectLink {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLink]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperProjectLink] =
-      deriveDecoder[DeveloperProjectLink]
   }
 
   final case class DeveloperProjectLinkKey(developerId: Long, projectId: Long)
@@ -153,8 +132,6 @@ object ItTestModel {
   object DeveloperProjectLinkKey {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkKey]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperProjectLinkKey] =
-      deriveDecoder[DeveloperProjectLinkKey]
   }
 
   final case class DeveloperProjectLinkFilter(
@@ -168,8 +145,6 @@ object ItTestModel {
   object DeveloperProjectLinkFilter {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkFilter]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperProjectLinkFilter] =
-      deriveDecoder[DeveloperProjectLinkFilter]
   }
 
   final case class DeveloperProjectLinkModifier(
@@ -180,8 +155,6 @@ object ItTestModel {
   object DeveloperProjectLinkModifier {
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkModifier]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[DeveloperProjectLinkModifier] =
-      deriveDecoder[DeveloperProjectLinkModifier]
   }
 
   // TASK
@@ -197,8 +170,6 @@ object ItTestModel {
   object Task {
     implicit val lgen: TypeOf.`LabelledGeneric[Task]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[Task] =
-      deriveDecoder[Task]
   }
 
   final case class TaskKey(id: Long)
@@ -206,8 +177,6 @@ object ItTestModel {
   object TaskKey {
     implicit val lgen: TypeOf.`LabelledGeneric[TaskKey]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[TaskKey] =
-      deriveDecoder[TaskKey]
   }
 
   final case class TaskFilter(
@@ -224,8 +193,6 @@ object ItTestModel {
   object TaskFilter {
     implicit val lgen: TypeOf.`LabelledGeneric[TaskFilter]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[TaskFilter] =
-      deriveDecoder[TaskFilter]
   }
 
   final case class TaskModifier(
@@ -239,8 +206,6 @@ object ItTestModel {
   object TaskModifier {
     implicit val lgen: TypeOf.`LabelledGeneric[TaskModifier]`.type =
       cachedImplicit
-    implicit val decoder: Decoder[TaskModifier] =
-      deriveDecoder[TaskModifier]
   }
 
   // TABLES

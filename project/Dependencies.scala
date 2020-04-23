@@ -108,9 +108,6 @@ object Dependencies {
 
     lazy val `case-ql-sql`: Seq[ModuleID] = Seq(
       shapeless.core   % "compile",
-      circe.core       % "compile",
-      circe.parser     % "compile",
-      circe.generic    % "compile",
       cats.core        % "compile",
       cats.free        % "compile",
       cats.effect      % "compile",
@@ -120,15 +117,15 @@ object Dependencies {
       doobie.postgres  % "it"
     ) ++ `shared`
 
-    lazy val `case-ql-gql`: Seq[ModuleID] = Seq(
-      sangria.core  % "compile",
-      sangria.circe % "it, test"
-    ) ++ `shared`
-
     lazy val `case-ql-circe`: Seq[ModuleID] = Seq(
       circe.core    % "compile",
       circe.parser  % "compile",
       circe.generic % "compile"
+    ) ++ `shared`
+
+    lazy val `case-ql-gql`: Seq[ModuleID] = Seq(
+      sangria.core  % "compile",
+      sangria.circe % "it, test"
     ) ++ `shared`
 
     lazy val `case-ql-example`: Seq[ModuleID] = Seq(
