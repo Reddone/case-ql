@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import doobie.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
-import com.github.reddone.caseql.sql.ItTestData._
+import com.github.reddone.caseql.sql.itmodel.data._
 import com.github.reddone.caseql.sql.util.Raw._
 import com.github.reddone.caseql.sql.util.TestTransactors._
 

@@ -1,7 +1,7 @@
 package com.github.reddone.caseql.gql
 
 import com.github.reddone.caseql.gql.InputDefinition._
-import com.github.reddone.caseql.sql.TestModel._
+import com.github.reddone.caseql.sql.model.db._
 import sangria.macros.derive.{InputObjectTypeDescription, InputObjectTypeName, deriveInputObjectType}
 import sangria.schema.InputObjectType
 

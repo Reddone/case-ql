@@ -2,8 +2,8 @@ package com.github.reddone.caseql.sql.util
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.ItTestData._
-import com.github.reddone.caseql.sql.ItTestModel._
+import com.github.reddone.caseql.sql.itmodel.data._
+import com.github.reddone.caseql.sql.itmodel.db._
 import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie.implicits._

@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.filter.models.Filter
+import com.github.reddone.caseql.sql.filter.primitives.Filter
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import com.github.reddone.caseql.sql.util.FragmentUtils
 import doobie._

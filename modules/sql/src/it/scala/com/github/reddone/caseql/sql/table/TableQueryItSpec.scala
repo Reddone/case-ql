@@ -2,11 +2,11 @@ package com.github.reddone.caseql.sql.table
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.ItTestData._
-import com.github.reddone.caseql.sql.ItTestModel._
-import com.github.reddone.caseql.sql.ItTestImplicits._
+import com.github.reddone.caseql.sql.itmodel.data._
+import com.github.reddone.caseql.sql.itmodel.db._
+import com.github.reddone.caseql.sql.itmodel.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
-import com.github.reddone.caseql.sql.filter.models.IntFilter
+import com.github.reddone.caseql.sql.filter.primitives.IntFilter
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie.implicits._
 

@@ -1,13 +1,13 @@
-package com.github.reddone.caseql.sql
+package com.github.reddone.caseql.sql.itmodel
 
-import com.github.reddone.caseql.sql.ItTestModel._
+import com.github.reddone.caseql.sql.itmodel.db._
 import com.github.reddone.caseql.sql.table.TableLink.Aux
-import com.github.reddone.caseql.sql.table.{FieldSet, Table, TableFilter, TableLink, TableModifier}
+import com.github.reddone.caseql.sql.table._
 import doobie.implicits._
 import javasql._
 import javatime._
 
-object ItTestImplicits {
+object implicits {
 
   // TABLE
 

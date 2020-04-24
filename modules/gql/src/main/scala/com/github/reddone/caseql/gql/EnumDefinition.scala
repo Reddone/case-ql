@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.gql
 
-import com.github.reddone.caseql.sql.modifier.models.{ModifierAction, ModifierOptionAction}
+import com.github.reddone.caseql.sql.modifier.primitives.{ModifierAction, ModifierOptionAction}
 import sangria.schema.{EnumType, EnumValue}
 
 object EnumDefinition {

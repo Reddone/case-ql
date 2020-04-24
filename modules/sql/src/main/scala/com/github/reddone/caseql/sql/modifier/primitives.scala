@@ -10,7 +10,7 @@ import doobie.implicits._
 import javasql._
 import javatime._
 
-object models {
+object primitives {
 
   object ModifierAction extends Enumeration {
     val Default: ModifierAction.Value = Value("DEFAULT")

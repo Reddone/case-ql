@@ -1,11 +1,11 @@
-package com.github.reddone.caseql.sql
+package com.github.reddone.caseql.sql.itmodel
 
 import java.sql.Timestamp
 import java.time.Instant
 
-import com.github.reddone.caseql.sql.ItTestModel._
+import com.github.reddone.caseql.sql.itmodel.db._
 
-object ItTestData {
+object data {
 
   val testSchema: String = "test"
 

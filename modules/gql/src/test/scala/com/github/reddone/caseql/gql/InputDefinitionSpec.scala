@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.gql
 
-import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.circe.filter.decoders._
 import io.circe._
 import io.circe.generic.semiauto._

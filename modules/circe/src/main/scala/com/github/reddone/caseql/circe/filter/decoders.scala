@@ -1,7 +1,7 @@
 package com.github.reddone.caseql.circe.filter
 
 import com.github.reddone.caseql.circe.util.decoders._
-import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
 import doobie.Put
 import io.circe.Decoder

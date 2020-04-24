@@ -12,7 +12,7 @@ import doobie.implicits._
 import javasql._
 import javatime._
 
-object models {
+object primitives {
 
   trait Filter[T] {
 

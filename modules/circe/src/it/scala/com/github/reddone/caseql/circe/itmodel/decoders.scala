@@ -1,9 +1,9 @@
-package com.github.reddone.caseql.circe.model
+package com.github.reddone.caseql.circe.itmodel
 
 import com.github.reddone.caseql.circe.filter.decoders._
 import com.github.reddone.caseql.circe.modifier.decoders._
 import com.github.reddone.caseql.circe.util.decoders._
-import com.github.reddone.caseql.sql.ItTestModel._
+import com.github.reddone.caseql.sql.itmodel.db._
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 

@@ -4,7 +4,7 @@ import com.github.reddone.caseql.gql.ByteTypeDefinition._
 import com.github.reddone.caseql.gql.EnumDefinition._
 import com.github.reddone.caseql.gql.JavaSqlTypeDefinition._
 import com.github.reddone.caseql.gql.JavaTimeTypeDefinition._
-import com.github.reddone.caseql.sql.TestModel._
+import com.github.reddone.caseql.sql.model.db._
 import sangria.macros.derive._
 import sangria.schema._
 

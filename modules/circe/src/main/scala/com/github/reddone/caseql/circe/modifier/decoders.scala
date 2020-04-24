@@ -1,7 +1,7 @@
 package com.github.reddone.caseql.circe.modifier
 
 import com.github.reddone.caseql.circe.util.decoders._
-import com.github.reddone.caseql.sql.modifier.models._
+import com.github.reddone.caseql.sql.modifier.primitives._
 import doobie.Put
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder

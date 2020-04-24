@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.TestModel.{Test, TestKey}
+import com.github.reddone.caseql.sql.model.db.{Test, TestKey}
 import doobie._
 import doobie.implicits._
 import javasql._

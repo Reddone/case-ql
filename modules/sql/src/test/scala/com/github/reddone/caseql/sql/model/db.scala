@@ -1,14 +1,14 @@
-package com.github.reddone.caseql.sql
+package com.github.reddone.caseql.sql.model
 
 import java.sql.Timestamp
 
-import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.modifier.models._
+import com.github.reddone.caseql.sql.modifier.primitives._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import shapeless.{cachedImplicit, LabelledGeneric, TypeOf}
 
-object TestModel {
+object db {
 
   // TABLE
 

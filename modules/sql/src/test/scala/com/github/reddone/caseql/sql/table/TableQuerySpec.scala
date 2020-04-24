@@ -1,8 +1,8 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.TestModel.{Test, TestKey, TestFilter, TestModifier}
-import com.github.reddone.caseql.sql.filter.models._
-import com.github.reddone.caseql.sql.modifier.models._
+import com.github.reddone.caseql.sql.model.db.{Test, TestKey, TestFilter, TestModifier}
+import com.github.reddone.caseql.sql.filter.primitives._
+import com.github.reddone.caseql.sql.modifier.primitives._
 import doobie._
 import doobie.implicits._
 import javasql._

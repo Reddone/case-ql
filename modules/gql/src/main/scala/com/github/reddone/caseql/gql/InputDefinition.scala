@@ -6,9 +6,9 @@ import com.github.reddone.caseql.gql.ByteTypeDefinition._
 import com.github.reddone.caseql.gql.EnumDefinition._
 import com.github.reddone.caseql.gql.JavaSqlTypeDefinition._
 import com.github.reddone.caseql.gql.JavaTimeTypeDefinition._
-import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.sql.filter.wrappers.{EntityFilter, RelationFilter}
-import com.github.reddone.caseql.sql.modifier.models._
+import com.github.reddone.caseql.sql.modifier.primitives._
 import sangria.schema._
 
 import scala.reflect.runtime.universe.{Symbol => _, _}

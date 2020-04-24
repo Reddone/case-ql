@@ -1,13 +1,13 @@
-package com.github.reddone.caseql.gql
+package com.github.reddone.caseql.example.model
 
 import com.github.reddone.caseql.circe.filter.decoders._
 import com.github.reddone.caseql.circe.modifier.decoders._
 import com.github.reddone.caseql.circe.util.decoders._
-import com.github.reddone.caseql.sql.ItTestModel._
+import com.github.reddone.caseql.example.model.db._
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 
-object ItTestDecoders {
+object decoders {
 
   // DEVELOPER
 

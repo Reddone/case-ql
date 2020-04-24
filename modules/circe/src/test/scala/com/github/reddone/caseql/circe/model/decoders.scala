@@ -3,7 +3,7 @@ package com.github.reddone.caseql.circe.model
 import com.github.reddone.caseql.circe.filter.decoders._
 import com.github.reddone.caseql.circe.modifier.decoders._
 import com.github.reddone.caseql.circe.util.decoders._
-import com.github.reddone.caseql.sql.TestModel._
+import com.github.reddone.caseql.sql.model.db._
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
 

@@ -3,8 +3,8 @@ package com.github.reddone.caseql.sql.table
 import java.sql.Timestamp
 import java.time.Instant
 
-import com.github.reddone.caseql.sql.TestModel._
-import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.model.db._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.sql.filter.wrappers.RelationFilter
 import com.github.reddone.caseql.sql.table.TableLink.Aux
 import doobie._

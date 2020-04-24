@@ -1,8 +1,8 @@
 package com.github.reddone.caseql.gql
 
-import com.github.reddone.caseql.gql.TestDecoders._
+import com.github.reddone.caseql.circe.model.decoders._
 import com.github.reddone.caseql.gql.TestInputDefinition._
-import com.github.reddone.caseql.sql.TestModel._
+import com.github.reddone.caseql.sql.model.db._
 import sangria.schema.Argument
 import sangria.marshalling.circe._
 
