@@ -9,7 +9,6 @@ import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import shapeless.{LabelledGeneric, TypeOf, cachedImplicit}
 
 object db {
-  import implicits._
 
   // DEVELOPER
 
