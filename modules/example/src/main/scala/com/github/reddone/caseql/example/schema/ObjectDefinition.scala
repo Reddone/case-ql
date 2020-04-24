@@ -1,9 +1,8 @@
-package com.github.reddone.caseql.gql
+package com.github.reddone.caseql.example.schema
 
-import com.github.reddone.caseql.gql.model.gql._
-import sangria.macros.derive._
-import sangria.schema._
-
+import com.github.reddone.caseql.example.model.gql._
+import sangria.macros.derive.{ObjectTypeDescription, ObjectTypeName, deriveObjectType}
+import sangria.schema.{Field, ListType, ObjectType, OutputType, fields}
 import scala.reflect.runtime.universe.{Symbol => _, _}
 
 object ObjectDefinition {

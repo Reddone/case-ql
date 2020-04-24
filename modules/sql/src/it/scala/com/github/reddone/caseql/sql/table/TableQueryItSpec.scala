@@ -26,7 +26,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
         )
 
         val developers = Table[Developer, DeveloperKey]
-          .select(filter, Some("dev"))
+          .select(filter, Some("d"))
           .execute
           .transact(rollingBack(xa))
           .compile
@@ -39,7 +39,11 @@ class TableQueryItSpec extends PgAnyWordSpec {
         )
       }
 
-      "succeed to execute a select with a nested filter" in {}
+      "succeed to execute a select with a nested filter" in {
+        val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+        )
+      }
 
       "succeed to execute a select with a deep nested filter" in {}
 

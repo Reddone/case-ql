@@ -8,7 +8,7 @@ import com.github.reddone.caseql.sql.ItTestModel._
 import sangria.macros.derive._
 import sangria.schema._
 
-object ItObjectDefinition {
+object ItTestObjectDefinition {
 
   // DEVELOPER
 

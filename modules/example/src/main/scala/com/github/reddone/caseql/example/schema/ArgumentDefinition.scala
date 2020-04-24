@@ -1,4 +1,4 @@
-package com.github.reddone.caseql.gql
+package com.github.reddone.caseql.example.schema
 
 import sangria.schema._
 

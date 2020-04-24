@@ -198,4 +198,15 @@ object db {
     implicit val lgen: TypeOf.`LabelledGeneric[TaskModifier]`.type =
       cachedImplicit
   }
+
+  // COMMON
+
+  final case class QueryResultSet[+T](
+      records: List[T],
+      count: Long
+  )
+
+  object QueryResultSet {
+    def empty[T]: QueryResultSet[T] = QueryResultSet[T](Nil, 0L)
+  }
 }
