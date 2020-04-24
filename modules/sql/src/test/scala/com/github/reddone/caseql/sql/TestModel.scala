@@ -12,7 +12,7 @@ object TestModel {
 
   // TABLE
 
-  // test model
+  // test reference model
   final case class Test(
       field1: Int,
       field2: Option[String],
@@ -75,7 +75,11 @@ object TestModel {
       NOT: Option[TestFilter]
   ) extends EntityFilter[TestFilter]
   object TestFilter {
-    val empty: TestFilter = TestFilter(None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestFilter = TestFilter(
+      None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilter]`.type =
       cachedImplicit
@@ -91,7 +95,11 @@ object TestModel {
       NOT: Option[TestFilterUnordered]
   ) extends EntityFilter[TestFilterUnordered]
   object TestFilterUnordered {
-    val empty: TestFilterUnordered = TestFilterUnordered(None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestFilterUnordered = TestFilterUnordered(
+      None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterUnordered]`.type =
       cachedImplicit
@@ -109,7 +117,11 @@ object TestModel {
       NOT: Option[TestFilterOther]
   ) extends EntityFilter[TestFilterOther]
   object TestFilterOther {
-    val empty: TestFilterOther = TestFilterOther(None, None, None, None, "", Seq.empty, None, None, None)
+    // format: off
+    val empty: TestFilterOther = TestFilterOther(
+      None, None, None, None, "", Seq.empty, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterOther]`.type =
       cachedImplicit
@@ -127,8 +139,11 @@ object TestModel {
       NOT: Option[TestFilterOtherUnordered]
   ) extends EntityFilter[TestFilterOtherUnordered]
   object TestFilterOtherUnordered {
-    val empty: TestFilterOtherUnordered =
-      TestFilterOtherUnordered(Seq.empty, None, None, None, "", None, None, None, None)
+    // format: off
+    val empty: TestFilterOtherUnordered = TestFilterOtherUnordered(
+      Seq.empty, None, None, None, "", None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterOtherUnordered]`.type =
       cachedImplicit
@@ -145,7 +160,11 @@ object TestModel {
       NOT: Option[TestFilterPlus]
   ) extends EntityFilter[TestFilterPlus]
   object TestFilterPlus {
-    val empty: TestFilterPlus = TestFilterPlus(None, None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestFilterPlus = TestFilterPlus(
+      None, None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterPlus]`.type =
       cachedImplicit
@@ -162,7 +181,11 @@ object TestModel {
       NOT: Option[TestFilterPlusUnordered]
   ) extends EntityFilter[TestFilterPlusUnordered]
   object TestFilterPlusUnordered {
-    val empty: TestFilterPlusUnordered = TestFilterPlusUnordered(None, None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestFilterPlusUnordered = TestFilterPlusUnordered(
+      None, None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterPlusUnordered]`.type =
       cachedImplicit
@@ -177,7 +200,11 @@ object TestModel {
       NOT: Option[TestFilterLess]
   ) extends EntityFilter[TestFilterLess]
   object TestFilterLess {
-    val empty: TestFilterLess = TestFilterLess(None, None, None, None, None, None)
+    // format: off
+    val empty: TestFilterLess = TestFilterLess(
+      None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterLess]`.type =
       cachedImplicit
@@ -192,7 +219,11 @@ object TestModel {
       NOT: Option[TestFilterLessUnordered]
   ) extends EntityFilter[TestFilterLessUnordered]
   object TestFilterLessUnordered {
-    val empty: TestFilterLessUnordered = TestFilterLessUnordered(None, None, None, None, None, None)
+    // format: off
+    val empty: TestFilterLessUnordered = TestFilterLessUnordered(
+      None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestFilterLessUnordered]`.type =
       cachedImplicit
@@ -208,7 +239,11 @@ object TestModel {
       field4: Option[TimestampModifierOption]
   ) extends EntityModifier[TestModifier]
   object TestModifier {
-    val empty: TestModifier = TestModifier(None, None, None, None)
+    // format: off
+    val empty: TestModifier = TestModifier(
+      None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifier]`.type =
       cachedImplicit
@@ -221,7 +256,11 @@ object TestModel {
       field1: Option[IntModifier]
   ) extends EntityModifier[TestModifierUnordered]
   object TestModifierUnordered {
-    val empty: TestModifierUnordered = TestModifierUnordered(None, None, None, None)
+    // format: off
+    val empty: TestModifierUnordered = TestModifierUnordered(
+      None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierUnordered]`.type =
       cachedImplicit
@@ -236,7 +275,11 @@ object TestModel {
       otherField2: Seq[Int]
   ) extends EntityModifier[TestModifierOther]
   object TestModifierOther {
-    val empty: TestModifierOther = TestModifierOther(None, None, None, None, "", Seq.empty)
+    // format: off
+    val empty: TestModifierOther = TestModifierOther(
+      None, None, None, None, "", Seq.empty
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierOther]`.type =
       cachedImplicit
@@ -251,7 +294,11 @@ object TestModel {
       field1: Option[IntModifier]
   ) extends EntityModifier[TestModifierOtherUnordered]
   object TestModifierOtherUnordered {
-    val empty: TestModifierOtherUnordered = TestModifierOtherUnordered(Seq.empty, None, None, None, "", None)
+    // format: off
+    val empty: TestModifierOtherUnordered = TestModifierOtherUnordered(
+      Seq.empty, None, None, None, "", None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierOtherUnordered]`.type =
       cachedImplicit
@@ -265,7 +312,11 @@ object TestModel {
       field5: Option[StringModifier]
   ) extends EntityModifier[TestModifierPlus]
   object TestModifierPlus {
-    val empty: TestModifierPlus = TestModifierPlus(None, None, None, None, None)
+    // format: off
+    val empty: TestModifierPlus = TestModifierPlus(
+      None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierPlus]`.type =
       cachedImplicit
@@ -279,7 +330,11 @@ object TestModel {
       field3: Option[LongModifier]
   ) extends EntityModifier[TestModifierPlusUnordered]
   object TestModifierPlusUnordered {
-    val empty: TestModifierPlusUnordered = TestModifierPlusUnordered(None, None, None, None, None)
+    // format: off
+    val empty: TestModifierPlusUnordered = TestModifierPlusUnordered(
+      None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierPlusUnordered]`.type =
       cachedImplicit
@@ -291,7 +346,11 @@ object TestModel {
       field3: Option[LongModifier]
   ) extends EntityModifier[TestModifierLess]
   object TestModifierLess {
-    val empty: TestModifierLess = TestModifierLess(None, None, None)
+    // format: off
+    val empty: TestModifierLess = TestModifierLess(
+      None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierLess]`.type =
       cachedImplicit
@@ -303,7 +362,11 @@ object TestModel {
       field3: Option[LongModifier]
   ) extends EntityModifier[TestModifierLessUnordered]
   object TestModifierLessUnordered {
-    val empty: TestModifierLessUnordered = TestModifierLessUnordered(None, None, None)
+    // format: off
+    val empty: TestModifierLessUnordered = TestModifierLessUnordered(
+      None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestModifierLessUnordered]`.type =
       cachedImplicit
@@ -394,7 +457,11 @@ object TestModel {
       NOT: Option[TestLeftFilter]
   ) extends EntityFilter[TestLeftFilter]
   object TestLeftFilter {
-    val empty: TestLeftFilter = TestLeftFilter(None, None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestLeftFilter = TestLeftFilter(
+      None, None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestLeftFilter]`.type =
       cachedImplicit
@@ -410,7 +477,11 @@ object TestModel {
       NOT: Option[TestDirectFilter]
   ) extends EntityFilter[TestDirectFilter]
   object TestDirectFilter {
-    val empty: TestDirectFilter = TestDirectFilter(None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestDirectFilter = TestDirectFilter(
+      None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestDirectFilter]`.type =
       cachedImplicit
@@ -426,7 +497,11 @@ object TestModel {
       NOT: Option[TestRightFilter]
   ) extends EntityFilter[TestRightFilter]
   object TestRightFilter {
-    val empty: TestRightFilter = TestRightFilter(None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestRightFilter = TestRightFilter(
+      None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestRightFilter]`.type =
       cachedImplicit
@@ -442,7 +517,11 @@ object TestModel {
       NOT: Option[TestJunctionFilter]
   ) extends EntityFilter[TestJunctionFilter]
   object TestJunctionFilter {
-    val empty: TestJunctionFilter = TestJunctionFilter(None, None, None, None, None, None, None)
+    // format: off
+    val empty: TestJunctionFilter = TestJunctionFilter(
+      None, None, None, None, None, None, None
+    )
+    // format: on
 
     implicit val lgen: TypeOf.`LabelledGeneric[TestJunctionFilter]`.type =
       cachedImplicit

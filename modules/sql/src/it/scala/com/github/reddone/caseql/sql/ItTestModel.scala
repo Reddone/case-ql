@@ -62,6 +62,12 @@ object ItTestModel {
   ) extends EntityModifier[DeveloperModifier]
 
   object DeveloperModifier {
+    // format: off
+    val empty: DeveloperModifier = DeveloperModifier(
+      None, None, None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperModifier]`.type =
       cachedImplicit
   }
@@ -97,6 +103,12 @@ object ItTestModel {
   ) extends EntityFilter[ProjectFilter]
 
   object ProjectFilter {
+    // format: off
+    val empty: ProjectFilter = ProjectFilter(
+      None, None, None, None, None, None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[ProjectFilter]`.type =
       cachedImplicit
   }
@@ -108,6 +120,12 @@ object ItTestModel {
   ) extends EntityModifier[ProjectModifier]
 
   object ProjectModifier {
+    // format: off
+    val empty: ProjectModifier = ProjectModifier(
+      None, None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[ProjectModifier]`.type =
       cachedImplicit
   }
@@ -140,6 +158,12 @@ object ItTestModel {
   ) extends EntityFilter[DeveloperProjectLinkFilter]
 
   object DeveloperProjectLinkFilter {
+    // format: off
+    val empty: DeveloperProjectLinkFilter = DeveloperProjectLinkFilter(
+      None, None, None, None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkFilter]`.type =
       cachedImplicit
   }
@@ -150,6 +174,12 @@ object ItTestModel {
   ) extends EntityModifier[DeveloperProjectLinkModifier]
 
   object DeveloperProjectLinkModifier {
+    // format: off
+    val empty: DeveloperProjectLinkModifier = DeveloperProjectLinkModifier(
+      None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[DeveloperProjectLinkModifier]`.type =
       cachedImplicit
   }
@@ -188,6 +218,12 @@ object ItTestModel {
   ) extends EntityFilter[TaskFilter]
 
   object TaskFilter {
+    // format: off
+    val empty: TaskFilter = TaskFilter(
+      None, None, None, None, None, None, None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[TaskFilter]`.type =
       cachedImplicit
   }
@@ -201,6 +237,12 @@ object ItTestModel {
   ) extends EntityModifier[TaskModifier]
 
   object TaskModifier {
+    // format: off
+    val empty: TaskModifier = TaskModifier(
+      None, None, None, None, None
+    )
+    // format: on
+
     implicit val lgen: TypeOf.`LabelledGeneric[TaskModifier]`.type =
       cachedImplicit
   }

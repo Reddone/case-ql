@@ -13,14 +13,15 @@ class TableQueryItSpec extends PgAnyWordSpec {
     "selecting data" should {
 
       "succeed to execute a simple select" in {
+        val filter = DeveloperFilter.empty
+
         val developers = Table[Developer, DeveloperKey]
-          .select(null, Some("dev"))
+          .select(filter, Some("dev"))
           .execute
           .transact(rollingBack(xa))
           .compile
           .toList
           .unsafeRunSync()
-
       }
 
       "succeed to execute a select with a nested filter" in {}
