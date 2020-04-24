@@ -2,8 +2,6 @@ package com.github.reddone.caseql.sql.util
 
 import java.util.concurrent.atomic.AtomicLong
 
-import cats.implicits._
-import doobie._
 import doobie.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
 import com.github.reddone.caseql.sql.ItTestData._
@@ -16,8 +14,9 @@ class RawItSpec extends PgAnyWordSpec {
 
   val testRepository: GenericRepository = GenericRepository.forSchema(testSchema)
 
-  val nextDeveloperId = new AtomicLong(developers.length + 1L)
-  val nextProjectId   = new AtomicLong(projects.length + 1L)
+  val currentDeveloperId = new AtomicLong(developers.length.toLong)
+  val currentProjectId   = new AtomicLong(projects.length.toLong)
+  val currentTaskId   = new AtomicLong(tasks.length.toLong)
 
   val rawDevelopers: List[Map[String, Any]] = List(
     Map("id" -> 1L, "name" -> "Reddone", "age"                   -> 32, "team_leader_id" -> None),
@@ -101,49 +100,55 @@ class RawItSpec extends PgAnyWordSpec {
     "providing an implicit Write[Row]" should {
 
       "succeed to execute an update when parameters are correct" in {
+        val nextDeveloperId = currentDeveloperId.incrementAndGet()
+
         val builder1 = mutable.LinkedHashMap.newBuilder[String, Any]
-        builder1 += ("param_1" -> "A random Donger appears")
-        builder1 += ("param_2" -> 42)
-        builder1 += ("param_3" -> None)
+        builder1 += ("param_1" -> nextDeveloperId)
+        builder1 += ("param_2" -> "A random Donger appears")
+        builder1 += ("param_3" -> 42)
+        builder1 += ("param_4" -> None)
         val parameters1: Row = builder1.result()
 
-        val (nextId, result1) = (for {
-          _   <- testRepository.insert(developerTableName, developerColsNoId, parameters1)
-          id  <- nextDeveloperId.getAndIncrement().pure[ConnectionIO]
-          dev <- testRepository.select[Unit, Row](developerTableName, List("*"), s"WHERE id = $id", ())
-        } yield (id, dev)).transact(rollingBack(xa)).unsafeRunSync()
+        val result1 = (for {
+          _   <- testRepository.insert(developerTableName, developerCols, parameters1)
+          dev <- testRepository.select[Long, Row](
+            developerTableName, "*" :: Nil, s"WHERE id=?", nextDeveloperId
+          )
+        } yield dev).transact(rollingBack(xa)).unsafeRunSync()
 
         result1 shouldBe List(
-          Map("id" -> nextId, "name" -> "A random Donger appears", "age" -> 42, "team_leader_id" -> None)
+          Map("id" -> nextDeveloperId, "name" -> "A random Donger appears", "age" -> 42, "team_leader_id" -> None)
         )
       }
 
       "fail to execute an update when parameters are wrong" in {
         val builder1 = mutable.LinkedHashMap.newBuilder[String, Any]
-        builder1 += ("param_1" -> "A random Donger appears")
-        builder1 += ("param_2" -> 42)
-        builder1 += ("param_3" -> None)
-        builder1 += ("param_4" -> "Kaboom")
+        builder1 += ("param_1" -> 9999L)
+        builder1 += ("param_2" -> "A random Donger appears")
+        builder1 += ("param_3" -> 42)
+        builder1 += ("param_4" -> None)
+        builder1 += ("param_5" -> "Kaboom")
         val parameters1: Row = builder1.result()
 
         val thrown1 = the[IllegalArgumentException] thrownBy testRepository
-          .insert(developerTableName, developerColsNoId, parameters1)
+          .insert(developerTableName, developerCols, parameters1)
           .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        thrown1.getMessage shouldBe "You are trying to set 3 parameters using 4 values"
+        thrown1.getMessage shouldBe "You are trying to set 4 parameters using 5 values"
 
         val builder2 = mutable.LinkedHashMap.newBuilder[String, Any]
-        builder2 += ("param_1" -> "A random Donger appears")
-        builder2 += ("param_2" -> "Kaboom")
+        builder2 += ("param_1" -> 9999L)
+        builder2 += ("param_2" -> "A random Donger appears")
+        builder2 += ("param_3" -> 42)
         val parameters2: Row = builder2.result()
 
         val thrown2 = the[IllegalArgumentException] thrownBy testRepository
-          .insert(developerTableName, developerColsNoId, parameters2)
+          .insert(developerTableName, developerCols, parameters2)
           .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        thrown2.getMessage shouldBe "You are trying to set 3 parameters using 2 values"
+        thrown2.getMessage shouldBe "You are trying to set 4 parameters using 3 values"
       }
     }
   }

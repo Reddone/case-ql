@@ -1,19 +1,29 @@
 package com.github.reddone.caseql.sql.table
 
+import java.util.concurrent.atomic.AtomicLong
+
+import com.github.reddone.caseql.sql.ItTestData._
 import com.github.reddone.caseql.sql.ItTestModel._
 import com.github.reddone.caseql.sql.ItTestImplicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
+import com.github.reddone.caseql.sql.filter.models.IntFilter
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie.implicits._
 
 class TableQueryItSpec extends PgAnyWordSpec {
+
+  val currentDeveloperId = new AtomicLong(developers.length.toLong)
+  val currentProjectId   = new AtomicLong(projects.length.toLong)
+  val currentTaskId   = new AtomicLong(tasks.length.toLong)
 
   "TableQuery" when {
 
     "selecting data" should {
 
       "succeed to execute a simple select" in {
-        val filter = DeveloperFilter.empty
+        val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+        )
 
         val developers = Table[Developer, DeveloperKey]
           .select(filter, Some("dev"))
@@ -22,6 +32,8 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .compile
           .toList
           .unsafeRunSync()
+
+        developers should contain theSameElementsAs List()
       }
 
       "succeed to execute a select with a nested filter" in {}
