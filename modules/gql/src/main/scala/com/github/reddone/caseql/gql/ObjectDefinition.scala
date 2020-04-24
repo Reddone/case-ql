@@ -8,15 +8,15 @@ import scala.reflect.runtime.universe.{Symbol => _, _}
 
 object ObjectDefinition {
 
-  implicit def listContainerType[A: TypeTag, Ctx](
-      implicit objectType: ObjectType[Ctx, A]
-  ): ObjectType[Ctx, ListContainer[A]] =
-    ObjectType[Ctx, ListContainer[A]](
+  implicit def listContainerType[A: TypeTag](
+      implicit outputType: OutputType[A]
+  ): ObjectType[Unit, ListContainer[A]] =
+    ObjectType[Unit, ListContainer[A]](
       s"${typeOf[A].typeSymbol.name.toString}ListContainer",
       s"ListContainer for ${typeOf[A].typeSymbol.name.toString}",
       () =>
-        List(
-          Field("content", ListType(objectType), resolve = _.value.content),
+        fields[Unit, ListContainer[A]](
+          Field("content", ListType(outputType), resolve = _.value.content),
           Field("pageInfo", PageInfoType, resolve = _.value.pageInfo)
         )
     )
