@@ -14,7 +14,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
   val currentDeveloperId = new AtomicLong(developers.length.toLong)
   val currentProjectId   = new AtomicLong(projects.length.toLong)
-  val currentTaskId   = new AtomicLong(tasks.length.toLong)
+  val currentTaskId      = new AtomicLong(tasks.length.toLong)
 
   "TableQuery" when {
 
@@ -33,7 +33,10 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .toList
           .unsafeRunSync()
 
-        developers should contain theSameElementsAs List()
+        developers should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L))
+        )
       }
 
       "succeed to execute a select with a nested filter" in {}
