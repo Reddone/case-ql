@@ -7,6 +7,32 @@ import sangria.schema.InputObjectType
 
 object ItTestInputDefinition {
 
+  // KEY
+
+  val DeveloperKeyType: InputObjectType[DeveloperKey] =
+    deriveInputObjectType[DeveloperKey](
+      InputObjectTypeName("DeveloperKey"),
+      InputObjectTypeDescription("Key for Developer")
+    )
+
+  val ProjectKeyType: InputObjectType[ProjectKey] =
+    deriveInputObjectType[ProjectKey](
+      InputObjectTypeName("ProjectKey"),
+      InputObjectTypeDescription("Key for Project")
+    )
+
+  val DeveloperProjectLinkKeyType: InputObjectType[DeveloperProjectLinkKey] =
+    deriveInputObjectType[DeveloperProjectLinkKey](
+      InputObjectTypeName("DeveloperProjectLinkKey"),
+      InputObjectTypeDescription("Key for DeveloperProjectLink")
+    )
+
+  val TaskKeyType: InputObjectType[TaskKey] =
+    deriveInputObjectType[TaskKey](
+      InputObjectTypeName("TaskKey"),
+      InputObjectTypeDescription("Key for Task")
+    )
+
   // FILTER
 
   implicit val DeveloperFilterType: InputObjectType[DeveloperFilter] =

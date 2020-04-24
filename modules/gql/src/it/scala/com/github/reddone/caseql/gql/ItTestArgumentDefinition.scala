@@ -8,6 +8,17 @@ import sangria.marshalling.circe._
 
 object ItTestArgumentDefinition {
 
+  // KEY
+
+  val DeveloperKeyArg: Argument[DeveloperKey] =
+    Argument("key", DeveloperKeyType)
+  val ProjectKeyArg: Argument[ProjectKey] =
+    Argument("key", ProjectKeyType)
+  val DeveloperProjectLinkKeyArg: Argument[DeveloperProjectLinkKey] =
+    Argument("key", DeveloperProjectLinkKeyType)
+  val TaskKeyArg: Argument[TaskKey] =
+    Argument("key", TaskKeyType)
+
   // FILTER
 
   val DeveloperFilterArg: Argument[DeveloperFilter] =

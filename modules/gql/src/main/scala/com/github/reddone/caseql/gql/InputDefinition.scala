@@ -807,8 +807,8 @@ object InputDefinition {
       implicit inputType: InputObjectType[FB]
   ): InputObjectType[RelationFilter[A, B, FB]] =
     InputObjectType[RelationFilter[A, B, FB]](
-      s"${typeOf[FB].typeSymbol.name.toString}RelationFilter",
-      s"RelationFilter for ${typeOf[FB].typeSymbol.name.toString}",
+      s"${typeOf[FB].typeSymbol.name.toString}Relation",
+      s"Relation for ${typeOf[FB].typeSymbol.name.toString}",
       () =>
         List(
           InputField(EveryName, OptionInputType(inputType)),
