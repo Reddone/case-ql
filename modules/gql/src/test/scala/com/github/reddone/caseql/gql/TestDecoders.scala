@@ -23,7 +23,7 @@ object TestDecoders {
   implicit val testModifierDecoder: Decoder[TestModifier] =
     deriveDecoder[TestModifier]
 
-  // RELATION FILTER TEST
+  // TEST_LEFT
 
   implicit val testLeftDecoder: Decoder[TestLeft] =
     deriveDecoder[TestLeft]
@@ -34,6 +34,8 @@ object TestDecoders {
   implicit val testLeftFilterDecoder: Decoder[TestLeftFilter] =
     deriveDecoder[TestLeftFilter]
 
+  // TEST_DIRECT
+
   implicit val testDirectDecoder: Decoder[TestDirect] =
     deriveDecoder[TestDirect]
 
@@ -43,6 +45,8 @@ object TestDecoders {
   implicit val testDirectFilterDecoder: Decoder[TestDirectFilter] =
     deriveDecoder[TestDirectFilter]
 
+  // TEST_RIGHT
+
   implicit val testRightDecoder: Decoder[TestRight] =
     deriveDecoder[TestRight]
 
@@ -51,6 +55,8 @@ object TestDecoders {
 
   implicit val testRightFilterDecoder: Decoder[TestRightFilter] =
     deriveDecoder[TestRightFilter]
+
+  // TEST_JUNCTION
 
   implicit val testJunctionDecoder: Decoder[TestJunction] =
     deriveDecoder[TestJunction]

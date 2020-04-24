@@ -8,15 +8,23 @@ import sangria.marshalling.circe._
 
 object TestArgumentDefinition {
 
-  // TEST
+  // KEY
+
+  val TestKeyArg: Argument[TestKey] =
+    Argument("key", TestKeyType)
+  val TestLeftKeyArg: Argument[TestLeftKey] =
+    Argument("key", TestLeftKeyType)
+  val TestDirectKeyArg: Argument[TestDirectKey] =
+    Argument("key", TestDirectKeyType)
+  val TestRightKeyArg: Argument[TestRightKey] =
+    Argument("key", TestRightKeyType)
+  val TestJunctionKeyArg: Argument[TestJunctionKey] =
+    Argument("key", TestJunctionKeyType)
+
+  // FILTER
 
   val TestFilterArg: Argument[TestFilter] =
     Argument("filter", TestFilterType)
-  val TestModifierArg: Argument[TestModifier] =
-    Argument("modifier", TestModifierType)
-
-  // RELATION FILTER TEST
-
   val TestLeftFilterArg: Argument[TestLeftFilter] =
     Argument("filter", TestLeftFilterType)
   val TestDirectFilterArg: Argument[TestDirectFilter] =
@@ -25,4 +33,9 @@ object TestArgumentDefinition {
     Argument("filter", TestRightFilterType)
   val TestJunctionFilterArg: Argument[TestJunctionFilter] =
     Argument("filter", TestJunctionFilterType)
+
+  // MODIFIER
+
+  val TestModifierArg: Argument[TestModifier] =
+    Argument("modifier", TestModifierType)
 }

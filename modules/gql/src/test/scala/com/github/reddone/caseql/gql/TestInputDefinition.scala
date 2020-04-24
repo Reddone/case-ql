@@ -7,21 +7,45 @@ import sangria.schema.InputObjectType
 
 object TestInputDefinition {
 
-  // TEST
+  // KEY
+
+  implicit val TestKeyType: InputObjectType[TestKey] =
+    deriveInputObjectType[TestKey](
+      InputObjectTypeName("TestKey"),
+      InputObjectTypeDescription("Key for Test")
+    )
+
+  implicit val TestLeftKeyType: InputObjectType[TestLeftKey] =
+    deriveInputObjectType[TestLeftKey](
+      InputObjectTypeName("TestLeftKey"),
+      InputObjectTypeDescription("Key for TestLeft")
+    )
+
+  implicit val TestDirectKeyType: InputObjectType[TestDirectKey] =
+    deriveInputObjectType[TestDirectKey](
+      InputObjectTypeName("TestDirectKey"),
+      InputObjectTypeDescription("Key for TestDirect")
+    )
+
+  implicit val TestRightKeyType: InputObjectType[TestRightKey] =
+    deriveInputObjectType[TestRightKey](
+      InputObjectTypeName("TestRightKey"),
+      InputObjectTypeDescription("Key for TestRight")
+    )
+
+  implicit val TestJunctionKeyType: InputObjectType[TestJunctionKey] =
+    deriveInputObjectType[TestJunctionKey](
+      InputObjectTypeName("TestJunctionKey"),
+      InputObjectTypeDescription("Key for TestJunction")
+    )
+
+  // FILTER
 
   implicit val TestFilterType: InputObjectType[TestFilter] =
     deriveInputObjectType[TestFilter](
       InputObjectTypeName("TestFilter"),
       InputObjectTypeDescription("Filter for Test")
     )
-
-  implicit val TestModifierType: InputObjectType[TestModifier] =
-    deriveInputObjectType[TestModifier](
-      InputObjectTypeName("TestModifier"),
-      InputObjectTypeDescription("Modifier for Test")
-    )
-
-  // RELATION FILTER TEST
 
   implicit val TestLeftFilterType: InputObjectType[TestLeftFilter] =
     deriveInputObjectType[TestLeftFilter](
@@ -45,5 +69,13 @@ object TestInputDefinition {
     deriveInputObjectType[TestJunctionFilter](
       InputObjectTypeName("TestJunctionFilter"),
       InputObjectTypeDescription("Filter for TestJunction")
+    )
+
+  // MODIFIER
+
+  implicit val TestModifierType: InputObjectType[TestModifier] =
+    deriveInputObjectType[TestModifier](
+      InputObjectTypeName("TestModifier"),
+      InputObjectTypeDescription("Modifier for Test")
     )
 }

@@ -12,6 +12,12 @@ object ItObjectDefinition {
 
   // DEVELOPER
 
+  implicit val DeveloperIdType: ObjectType[Unit, DeveloperKey] =
+    deriveObjectType[Unit, DeveloperKey](
+      ObjectTypeName("DeveloperId"),
+      ObjectTypeDescription("Developer entity id")
+    )
+
   implicit val DeveloperType: ObjectType[Unit, Developer] =
     deriveObjectType[Unit, Developer](
       ObjectTypeName("Developer"),
@@ -19,6 +25,12 @@ object ItObjectDefinition {
     )
 
   // PROJECT
+
+  implicit val ProjectIdType: ObjectType[Unit, ProjectKey] =
+    deriveObjectType[Unit, ProjectKey](
+      ObjectTypeName("ProjectId"),
+      ObjectTypeDescription("Project entity id")
+    )
 
   implicit val ProjectType: ObjectType[Unit, Project] =
     deriveObjectType[Unit, Project](
@@ -28,6 +40,12 @@ object ItObjectDefinition {
 
   // DEVELOPER_PROJECT_LINK
 
+  implicit val DeveloperProjectLinkIdType: ObjectType[Unit, DeveloperProjectLinkKey] =
+    deriveObjectType[Unit, DeveloperProjectLinkKey](
+      ObjectTypeName("DeveloperProjectLinkId"),
+      ObjectTypeDescription("DeveloperProjectLink entity id")
+    )
+
   implicit val DeveloperProjectLinkType: ObjectType[Unit, DeveloperProjectLink] =
     deriveObjectType[Unit, DeveloperProjectLink](
       ObjectTypeName("DeveloperProjectLink"),
@@ -35,6 +53,12 @@ object ItObjectDefinition {
     )
 
   // TASK
+
+  implicit val TaskIdType: ObjectType[Unit, TaskKey] =
+    deriveObjectType[Unit, TaskKey](
+      ObjectTypeName("TaskId"),
+      ObjectTypeDescription("Task entity id")
+    )
 
   implicit val TaskType: ObjectType[Unit, Task] =
     deriveObjectType[Unit, Task](
