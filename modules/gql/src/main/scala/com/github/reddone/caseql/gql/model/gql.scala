@@ -4,24 +4,6 @@ import db.QueryResultSet
 
 object gql {
 
-  trait Identifiable {
-    type Identity
-
-    def id: Identity
-  }
-
-  trait IntIdentifiable extends Identifiable {
-    type Identity = Int
-  }
-
-  trait LongIdentifiable extends Identifiable {
-    type Identity = Long
-  }
-
-  trait StringIdentifiable extends Identifiable {
-    type Identity = String
-  }
-
   final case class ListContainer[+A](
       content: Seq[A],
       pageInfo: PageInfo
