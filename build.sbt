@@ -46,7 +46,7 @@ lazy val `case-ql-circe` = project
 lazy val `case-ql-gql` = project
   .in(file("modules/gql"))
   .dependsOn(
-    `case-ql-sql` % "it->it;test->test;compile->compile",
+    `case-ql-sql`   % "it->it;test->test;compile->compile",
     `case-ql-circe` % "it->it;test->test;compile->compile"
   )
   .settings(settings)
@@ -84,7 +84,9 @@ lazy val commonSettings = scalacSettings ++ Seq(
   crossScalaVersions := allScala,
   fork := true,
   parallelExecution in Test := false,
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjectorVersion)
+  addCompilerPlugin(
+    "org.typelevel" %% "kind-projector" % Versions.kindProjectorVersion cross CrossVersion.full
+  )
 )
 
 lazy val scalacSettings = Seq(

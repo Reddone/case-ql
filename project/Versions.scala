@@ -1,6 +1,6 @@
 object Versions {
   // compiler
-  val kindProjectorVersion = "0.10.3"
+  val kindProjectorVersion = "0.11.0"
   // project
   val doobieVersion                 = "0.9.0"
   val shapelessVersion              = "2.3.3" // stick with doobie
