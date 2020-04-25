@@ -6,7 +6,8 @@ import com.github.reddone.caseql.sql.itmodel.data._
 import com.github.reddone.caseql.sql.itmodel.db._
 import com.github.reddone.caseql.sql.itmodel.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
-import com.github.reddone.caseql.sql.filter.primitives.IntFilter
+import com.github.reddone.caseql.sql.modifier.primitives._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie.implicits._
 
@@ -41,7 +42,27 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
       "succeed to execute a select with a nested filter" in {
         val filter = DeveloperFilter.empty.copy(
-          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+          age = Some(IntFilter.empty.copy(LT = Some(32))),
+          OR = Some(
+            Seq(
+              DeveloperFilter.empty.copy(name = Some(StringFilter.empty.copy(CONTAINS = Some("ino")))),
+              DeveloperFilter.empty.copy(age = Some(IntFilter.empty.copy(EQ = Some(1))))
+            )
+          )
+        )
+
+        val developers = Table[Developer, DeveloperKey]
+          .select(filter, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        developers should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+          Developer(5L, "Cyberino Matterino", 2, Some(4L))
         )
       }
 

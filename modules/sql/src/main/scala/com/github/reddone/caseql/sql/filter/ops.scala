@@ -1,11 +1,11 @@
 package com.github.reddone.caseql.sql.filter
 
-import cats.Show
 import cats.data.NonEmptyList
 import com.github.reddone.caseql.sql.tokens._
 import doobie._
 import doobie.implicits._
 import Fragment._
+import cats.Show
 
 object ops {
 
@@ -38,26 +38,26 @@ object ops {
     )
 
   def contains[T: Show](name: String, valueOpt: Option[T]): Option[Fragment] =
-    valueOpt.map(value => const(s"$name $Like") ++ fr"%${Show[T].show(value)}%")
+    valueOpt.map(value => const(s"$name $Like") ++ like(value))
 
   def notContains[T: Show](name: String, valueOpt: Option[T]): Option[Fragment] =
-    valueOpt.map(value => const(s"$name $NotLike") ++ fr"%${Show[T].show(value)}%")
+    valueOpt.map(value => const(s"$name $NotLike") ++ like(value))
 
   def containsEvery[T: Show](name: String, valuesOpt: Option[Seq[T]]): Option[Fragment] =
     valuesOpt.map(values => {
-      val mapped = values.map(value => const(s"$name $Like") ++ fr"%${Show[T].show(value)}%")
+      val mapped = values.map(value => const(s"$name $Like") ++ like(value))
       Fragments.and(mapped: _*)
     })
 
   def containsSome[T: Show](name: String, valuesOpt: Option[Seq[T]]): Option[Fragment] =
     valuesOpt.map(values => {
-      val mapped = values.map(value => const(s"$name $Like") ++ fr"%${Show[T].show(value)}%")
+      val mapped = values.map(value => const(s"$name $Like") ++ like(value))
       Fragments.or(mapped: _*)
     })
 
   def containsNone[T: Show](name: String, valuesOpt: Option[Seq[T]]): Option[Fragment] =
     valuesOpt.map(values => {
-      val mapped = values.map(value => const(s"$name $NotLike") ++ fr"%${Show[T].show(value)}%")
+      val mapped = values.map(value => const(s"$name $NotLike") ++ like(value))
       Fragments.and(mapped: _*)
     })
 
@@ -66,4 +66,9 @@ object ops {
       case true  => const(s"$name $IsNull")
       case false => const(s"$name $IsNotNull")
     }
+
+  private def like[T: Show](value: T)(implicit put: Put[String]): Fragment = {
+    val expr = "%" + Show[T].show(value) + "%"
+    fr0"$expr"
+  }
 }
