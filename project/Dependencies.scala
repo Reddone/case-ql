@@ -40,6 +40,7 @@ object Dependencies {
     lazy val namespace = "org.sangria-graphql"
     lazy val core      = namespace %% "sangria" % sangriaVersion
     lazy val circe     = namespace %% "sangria-circe" % sangriaCirceVersion
+    lazy val slowLog   = namespace %% "sangria-slowlog" % sangriaSlowLogVersion
   }
 
   object scalatest {
@@ -150,7 +151,8 @@ object Dependencies {
       akka.http              % "compile",
       akkaHttpCirce.core     % "compile",
       sangria.core           % "compile",
-      sangria.circe          % "compile"
+      sangria.circe          % "compile",
+      sangria.slowLog        % "compile"
     )
   }
 }

@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import com.github.reddone.caseql.example.http.CorsSupport
 import com.github.reddone.caseql.example.http.GraphQLSupport._
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport.{fromByteStringUnmarshaller => _, _}
 import io.circe.Json
 import io.circe.optics.JsonPath.root
 import io.circe.parser.parse
@@ -19,6 +19,7 @@ import sangria.marshalling.circe._
 import sangria.parser.DeliveryScheme.Try
 import sangria.parser.{QueryParser, SyntaxError}
 import sangria.schema.Schema
+import sangria.slowlog.SlowLog
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -47,7 +48,8 @@ trait AkkaServer[Ctx] extends CorsSupport {
           userContext = userContext,
           operationName = operationName,
           variables = if (variables.isNull) Json.obj() else variables,
-          deferredResolver = deferredResolver
+          deferredResolver = deferredResolver,
+          middleware = if (tracing) SlowLog.apolloTracing :: Nil else Nil,
         )
         .map(OK → _)
         .recover {
@@ -91,7 +93,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
               }
             } ~ path("graphql") {
               get {
-                parameters(("query", "operationName".?, "variables".?)) {
+                parameters(('query, 'operationName.?, 'variables.?)) {
                   (queryParam, operationNameParam, variablesParam) ⇒
                     QueryParser.parse(queryParam) match {
                       case Success(ast) ⇒
@@ -107,7 +109,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
                     }
                 }
               } ~ post {
-                parameters(("query".?, "operationName".?, "variables".?)) {
+                parameters(('query.?, 'operationName.?, 'variables.?)) {
                   (queryParam, operationNameParam, variablesParam) ⇒
                     entity(as[Json]) { body ⇒
                       val query         = queryParam orElse root.query.string.getOption(body)

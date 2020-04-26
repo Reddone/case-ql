@@ -9,8 +9,9 @@ object Versions {
   val fs2Version                    = "2.3.0" // stick with doobie
   val circeVersion                  = "0.13.0"
   val circeOpticsVersion            = "0.13.0"
-  val sangriaCirceVersion           = "1.3.0"
   val sangriaVersion                = "1.4.2"
+  val sangriaCirceVersion           = "1.3.0"
+  val sangriaSlowLogVersion         = "0.1.8"
   val configVersion                 = "1.4.0"
   val jacksonVersion                = "2.10.3"
   val akkaVersion                   = "2.6.4"
