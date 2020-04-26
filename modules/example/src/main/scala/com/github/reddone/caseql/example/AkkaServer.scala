@@ -33,7 +33,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
   def schema: Schema[Ctx, Unit]
   def deferredResolver: DeferredResolver[Ctx]
 
-  def executeGraphQL(
+  final def executeGraphQL(
       query: Document,
       userContext: Ctx,
       operationName: Option[String],
@@ -58,7 +58,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
         }
     )
 
-  def formatError(error: Throwable): Json = error match {
+  final def formatError(error: Throwable): Json = error match {
     case syntaxError: SyntaxError ⇒
       Json.obj(
         "errors" → Json.arr(
@@ -79,10 +79,10 @@ trait AkkaServer[Ctx] extends CorsSupport {
       throw e
   }
 
-  def formatError(message: String): Json =
+  final def formatError(message: String): Json =
     Json.obj("errors" → Json.arr(Json.obj("message" → Json.fromString(message))))
 
-  def startAkkaServer(serverRoot: String, userContext: Ctx): Future[Http.ServerBinding] = {
+  final def startAkkaServer(serverRoot: String, userContext: Ctx): Future[Http.ServerBinding] = {
     val route: Route =
       optionalHeaderValueByName("X-Apollo-Tracing") { tracing ⇒
         redirectToNoTrailingSlashIfPresent(Found) {
