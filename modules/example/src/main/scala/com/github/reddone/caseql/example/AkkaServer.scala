@@ -155,12 +155,10 @@ trait AkkaServer[Ctx] extends CorsSupport {
           }
         }
 
-    val binding = Http().bindAndHandle(
+    Http().bindAndHandle(
       corsHandler(route),
       "0.0.0.0",
       sys.props.get("http.port").fold(4000)(_.toInt)
     )
-
-    binding
   }
 }

@@ -12,16 +12,16 @@ object implicits {
   // TABLE
 
   implicit val developerTable: Table[Developer, DeveloperKey] =
-    Table.derive[Developer, DeveloperKey]()
+    Table.derive[Developer, DeveloperKey](useTableAlias = false)
 
   implicit val projectTable: Table[Project, ProjectKey] =
-    Table.derive[Project, ProjectKey]()
+    Table.derive[Project, ProjectKey](useTableAlias = false)
 
   implicit val dplTable: Table[DeveloperProjectLink, DeveloperProjectLinkKey] =
-    Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey]()
+    Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey](useTableAlias = false)
 
   implicit val taskTable: Table[Task, TaskKey] =
-    Table.derive[Task, TaskKey]()
+    Table.derive[Task, TaskKey](useTableAlias = false)
 
   // LINK
 

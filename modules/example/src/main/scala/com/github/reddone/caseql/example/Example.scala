@@ -8,7 +8,6 @@ import cats.effect._
 import cats.implicits._
 import com.github.reddone.caseql.example.resource.TransactorResource
 import com.typesafe.config.{Config, ConfigFactory}
-import doobie.util.transactor.Transactor
 import org.apache.logging.log4j.scala.Logging
 import sangria.execution.deferred.{DeferredResolver, Fetcher}
 import sangria.schema.Schema
@@ -37,10 +36,13 @@ object Example extends IOApp with AkkaServer[SangriaContext] with SangriaSchema 
     DeferredResolver.fetchers(fetchers: _*)
   }
 
-  def createServer[F[_]: Async](xa: Transactor[F], deadline: FiniteDuration): Resource[F, Http.ServerBinding] = {
-    val userContext = SangriaContext.production[F](xa)
+  def serverResource[F[_]: Async](
+      serverRoot: String,
+      userContext: SangriaContext,
+      deadline: FiniteDuration
+  ): Resource[F, Http.ServerBinding] = {
     val alloc = Async[F].async[Http.ServerBinding] { cb =>
-      startAkkaServer("example", userContext).onComplete { r =>
+      startAkkaServer(serverRoot, userContext).onComplete { r =>
         cb(r match {
           case Success(binding) => Right(binding)
           case Failure(ex)      => Left(ex)
@@ -59,19 +61,21 @@ object Example extends IOApp with AkkaServer[SangriaContext] with SangriaSchema 
     Resource.make(alloc)(free(_).void)
   }
 
-  def runServer[F[_]: Async: ContextShift: Timer](config: Config): Resource[F, Http.ServerBinding] = {
-    val deadline = Duration(config.getDuration("server.hardDeadline").getSeconds, TimeUnit.SECONDS)
+  def createServer[F[_]: Async: ContextShift: Timer](config: Config): Resource[F, Http.ServerBinding] = {
+    val serverRoot = config.getString("server.root")
+    val deadline   = Duration(config.getDuration("server.hardDeadline").getSeconds, TimeUnit.SECONDS)
 
     for {
-      xa     <- TransactorResource.create[F](config)
-      server <- createServer(xa, deadline)
+      xa          <- TransactorResource[F](config)
+      userContext <- Resource.pure[F, SangriaContext](SangriaContext.production[F](xa))
+      server      <- serverResource[F](serverRoot, userContext, deadline)
     } yield server
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
     val config: Config = ConfigFactory.load()
 
-    runServer[IO](config).use { binding =>
+    createServer[IO](config).use { binding =>
       logger.info(s"Server bound to ${binding.localAddress}")
       IO.never.as(ExitCode.Success)
     }

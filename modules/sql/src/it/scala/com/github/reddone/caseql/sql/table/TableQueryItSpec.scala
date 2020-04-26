@@ -72,7 +72,18 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
       "succeed to execute a select with a deep relation filter" in {}
 
-      "succeed to execute a simple select by key" in {}
+      "succeed to execute a simple select by key" in {
+        val key = DeveloperKey(1L)
+
+        val maybeDeveloper = Table[Developer, DeveloperKey]
+          .selectByKey(key, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        maybeDeveloper shouldBe defined
+        maybeDeveloper.get shouldBe Developer(1L, "Reddone", 32, None)
+      }
     }
 
     "inserting data" should {
