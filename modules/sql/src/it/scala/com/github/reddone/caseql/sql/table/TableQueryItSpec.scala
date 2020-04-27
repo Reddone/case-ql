@@ -10,6 +10,7 @@ import com.github.reddone.caseql.sql.itmodel.implicits._
 import com.github.reddone.caseql.sql.PgAnyWordSpec
 import com.github.reddone.caseql.sql.modifier.primitives._
 import com.github.reddone.caseql.sql.filter.primitives._
+import com.github.reddone.caseql.sql.filter.wrappers.RelationFilter
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie.implicits._
 
@@ -28,7 +29,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           age = Some(IntFilter.empty.copy(EQ = Some(1)))
         )
 
-        val developers = Table[Developer, DeveloperKey]
+        val selectedDevelopers = Table[Developer, DeveloperKey]
           .select(filter, Some("d"))
           .execute
           .transact(rollingBack(xa))
@@ -36,7 +37,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .toList
           .unsafeRunSync()
 
-        developers should contain theSameElementsAs List(
+        selectedDevelopers should contain theSameElementsAs List(
           Developer(2L, "Eddy Pasterino", 1, Some(1L)),
           Developer(3L, "Tasty the Tester", 1, Some(1L))
         )
@@ -53,7 +54,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           )
         )
 
-        val developers = Table[Developer, DeveloperKey]
+        val selectedDevelopers = Table[Developer, DeveloperKey]
           .select(nestedFilter, Some("d"))
           .execute
           .transact(rollingBack(xa))
@@ -61,7 +62,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .toList
           .unsafeRunSync()
 
-        developers should contain theSameElementsAs List(
+        selectedDevelopers should contain theSameElementsAs List(
           Developer(2L, "Eddy Pasterino", 1, Some(1L)),
           Developer(3L, "Tasty the Tester", 1, Some(1L)),
           Developer(5L, "Cyberino Matterino", 2, Some(4L))
@@ -112,7 +113,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           )
         )
 
-        val developers = Table[Developer, DeveloperKey]
+        val selectedDevelopers = Table[Developer, DeveloperKey]
           .select(deepNestedFilter, Some("d"))
           .execute
           .transact(rollingBack(xa))
@@ -120,28 +121,85 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .toList
           .unsafeRunSync()
 
-        developers should contain theSameElementsAs List(
+        selectedDevelopers should contain theSameElementsAs List(
           Developer(1L, "Reddone", 32, None),
           Developer(2L, "Eddy Pasterino", 1, Some(1L)),
           Developer(3L, "Tasty the Tester", 1, Some(1L))
         )
       }
 
-      "succeed to execute a select with a relation filter" in {}
+      "succeed to execute a select with a relation filter" in {
+        val projectFilter1 = ProjectFilter.empty
+        val developerFilter1 = DeveloperFilter.empty.copy(
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(EVERY = Some(projectFilter1))
+          )
+        )
+
+        val selectedDevelopers1 = Table[Developer, DeveloperKey]
+          .select(developerFilter1, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers1 should contain theSameElementsAs List()
+
+        val projectFilter2 = ProjectFilter.empty
+        val developerFilter2 = DeveloperFilter.empty.copy(
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(SOME = Some(projectFilter2))
+          )
+        )
+
+        val selectedDevelopers2 = Table[Developer, DeveloperKey]
+          .select(developerFilter2, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers2 should contain theSameElementsAs List()
+
+        val projectFilter3 = ProjectFilter.empty
+        val developerFilter3 = DeveloperFilter.empty.copy(
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(NONE = Some(projectFilter3))
+          )
+        )
+
+        val selectedDevelopers3 = Table[Developer, DeveloperKey]
+          .select(developerFilter3, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers3 should contain theSameElementsAs List()
+      }
 
       "succeed to execute a select with a deep relation filter" in {}
 
       "succeed to execute a simple select by key" in {
         val key = DeveloperKey(1L)
 
-        val maybeDeveloper = Table[Developer, DeveloperKey]
+        val maybeSelectedDeveloper = Table[Developer, DeveloperKey]
           .selectByKey(key, Some("d"))
           .execute
           .transact(rollingBack(xa))
           .unsafeRunSync()
 
-        maybeDeveloper shouldBe defined
-        maybeDeveloper.get shouldBe Developer(1L, "Reddone", 32, None)
+        maybeSelectedDeveloper shouldBe defined
+        maybeSelectedDeveloper.get shouldBe Developer(1L, "Reddone", 32, None)
       }
     }
 
