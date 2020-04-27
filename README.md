@@ -18,9 +18,8 @@ implicit instance you can be sure that your serializable case class representing
 produce the desired effect when used to query or modify the entity.
 
 See the "example" sub project to see it in action! It is still an experiment but it helped me a lot!!!
-**I am writing examples along with tests and documentation these month, so please wait a little. If you want you can 
-explore the source code, the core is located inside the "table" package of the "sql" module. If you want to see some
-action please consult the TableFilterSpec test class of the same module.** For the moment, take the develop branch as
+**I have almost finished writing tests and the example. If you want to understand the potential of the library, see the
+tests and integration tests inside the sql module** For the moment, take the develop branch as
 a reference for the future stable release version.
 
 [Full documentation](./docs/intro.md)

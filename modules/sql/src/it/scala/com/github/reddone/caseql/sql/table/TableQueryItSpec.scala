@@ -143,61 +143,89 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
         val selectedDevelopers1 = Table[Developer, DeveloperKey]
           .select(filter1, Some("d"))
-
-        println(selectedDevelopers1.toFragment)
-
-        val res1 = selectedDevelopers1.execute
+          .execute
           .transact(rollingBack(xa))
           .compile
           .toList
           .unsafeRunSync()
 
-        res1 should contain theSameElementsAs List(
+        selectedDevelopers1 should contain theSameElementsAs List(
           Developer(2L, "Eddy Pasterino", 1, Some(1L))
         )
 
-//        val relationFilter2 = ProjectFilter.empty
-//        val filter2 = DeveloperFilter.empty.copy(
-//          age = Some(IntFilter.empty.copy(LTE = Some(2))),
-//          projectRelation = Some(
-//            RelationFilter
-//              .empty[Developer, Project, ProjectFilter]
-//              .copy(SOME = Some(relationFilter2))
-//          )
-//        )
-//
-//        val selectedDevelopers2 = Table[Developer, DeveloperKey]
-//          .select(filter2, Some("d"))
-//          .execute
-//          .transact(rollingBack(xa))
-//          .compile
-//          .toList
-//          .unsafeRunSync()
-//
-//        selectedDevelopers2 should contain theSameElementsAs List()
-//
-//        val relationFilter3 = ProjectFilter.empty
-//        val filter3 = DeveloperFilter.empty.copy(
-//          age = Some(IntFilter.empty.copy(LTE = Some(2))),
-//          projectRelation = Some(
-//            RelationFilter
-//              .empty[Developer, Project, ProjectFilter]
-//              .copy(NONE = Some(relationFilter3))
-//          )
-//        )
-//
-//        val selectedDevelopers3 = Table[Developer, DeveloperKey]
-//          .select(filter3, Some("d"))
-//          .execute
-//          .transact(rollingBack(xa))
-//          .compile
-//          .toList
-//          .unsafeRunSync()
-//
-//        selectedDevelopers3 should contain theSameElementsAs List()
+        val relationFilter2 = ProjectFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter2 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(LTE = Some(2))),
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(SOME = Some(relationFilter2))
+          )
+        )
+
+        val selectedDevelopers2 = Table[Developer, DeveloperKey]
+          .select(filter2, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers2 should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+          Developer(5L, "Cyberino Matterino", 2, Some(4L))
+        )
+
+        val relationFilter3 = ProjectFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter3 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(LTE = Some(2))),
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(NONE = Some(relationFilter3))
+          )
+        )
+
+        val selectedDevelopers3 = Table[Developer, DeveloperKey]
+          .select(filter3, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers3 should contain theSameElementsAs List(
+          Developer(6L, "Mario Rigatone", 2, Some(4L))
+        )
       }
 
-      "succeed to execute a select with a direct relation filter" ignore {}
+      "succeed to execute a select with a direct relation filter" ignore {
+        val relationFilter1 = TaskFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter1 = ProjectFilter.empty.copy(
+          taskRelation = Some(
+            RelationFilter
+              .empty[Project, Task, TaskFilter]
+              .copy(EVERY = Some(relationFilter1))
+          )
+        )
+
+        val selectedProjects = Table[Project, ProjectKey]
+          .select(filter1, Some("p"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedProjects should contain theSameElementsAs List()
+      }
 
       "succeed to execute a select with a deep relation filter" ignore {
         val nestedRelationFilter = TaskFilter.empty

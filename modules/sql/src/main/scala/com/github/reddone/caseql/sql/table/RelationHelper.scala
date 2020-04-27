@@ -54,17 +54,20 @@ object RelationHelper {
       const(
         s"$Exists (" +
           s"$Select 1 " +
-          s"$From ${rightQuerySyntax.aliasedName} $Where"
+          s"$From ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
       ) ++ filterFragment ++
         const(
-          s"$And $joinCondition " +
+          s") $As ${rightQuerySyntax.aliasedName} " +
+            s"$Where $joinCondition " +
             s"$Having $Count ($Star) = (" +
-            s"$Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $joinCondition ) )"
+            s"$Select $Count ($Star) " +
+            s"$From ${rightQuerySyntax.aliasedName} " +
+            s"$Where $joinCondition ) )"
         )
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeEveryFragment)
-    // DIRECT LINK - SOME (contrary of NONE)
+    // DIRECT LINK - SOME (negation of NONE)
     // EXISTS (
     //   SELECT 1
     //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
@@ -83,7 +86,7 @@ object RelationHelper {
     val some = f.SOME
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeSomeFragment)
-    // DIRECT LINK - NONE (contrary of SOME)
+    // DIRECT LINK - NONE (negation of SOME)
     // NOT EXISTS (
     //   SELECT 1
     //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
@@ -150,7 +153,7 @@ object RelationHelper {
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeEveryFragment)
-    // JUNCTION LINK - SOME (contrary of NONE)
+    // JUNCTION LINK - SOME (negation of NONE)
     // (you can use LEFT JOIN and add "IS NOT NULL rightTable.id")
     // EXISTS (
     //   SELECT 1
@@ -173,7 +176,7 @@ object RelationHelper {
     val some = f.SOME
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeSomeFragment)
-    // JUNCTION LINK - NONE (contrary of SOME)
+    // JUNCTION LINK - NONE (negation of SOME)
     // (you can use LEFT JOIN and add "IS NOT NULL rightTable.id")
     // NOT EXISTS (
     //   SELECT 1
