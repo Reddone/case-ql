@@ -38,26 +38,26 @@ object ops {
     )
 
   def contains[T: Show](name: String, valueOpt: Option[T]): Option[Fragment] =
-    valueOpt.map(value => const(s"$name $Like") ++ fr0"${"%" + Show[T].show(value) + "%"}")
+    valueOpt.map(value => const(s"$name $Like") ++ fr"${"%" + Show[T].show(value) + "%"}")
 
   def notContains[T: Show](name: String, valueOpt: Option[T]): Option[Fragment] =
-    valueOpt.map(value => const(s"$name $NotLike") ++ fr0"${"%" + Show[T].show(value) + "%"}")
+    valueOpt.map(value => const(s"$name $NotLike") ++ fr"${"%" + Show[T].show(value) + "%"}")
 
   def containsEvery[T: Show](name: String, valuesOpt: Option[Seq[T]]): Option[Fragment] =
     valuesOpt.map(values => {
-      val mapped = values.map(value => const(s"$name $Like") ++ fr0"${"%" + Show[T].show(value) + "%"}")
+      val mapped = values.map(value => const(s"$name $Like") ++ fr"${"%" + Show[T].show(value) + "%"}")
       Fragments.and(mapped: _*)
     })
 
   def containsSome[T: Show](name: String, valuesOpt: Option[Seq[T]]): Option[Fragment] =
     valuesOpt.map(values => {
-      val mapped = values.map(value => const(s"$name $Like") ++ fr0"${"%" + Show[T].show(value) + "%"}")
+      val mapped = values.map(value => const(s"$name $Like") ++ fr"${"%" + Show[T].show(value) + "%"}")
       Fragments.or(mapped: _*)
     })
 
   def containsNone[T: Show](name: String, valuesOpt: Option[Seq[T]]): Option[Fragment] =
     valuesOpt.map(values => {
-      val mapped = values.map(value => const(s"$name $NotLike") ++ fr0"${"%" + Show[T].show(value) + "%"}")
+      val mapped = values.map(value => const(s"$name $NotLike") ++ fr"${"%" + Show[T].show(value) + "%"}")
       Fragments.and(mapped: _*)
     })
 

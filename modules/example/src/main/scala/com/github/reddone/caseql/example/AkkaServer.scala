@@ -49,7 +49,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
           operationName = operationName,
           variables = if (variables.isNull) Json.obj() else variables,
           deferredResolver = deferredResolver,
-          middleware = if (tracing) SlowLog.apolloTracing :: Nil else Nil,
+          middleware = if (tracing) SlowLog.apolloTracing :: Nil else Nil
         )
         .map(OK → _)
         .recover {

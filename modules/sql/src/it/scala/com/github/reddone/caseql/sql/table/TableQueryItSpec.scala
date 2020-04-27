@@ -1,5 +1,7 @@
 package com.github.reddone.caseql.sql.table
 
+import java.sql.Timestamp
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicLong
 
 import com.github.reddone.caseql.sql.itmodel.data._
@@ -88,15 +90,104 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
     "inserting data" should {
 
-      "succeed to execute a simple insert" in {}
+      "succeed to execute a simple insert" in {
+        val nextTaskId = currentTaskId.incrementAndGet()
 
-      "succeed to execute an insert with null values" in {}
+        val modifier = TaskModifier.empty.copy(
+          id = Some(LongModifier(ModifierAction.Set, Some(nextTaskId))),
+          label = Some(StringModifier(ModifierAction.Set, Some("label"))),
+          description = Some(StringModifierOption(ModifierOptionAction.Set, Some("description"))),
+          deadline = Some(
+            TimestampModifier(
+              ModifierAction.Set,
+              Some(Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 4)))
+            )
+          ),
+          projectId = Some(LongModifier(ModifierAction.Set, Some(3L)))
+        )
 
-      "succeed to execute an insert with default values" in {}
+        val affectedRows = Table[Task, TaskKey]
+          .insert(modifier)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
 
-      "succeed to execute an insert with missing values having a default" in {}
+        affectedRows shouldBe 1
+      }
 
-      "succeed to execute a simple insert returning key" in {}
+      "succeed to execute an insert with null values" in {
+        val nextTaskId = currentTaskId.incrementAndGet()
+
+        val modifier = TaskModifier.empty.copy(
+          id = Some(LongModifier(ModifierAction.Set, Some(nextTaskId))),
+          label = Some(StringModifier(ModifierAction.Set, Some("label"))),
+          description = Some(StringModifierOption(ModifierOptionAction.Null, None)),
+          deadline = Some(
+            TimestampModifier(
+              ModifierAction.Set,
+              Some(Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 4)))
+            )
+          ),
+          projectId = Some(LongModifier(ModifierAction.Set, Some(3L)))
+        )
+
+        val affectedRows = Table[Task, TaskKey]
+          .insert(modifier)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 1
+      }
+
+      "succeed to execute an insert with missing values having a default" in {
+        val nextTaskId = currentTaskId.incrementAndGet()
+
+        val modifier = TaskModifier.empty.copy(
+          id = Some(LongModifier(ModifierAction.Set, Some(nextTaskId))),
+          label = Some(StringModifier(ModifierAction.Set, Some("label"))),
+          deadline = Some(
+            TimestampModifier(
+              ModifierAction.Set,
+              Some(Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 4)))
+            )
+          ),
+          projectId = Some(LongModifier(ModifierAction.Set, Some(3L)))
+        )
+
+        val affectedRows = Table[Task, TaskKey]
+          .insert(modifier)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 1
+      }
+
+      "succeed to execute a simple insert returning key" in {
+        val nextTaskId = currentTaskId.incrementAndGet()
+
+        val modifier = TaskModifier.empty.copy(
+          id = Some(LongModifier(ModifierAction.Set, Some(nextTaskId))),
+          label = Some(StringModifier(ModifierAction.Set, Some("label"))),
+          description = Some(StringModifierOption(ModifierOptionAction.Set, Some("description"))),
+          deadline = Some(
+            TimestampModifier(
+              ModifierAction.Set,
+              Some(Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 4)))
+            )
+          ),
+          projectId = Some(LongModifier(ModifierAction.Set, Some(3L)))
+        )
+
+        val returnedKey = Table[Task, TaskKey]
+          .insertReturningKey(modifier)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        returnedKey shouldBe TaskKey(nextTaskId)
+      }
     }
 
     "updating data" should {
@@ -210,9 +301,31 @@ class TableQueryItSpec extends PgAnyWordSpec {
         returnedKeys should contain theSameElementsAs List(DeveloperKey(2L), DeveloperKey(3L))
       }
 
-      "succeed to execute a simple delete by key" in {}
+      "succeed to execute a simple delete by key" in {
+        val key = DeveloperKey(4L)
 
-      "succeed to execute a simple delete by key returning keys" in {}
+        val affectedRows = Table[Developer, DeveloperKey]
+          .deleteByKey(key)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 1
+      }
+
+      "succeed to execute a simple delete by key returning keys" in {
+        val key = DeveloperKey(4L)
+
+        val returnedKeys = Table[Developer, DeveloperKey]
+          .deleteByKeyReturningKeys(key)
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        returnedKeys should contain theSameElementsAs List(DeveloperKey(4L))
+      }
     }
   }
 }

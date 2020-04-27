@@ -95,7 +95,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
 
     result1(Some(alias1)).map(_.map(_.toString)) shouldBe List(
       Some("Fragment(\"(a1.field1 = ? ) AND (a1.field1 IN (?, ?) ) \")"),
-      Some("Fragment(\"(a1.field2 LIKE %?% ) \")"),
+      Some("Fragment(\"(a1.field2 LIKE ? ) \")"),
       None,
       None
     )
@@ -111,7 +111,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
 
     result2(Some(alias2)).map(_.map(_.toString)) shouldBe List(
       None,
-      Some("Fragment(\"(a2.field2 LIKE %?% ) \")"),
+      Some("Fragment(\"(a2.field2 LIKE ? ) \")"),
       None,
       Some("Fragment(\"(a2.field1 = ? ) AND (a2.field1 IN (?, ?) ) \")")
     )
@@ -160,7 +160,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     result.get.toString shouldBe "Fragment(\"" +
       "(" +
       "((a1.field1 = ? ) AND (a1.field1 IN (?, ?, ?) ) ) AND " +
-      "((a1.field2 = ? ) AND (a1.field2 LIKE %?% ) ) AND " +
+      "((a1.field2 = ? ) AND (a1.field2 LIKE ? ) ) AND " +
       "((a1.field3 = ? ) AND (a1.field3 IN (?, ?, ?) ) ) AND " +
       "((a1.field4 = ? ) ) " +
       ") " +
@@ -273,7 +273,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") AND (" +
       "(NOT (" + // SECOND FILTER INSIDE AND, NOT BEGIN
       "(" +
-      "((a1.field2 LIKE %?% ) ) " +
+      "((a1.field2 LIKE ? ) ) " +
       ") " +
       ") ) " + // NOT END
       ") AND (" +
