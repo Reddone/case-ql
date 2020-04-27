@@ -436,7 +436,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
       "LEFT OUTER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND IS NULL test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "WHERE a1.field1 = test_junction.field2 AND test_left.field1 IS NULL AND (((test_left.field1 = ? ) ) ) ) " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
@@ -535,7 +535,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "SELECT 1 FROM test_junction " +
       "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
       "WHERE test_left.field1 = test_junction.field1 " +
-      "AND IS NULL test_right.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      "AND test_right.field1 IS NULL AND (((test_right.field1 = ? ) ) ) ) " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
@@ -570,7 +570,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "SELECT 1 FROM test_junction " +
       "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
       "WHERE test_left.field1 = test_junction.field1 " +
-      "AND IS NULL test_right.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      "AND test_right.field1 IS NULL AND (((test_right.field2 = ? ) ) ) ) " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
@@ -603,7 +603,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "SELECT 1 FROM test_junction " +
       "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
       "WHERE test_left.field1 = test_junction.field1 " +
-      "AND IS NULL test_right.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      "AND test_right.field1 IS NULL AND (((test_right.field3 = ? ) ) ) ) " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME

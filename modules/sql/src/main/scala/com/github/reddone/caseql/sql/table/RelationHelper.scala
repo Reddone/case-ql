@@ -107,15 +107,21 @@ object RelationHelper {
     //   FROM joinTable
     //   LEFT JOIN (SELECT * FROM rightTable WHERE filter) AS rightTable
     //   ON joinTable.id = rightTable.id
-    //   WHERE joinTable.id = leftTable.id AND IS NULL rightTable.id
+    //   WHERE joinTable.id = leftTable.id AND rightTable.id IS NULL
     // )
     val makeEveryFragment = (filterFragment: Fragment) =>
       const(
         s"$NotExists (" +
-          s"$Select 1 $From ${junctionSyntax.aliasedName} $LeftJoin ${rightQuerySyntax.aliasedName} " +
-          s"$On ${rightJoinCondition} " +
-          s"$Where ${leftJoinCondition} $And ${areNulls(rightQuerySyntax, rightJoinFields.map(_._1))} $And"
-      ) ++ filterFragment ++ const(")")
+          s"$Select 1 $From ${junctionSyntax.aliasedName} " +
+          s"$LeftJoin ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
+      ) ++
+        filterFragment ++
+        const(
+          s") $As ${rightQuerySyntax.aliasedName} " +
+            s"$On $rightJoinCondition " +
+            s"$Where $leftJoinCondition $And ${areNulls(rightQuerySyntax, rightJoinFields.map(_._1))} )"
+        )
+
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeEveryFragment)
@@ -175,7 +181,7 @@ object RelationHelper {
   private def areNulls[A](syntax: TableSyntax[A], fields: Seq[String]): String = {
     fields
       .map(syntax.aliasedColumn)
-      .map(s"$IsNull " + _)
+      .map(_ + s" $IsNull")
       .mkString(s" $And ")
   }
 }
