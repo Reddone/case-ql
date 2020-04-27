@@ -128,7 +128,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
         )
       }
 
-      "succeed to execute a select with a relation filter" in {
+      "succeed to execute a select with a junction relation filter" in {
         val relationFilter1 = ProjectFilter.empty.copy(
           description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
         )
@@ -146,13 +146,15 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
         println(selectedDevelopers1.toFragment)
 
-        val res = selectedDevelopers1.execute
+        val res1 = selectedDevelopers1.execute
           .transact(rollingBack(xa))
           .compile
           .toList
           .unsafeRunSync()
 
-        res should contain theSameElementsAs List()
+        res1 should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L))
+        )
 
 //        val relationFilter2 = ProjectFilter.empty
 //        val filter2 = DeveloperFilter.empty.copy(
@@ -194,6 +196,8 @@ class TableQueryItSpec extends PgAnyWordSpec {
 //
 //        selectedDevelopers3 should contain theSameElementsAs List()
       }
+
+      "succeed to execute a select with a direct relation filter" ignore {}
 
       "succeed to execute a select with a deep relation filter" ignore {
         val nestedRelationFilter = TaskFilter.empty

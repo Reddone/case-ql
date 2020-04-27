@@ -44,10 +44,23 @@ object RelationHelper {
     //  (SELECT COUNT(*)
     //   FROM rightTable
     //   WHERE rightTable.id = leftTable.id)
+    /*
     val makeEveryFragment = (filterFragment: Fragment) =>
       const(s"($Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $joinCondition $And") ++
         filterFragment ++
         const(s") = ($Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $joinCondition)")
+     */
+    val makeEveryFragment = (filterFragment: Fragment) =>
+      const(
+        s"$Exists (" +
+          s"$Select 1 " +
+          s"$From ${rightQuerySyntax.aliasedName} $Where"
+      ) ++ filterFragment ++
+        const(
+          s"$And $joinCondition " +
+            s"$Having $Count ($Star) = (" +
+            s"$Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $joinCondition ) )"
+        )
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeEveryFragment)
@@ -58,8 +71,15 @@ object RelationHelper {
     //   WHERE rightTable.id = leftTable.id
     // )
     val makeSomeFragment = (filterFragment: Fragment) =>
-      const(s"$Exists ($Select 1 $From ${rightQuerySyntax.aliasedName} $Where $joinCondition $And") ++
-        filterFragment ++ const(")")
+      const(
+        s"$Exists (" +
+          s"$Select 1 " +
+          s"$From ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
+      ) ++ filterFragment ++
+        const(
+          s") $As ${rightQuerySyntax.aliasedName} " +
+            s"$Where $joinCondition )"
+        )
     val some = f.SOME
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeSomeFragment)
@@ -70,8 +90,15 @@ object RelationHelper {
     //   WHERE rightTable.id = leftTable.id
     // )
     val makeNoneFragment = (filterFragment: Fragment) =>
-      const(s"$NotExists ($Select 1 $From ${rightQuerySyntax.aliasedName} $Where $joinCondition $And") ++
-        filterFragment ++ const(")")
+      const(
+        s"$NotExists (" +
+          s"$Select 1 " +
+          s"$From ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
+      ) ++ filterFragment ++
+        const(
+          s") $As ${rightQuerySyntax.aliasedName} " +
+            s"$Where $joinCondition )"
+        )
     val none = f.NONE
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeNoneFragment)
@@ -114,19 +141,17 @@ object RelationHelper {
         s"$NotExists (" +
           s"$Select 1 $From ${junctionSyntax.aliasedName} " +
           s"$LeftJoin ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
-      ) ++
-        filterFragment ++
+      ) ++ filterFragment ++
         const(
           s") $As ${rightQuerySyntax.aliasedName} " +
             s"$On $rightJoinCondition " +
             s"$Where $leftJoinCondition $And ${areNulls(rightQuerySyntax, rightJoinFields.map(_._1))} )"
         )
-
     val every = f.EVERY
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeEveryFragment)
     // JUNCTION LINK - SOME (contrary of NONE)
-    // (you can use "LEFT JOIN" and add "IS NOT NULL rightTable.id")
+    // (you can use LEFT JOIN and add "IS NOT NULL rightTable.id")
     // EXISTS (
     //   SELECT 1
     //   FROM joinTable
@@ -137,10 +162,14 @@ object RelationHelper {
     val makeSomeFragment = (filterFragment: Fragment) =>
       const(
         s"$Exists (" +
-          s"$Select 1 $From ${junctionSyntax.aliasedName} $InnerJoin ${rightQuerySyntax.aliasedName} " +
-          s"$On ${rightJoinCondition} " +
-          s"$Where ${leftJoinCondition} $And"
-      ) ++ filterFragment ++ const(")")
+          s"$Select 1 $From ${junctionSyntax.aliasedName} " +
+          s"$InnerJoin ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
+      ) ++ filterFragment ++
+        const(
+          s") $As ${rightQuerySyntax.aliasedName} " +
+            s"$On $rightJoinCondition " +
+            s"$Where $leftJoinCondition )"
+        )
     val some = f.SOME
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeSomeFragment)
@@ -156,10 +185,14 @@ object RelationHelper {
     val makeNoneFragment = (filterFragment: Fragment) =>
       const(
         s"$NotExists (" +
-          s"$Select 1 $From ${junctionSyntax.aliasedName} $InnerJoin ${rightQuerySyntax.aliasedName} " +
-          s"$On ${rightJoinCondition} " +
-          s"$Where ${leftJoinCondition} $And"
-      ) ++ filterFragment ++ const(")")
+          s"$Select 1 $From ${junctionSyntax.aliasedName} " +
+          s"$InnerJoin ($Select $Star $From ${rightQuerySyntax.aliasedName} $Where"
+      ) ++ filterFragment ++
+        const(
+          s") $As ${rightQuerySyntax.aliasedName} " +
+            s"$On $rightJoinCondition " +
+            s"$Where $leftJoinCondition )"
+        )
     val none = f.NONE
       .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
       .map(makeNoneFragment)
@@ -179,9 +212,6 @@ object RelationHelper {
     }
 
   private def areNulls[A](syntax: TableSyntax[A], fields: Seq[String]): String = {
-    fields
-      .map(syntax.aliasedColumn)
-      .map(_ + s" $IsNull")
-      .mkString(s" $And ")
+    fields.map(syntax.aliasedColumn).map(_ + s" $IsNull").mkString(s" $And ")
   }
 }
