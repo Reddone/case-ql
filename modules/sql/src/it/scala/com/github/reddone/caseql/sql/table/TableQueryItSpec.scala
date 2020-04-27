@@ -101,20 +101,114 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
     "updating data" should {
 
-      "succeed to execute a simple update" in {}
+      "succeed to execute a simple update" in {
+        val modifier = DeveloperModifier.empty.copy(
+          age = Some(IntModifier(ModifierAction.Set, Some(3))),
+          teamLeaderId = Some(LongModifierOption(ModifierOptionAction.Null, None))
+        )
 
-      "succeed to execute a simple update returning keys" in {}
+        val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+        )
 
-      "succeed to execute a simple update by key" in {}
+        val affectedRows = Table[Developer, DeveloperKey]
+          .update(modifier, filter)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
 
-      "succeed to execute a simple update by key returning keys" in {}
+        affectedRows shouldBe 2
+      }
+
+      "succeed to execute a simple update returning keys" in {
+        val modifier = DeveloperModifier.empty.copy(
+          age = Some(IntModifier(ModifierAction.Set, Some(3))),
+          teamLeaderId = Some(LongModifierOption(ModifierOptionAction.Null, None))
+        )
+
+        val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+        )
+
+        val returnedKeys = Table[Developer, DeveloperKey]
+          .updateReturningKeys(modifier, filter)
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        returnedKeys should contain theSameElementsAs List(DeveloperKey(2L), DeveloperKey(3L))
+      }
+
+      "succeed to execute a simple update by key" in {
+        val modifier = DeveloperModifier.empty.copy(
+          age = Some(IntModifier(ModifierAction.Set, Some(42))),
+          teamLeaderId = Some(LongModifierOption(ModifierOptionAction.Set, Some(1L)))
+        )
+
+        val key = DeveloperKey(4L)
+
+        val affectedRows = Table[Developer, DeveloperKey]
+          .updateByKey(modifier, key)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 1
+      }
+
+      "succeed to execute a simple update by key returning keys" in {
+        val modifier = DeveloperModifier.empty.copy(
+          age = Some(IntModifier(ModifierAction.Set, Some(42))),
+          teamLeaderId = Some(LongModifierOption(ModifierOptionAction.Set, Some(1L)))
+        )
+
+        val key = DeveloperKey(4L)
+
+        val returnedKeys = Table[Developer, DeveloperKey]
+          .updateByKeyReturningKeys(modifier, key)
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        returnedKeys should contain theSameElementsAs List(DeveloperKey(4L))
+      }
     }
 
     "deleting data" should {
 
-      "succeed to execute a simple delete" in {}
+      "succeed to execute a simple delete" in {
+        val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+        )
 
-      "succeed to execute a simple delete returning keys" in {}
+        val affectedRows = Table[Developer, DeveloperKey]
+          .delete(filter)
+          .execute
+          .transact(rollingBack(xa))
+          .unsafeRunSync()
+
+        affectedRows shouldBe 2
+      }
+
+      "succeed to execute a simple delete returning keys" in {
+        val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
+        )
+
+        val returnedKeys = Table[Developer, DeveloperKey]
+          .deleteReturningKeys(filter)
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        returnedKeys should contain theSameElementsAs List(DeveloperKey(2L), DeveloperKey(3L))
+      }
 
       "succeed to execute a simple delete by key" in {}
 
