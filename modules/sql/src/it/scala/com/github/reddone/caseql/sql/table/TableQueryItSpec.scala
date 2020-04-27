@@ -43,18 +43,18 @@ class TableQueryItSpec extends PgAnyWordSpec {
       }
 
       "succeed to execute a select with a nested filter" in {
-        val filter = DeveloperFilter.empty.copy(
+        val nestedFilter = DeveloperFilter.empty.copy(
           age = Some(IntFilter.empty.copy(LT = Some(32))),
           OR = Some(
             Seq(
               DeveloperFilter.empty.copy(name = Some(StringFilter.empty.copy(CONTAINS = Some("ino")))),
-              DeveloperFilter.empty.copy(age = Some(IntFilter.empty.copy(EQ = Some(1))))
+              DeveloperFilter.empty.copy(id = Some(LongFilter.empty.copy(EQ = Some(3L))))
             )
           )
         )
 
         val developers = Table[Developer, DeveloperKey]
-          .select(filter, Some("d"))
+          .select(nestedFilter, Some("d"))
           .execute
           .transact(rollingBack(xa))
           .compile
@@ -68,7 +68,64 @@ class TableQueryItSpec extends PgAnyWordSpec {
         )
       }
 
-      "succeed to execute a select with a deep nested filter" in {}
+      "succeed to execute a select with a deep nested filter" in {
+        val deepNestedFilter = DeveloperFilter.empty.copy(
+          OR = Some(
+            Seq(
+              DeveloperFilter.empty.copy(
+                AND = Some(
+                  Seq(
+                    DeveloperFilter.empty.copy(
+                      name = Some(
+                        StringFilter.empty.copy(CONTAINS = Some("done"))
+                      )
+                    ),
+                    DeveloperFilter.empty.copy(
+                      NOT = Some(
+                        DeveloperFilter.empty.copy(
+                          teamLeaderId = Some(LongFilterOption.empty.copy(IS_NULL = Some(false)))
+                        )
+                      )
+                    )
+                  )
+                )
+              ),
+              DeveloperFilter.empty.copy(
+                AND = Some(
+                  Seq(
+                    DeveloperFilter.empty.copy(
+                      age = Some(
+                        IntFilter.empty.copy(EQ = Some(1))
+                      )
+                    ),
+                    DeveloperFilter.empty.copy(
+                      NOT = Some(
+                        DeveloperFilter.empty.copy(
+                          teamLeaderId = Some(LongFilterOption.empty.copy(IS_NULL = Some(true)))
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+
+        val developers = Table[Developer, DeveloperKey]
+          .select(deepNestedFilter, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        developers should contain theSameElementsAs List(
+          Developer(1L, "Reddone", 32, None),
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L))
+        )
+      }
 
       "succeed to execute a select with a relation filter" in {}
 
