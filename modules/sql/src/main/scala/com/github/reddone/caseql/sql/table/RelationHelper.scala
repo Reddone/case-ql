@@ -41,7 +41,7 @@ object RelationHelper {
     //   SELECT 1
     //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
     //   WHERE rightTable.id = leftTable.id
-    //   HAVING COUNT(*) =
+    //   HAVING COUNT(*) > 0 AND COUNT(*) =
     //   SELECT COUNT(*)
     //   FROM rightTable
     //   WHERE rightTable.id = leftTable.id
@@ -55,7 +55,7 @@ object RelationHelper {
         const(
           s") $As ${rightQuerySyntax.aliasedName} " +
             s"$Where $joinCondition " +
-            s"$Having $Count ($Star) = (" +
+            s"$Having $Count ($Star) $GreaterThan 0 $And $Count ($Star) $Equal (" +
             s"$Select $Count ($Star) " +
             s"$From ${rightQuerySyntax.aliasedName} " +
             s"$Where $joinCondition ) )"

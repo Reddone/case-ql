@@ -128,15 +128,14 @@ class TableQueryItSpec extends PgAnyWordSpec {
         )
       }
 
-      "succeed to execute a select with a junction relation filter" in {
-        val relationFilter1 = ProjectFilter.empty.copy(
-          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+      "succeed to execute a select with a self relation filter" in {
+        val relationFilter1 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
         )
         val filter1 = DeveloperFilter.empty.copy(
-          age = Some(IntFilter.empty.copy(LTE = Some(2))),
-          projectRelation = Some(
+          selfRelation = Some(
             RelationFilter
-              .empty[Developer, Project, ProjectFilter]
+              .selfEmpty[Developer, DeveloperFilter]
               .copy(EVERY = Some(relationFilter1))
           )
         )
@@ -150,17 +149,16 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .unsafeRunSync()
 
         selectedDevelopers1 should contain theSameElementsAs List(
-          Developer(2L, "Eddy Pasterino", 1, Some(1L))
+          Developer(1L, "Reddone", 32, None)
         )
 
-        val relationFilter2 = ProjectFilter.empty.copy(
-          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        val relationFilter2 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
         )
         val filter2 = DeveloperFilter.empty.copy(
-          age = Some(IntFilter.empty.copy(LTE = Some(2))),
-          projectRelation = Some(
+          selfRelation = Some(
             RelationFilter
-              .empty[Developer, Project, ProjectFilter]
+              .selfEmpty[Developer, DeveloperFilter]
               .copy(SOME = Some(relationFilter2))
           )
         )
@@ -174,19 +172,16 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .unsafeRunSync()
 
         selectedDevelopers2 should contain theSameElementsAs List(
-          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
-          Developer(3L, "Tasty the Tester", 1, Some(1L)),
-          Developer(5L, "Cyberino Matterino", 2, Some(4L))
+          Developer(1L, "Reddone", 32, None)
         )
 
-        val relationFilter3 = ProjectFilter.empty.copy(
-          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        val relationFilter3 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(EQ = Some(1)))
         )
         val filter3 = DeveloperFilter.empty.copy(
-          age = Some(IntFilter.empty.copy(LTE = Some(2))),
-          projectRelation = Some(
+          selfRelation = Some(
             RelationFilter
-              .empty[Developer, Project, ProjectFilter]
+              .selfEmpty[Developer, DeveloperFilter]
               .copy(NONE = Some(relationFilter3))
           )
         )
@@ -200,6 +195,10 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .unsafeRunSync()
 
         selectedDevelopers3 should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+          Developer(4L, "Maximus Kappacus Spamicus", 23, None),
+          Developer(5L, "Cyberino Matterino", 2, Some(4L)),
           Developer(6L, "Mario Rigatone", 2, Some(4L))
         )
       }
@@ -273,6 +272,82 @@ class TableQueryItSpec extends PgAnyWordSpec {
 
         selectedProjects3 should contain theSameElementsAs List(
           Project(2L, "Random Pasta", None)
+        )
+      }
+
+      "succeed to execute a select with a junction relation filter" in {
+        val relationFilter1 = ProjectFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter1 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(LTE = Some(2))),
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(EVERY = Some(relationFilter1))
+          )
+        )
+
+        val selectedDevelopers1 = Table[Developer, DeveloperKey]
+          .select(filter1, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers1 should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L))
+        )
+
+        val relationFilter2 = ProjectFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter2 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(LTE = Some(2))),
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(SOME = Some(relationFilter2))
+          )
+        )
+
+        val selectedDevelopers2 = Table[Developer, DeveloperKey]
+          .select(filter2, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers2 should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+          Developer(5L, "Cyberino Matterino", 2, Some(4L))
+        )
+
+        val relationFilter3 = ProjectFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter3 = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(LTE = Some(2))),
+          projectRelation = Some(
+            RelationFilter
+              .empty[Developer, Project, ProjectFilter]
+              .copy(NONE = Some(relationFilter3))
+          )
+        )
+
+        val selectedDevelopers3 = Table[Developer, DeveloperKey]
+          .select(filter3, Some("d"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedDevelopers3 should contain theSameElementsAs List(
+          Developer(6L, "Mario Rigatone", 2, Some(4L))
         )
       }
 
