@@ -37,19 +37,15 @@ object RelationHelper {
       }
       .mkString(s" $And ")
     // DIRECT LINK - EVERY
-    // (SELECT COUNT(*)
+    // EXISTS (
+    //   SELECT 1
     //   FROM (SELECT * FROM rightTable WHERE filter) as rightTable
-    //   WHERE rightTable.id = leftTable.id)
-    //   =
-    //  (SELECT COUNT(*)
+    //   WHERE rightTable.id = leftTable.id
+    //   HAVING COUNT(*) =
+    //   SELECT COUNT(*)
     //   FROM rightTable
-    //   WHERE rightTable.id = leftTable.id)
-    /*
-    val makeEveryFragment = (filterFragment: Fragment) =>
-      const(s"($Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $joinCondition $And") ++
-        filterFragment ++
-        const(s") = ($Select $Count ($Star) $From ${rightQuerySyntax.aliasedName} $Where $joinCondition)")
-     */
+    //   WHERE rightTable.id = leftTable.id
+    // )
     val makeEveryFragment = (filterFragment: Fragment) =>
       const(
         s"$Exists (" +

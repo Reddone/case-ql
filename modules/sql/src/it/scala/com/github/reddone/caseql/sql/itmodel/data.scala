@@ -101,7 +101,7 @@ object data {
     Task(
       1L,
       "POC of Top Decking script",
-      None,
+      Some("Description of what to do is deducible with ease from the task label"),
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 1)),
       1L
     ),
@@ -115,7 +115,7 @@ object data {
     Task(
       3L,
       "Copy pasta some random text ",
-      Some("Description of what to do is deducible with ease from the task label"),
+      None,
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 2)),
       2L
     ),
@@ -136,7 +136,7 @@ object data {
     Task(
       6L,
       "Report all teammates",
-      Some("Description of what to do is deducible with ease from the task label"),
+      None,
       Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 3)),
       3L
     )

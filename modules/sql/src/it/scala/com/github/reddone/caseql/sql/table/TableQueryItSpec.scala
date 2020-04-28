@@ -204,7 +204,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
         )
       }
 
-      "succeed to execute a select with a direct relation filter" ignore {
+      "succeed to execute a select with a direct relation filter" in {
         val relationFilter1 = TaskFilter.empty.copy(
           description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
         )
@@ -216,7 +216,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           )
         )
 
-        val selectedProjects = Table[Project, ProjectKey]
+        val selectedProjects1 = Table[Project, ProjectKey]
           .select(filter1, Some("p"))
           .execute
           .transact(rollingBack(xa))
@@ -224,10 +224,59 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .toList
           .unsafeRunSync()
 
-        selectedProjects should contain theSameElementsAs List()
+        selectedProjects1 should contain theSameElementsAs List(
+          Project(1L, "Topdeckin N' Wreckin", Some("Kripp most loved hobby"))
+        )
+
+        val relationFilter2 = TaskFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter2 = ProjectFilter.empty.copy(
+          taskRelation = Some(
+            RelationFilter
+              .empty[Project, Task, TaskFilter]
+              .copy(SOME = Some(relationFilter2))
+          )
+        )
+
+        val selectedProjects2 = Table[Project, ProjectKey]
+          .select(filter2, Some("p"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedProjects2 should contain theSameElementsAs List(
+          Project(1L, "Topdeckin N' Wreckin", Some("Kripp most loved hobby")),
+          Project(3L, "Welcome to Summoner Rift", Some("Fedding like there's no tomorrow"))
+        )
+
+        val relationFilter3 = TaskFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false)))
+        )
+        val filter3 = ProjectFilter.empty.copy(
+          taskRelation = Some(
+            RelationFilter
+              .empty[Project, Task, TaskFilter]
+              .copy(NONE = Some(relationFilter3))
+          )
+        )
+
+        val selectedProjects3 = Table[Project, ProjectKey]
+          .select(filter3, Some("p"))
+          .execute
+          .transact(rollingBack(xa))
+          .compile
+          .toList
+          .unsafeRunSync()
+
+        selectedProjects3 should contain theSameElementsAs List(
+          Project(2L, "Random Pasta", None)
+        )
       }
 
-      "succeed to execute a select with a deep relation filter" ignore {
+      "succeed to execute a select with a deep relation filter" in {
         val nestedRelationFilter = TaskFilter.empty
         val relationFilter = ProjectFilter.empty.copy(
           taskRelation = Some(
