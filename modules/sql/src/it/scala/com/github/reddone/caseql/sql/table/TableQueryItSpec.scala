@@ -277,8 +277,13 @@ class TableQueryItSpec extends PgAnyWordSpec {
       }
 
       "succeed to execute a select with a deep relation filter" in {
-        val nestedRelationFilter = TaskFilter.empty
+        val nestedRelationFilter = TaskFilter.empty.copy(
+          deadline = Some(
+            TimestampFilter.empty.copy(LTE = Some(Timestamp.from(Instant.EPOCH.plusSeconds(3600L * 2))))
+          )
+        )
         val relationFilter = ProjectFilter.empty.copy(
+          description = Some(StringFilterOption.empty.copy(IS_NULL = Some(false))),
           taskRelation = Some(
             RelationFilter
               .empty[Project, Task, TaskFilter]
@@ -286,6 +291,7 @@ class TableQueryItSpec extends PgAnyWordSpec {
           )
         )
         val filter = DeveloperFilter.empty.copy(
+          age = Some(IntFilter.empty.copy(LTE = Some(2))),
           projectRelation = Some(
             RelationFilter
               .empty[Developer, Project, ProjectFilter]
@@ -301,7 +307,11 @@ class TableQueryItSpec extends PgAnyWordSpec {
           .toList
           .unsafeRunSync()
 
-        selectedDevelopers should contain theSameElementsAs List()
+        selectedDevelopers should contain theSameElementsAs List(
+          Developer(2L, "Eddy Pasterino", 1, Some(1L)),
+          Developer(3L, "Tasty the Tester", 1, Some(1L)),
+          Developer(5L, "Cyberino Matterino", 2, Some(4L))
+        )
       }
 
       "succeed to execute a simple select by key" in {
