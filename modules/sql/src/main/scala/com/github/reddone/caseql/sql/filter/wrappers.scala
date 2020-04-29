@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.filter
 
-import com.github.reddone.caseql.sql.table.{RelationHelper, TableFilter, TableLink}
+import com.github.reddone.caseql.sql.table.{RelationHelper, TableFilter, TableLink, TableSyntax}
 import doobie.util.fragment.Fragment
 
 object wrappers {
@@ -50,5 +50,19 @@ object wrappers {
     def empty[A, B, FB <: EntityFilter[FB]]: RelationFilter[A, B, FB] = RelationFilter[A, B, FB](None, None, None)
 
     def selfEmpty[A, FA <: EntityFilter[FA]]: RelationFilter[A, A, FA] = RelationFilter[A, A, FA](None, None, None)
+  }
+
+  private def reAliasIfSelf[A, B](leftSyntax: TableSyntax[A], rightSyntax: TableSyntax[B]): TableSyntax[B] = {
+    if (leftSyntax.aliasedName == rightSyntax.aliasedName) { // it's the same table
+      if (rightSyntax.alias.isEmpty) {                       // and right part has no alias
+        val newAlias = s"self"
+        rightSyntax.withAlias("self")
+      } else {
+        val newAlias = s"${rightSyntax.alias}_self"          // or if right part has an alias
+        rightSyntax.withAlias(newAlias)                      // append '_self' to existing alias
+      }                                                      // it's not the same table
+    } else {                                                 // keep using right alias
+      rightSyntax                                            // because it's not a self join
+    }
   }
 }

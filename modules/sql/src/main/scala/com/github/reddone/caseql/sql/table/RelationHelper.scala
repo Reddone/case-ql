@@ -61,7 +61,7 @@ object RelationHelper {
             s"$Where $joinCondition ) )"
         )
     val every = f.EVERY
-      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
+      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightQuerySyntax.alias)))
       .map(makeEveryFragment)
     // DIRECT LINK - SOME (negation of NONE)
     // EXISTS (
@@ -80,7 +80,7 @@ object RelationHelper {
             s"$Where $joinCondition )"
         )
     val some = f.SOME
-      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
+      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightQuerySyntax.alias)))
       .map(makeSomeFragment)
     // DIRECT LINK - NONE (negation of SOME)
     // NOT EXISTS (
@@ -99,7 +99,7 @@ object RelationHelper {
             s"$Where $joinCondition )"
         )
     val none = f.NONE
-      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
+      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightQuerySyntax.alias)))
       .map(makeNoneFragment)
     // AND between EVERY, SOME, NONE
     FragmentUtils.optionalAndOpt(every, some, none)
@@ -147,7 +147,7 @@ object RelationHelper {
             s"$Where $leftJoinCondition $And ${areNulls(rightQuerySyntax, rightJoinFields.map(_._1))} )"
         )
     val every = f.EVERY
-      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
+      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightQuerySyntax.alias)))
       .map(makeEveryFragment)
     // JUNCTION LINK - SOME (negation of NONE)
     // (you can use LEFT JOIN and add "IS NOT NULL rightTable.id")
@@ -170,7 +170,7 @@ object RelationHelper {
             s"$Where $leftJoinCondition )"
         )
     val some = f.SOME
-      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
+      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightQuerySyntax.alias)))
       .map(makeSomeFragment)
     // JUNCTION LINK - NONE (negation of SOME)
     // (you can use LEFT JOIN and add "IS NOT NULL rightTable.id")
@@ -193,7 +193,7 @@ object RelationHelper {
             s"$Where $leftJoinCondition )"
         )
     val none = f.NONE
-      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightAlias)))
+      .flatMap(tableFilter.byFilterFragment(_, StringUtils.strToOpt(rightQuerySyntax.alias)))
       .map(makeNoneFragment)
     // AND between EVERY, SOME, NONE
     FragmentUtils.optionalAndOpt(every, some, none)
@@ -210,7 +210,7 @@ object RelationHelper {
       rightSyntax.alias                                      // because it's not a self join
     }
 
-  private def areNulls[A](syntax: TableSyntax[A], fields: Seq[String]): String = {
+  private def areNulls(syntax: TableSyntax[_], fields: Seq[String]): String = {
     fields.map(syntax.aliasedColumn).map(_ + s" $IsNull").mkString(s" $And ")
   }
 }
