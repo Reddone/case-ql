@@ -437,6 +437,22 @@ object InputDefinition {
       OffsetDateTimeType
     )
 
+  // Filter[ZonedDateTime]
+  implicit val ZonedDateTimeFilterType: InputObjectType[ZonedDateTimeFilter] =
+    makeAbstractTemporalFilterType(
+      "ZonedDateTimeFilter",
+      "Filter for a ZonedDateTime value",
+      ZonedDateTimeType
+    )
+
+  // FilterOption[ZonedDateTime]
+  implicit val ZonedDateTimeFilterOptionType: InputObjectType[ZonedDateTimeFilterOption] =
+    makeAbstractTemporalFilterOptionType(
+      "ZonedDateTimeFilterOption",
+      "Filter for an Option[ZonedDateTime] value",
+      ZonedDateTimeType
+    )
+
   // Filter[Date]
   implicit val DateFilterType: InputObjectType[DateFilter] =
     makeAbstractDateFilterType(

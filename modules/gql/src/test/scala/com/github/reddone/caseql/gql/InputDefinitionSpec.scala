@@ -1,90 +1,142 @@
 package com.github.reddone.caseql.gql
 
-import com.github.reddone.caseql.sql.filter.primitives._
-import com.github.reddone.caseql.circe.filter.decoders._
 import com.github.reddone.caseql.gql.InputDefinition._
-import sangria.ast.Document
-import sangria.parser.QueryParser
-import sangria.renderer.QueryRenderer
-import io.circe._
-import io.circe.generic.semiauto._
+import com.github.reddone.caseql.gql.TestInputDefinition._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import sangria.macros.derive.{InputObjectTypeDescription, InputObjectTypeName, deriveInputObjectType}
-import sangria.marshalling.circe._
+import sangria.ast
 import sangria.macros._
 import sangria.schema._
-import sangria.validation.QueryValidator
+import sangria.validation.{QueryValidator, Violation}
 
 class InputDefinitionSpec extends AnyFlatSpec with Matchers {
-
-  case class InputFilter(
-      aBoolean: Option[BooleanFilter],
-      anOptionBoolean: Option[BooleanFilterOption]
-  )
-
-  implicit val inputFilterType: InputObjectType[InputFilter] = deriveInputObjectType[InputFilter](
-    InputObjectTypeName("InputFilter"),
-    InputObjectTypeDescription("InputFilter")
-  )
 
   val Query: ObjectType[Unit, Unit] = ObjectType[Unit, Unit](
     "Query",
     fields[Unit, Unit](
       Field(
-        "test",
+        "liveness",
         StringType,
-        Some("Test"),
+        Some("Liveness probe"),
         arguments = Nil,
         resolve = _ => "Hey there!"
       )
     )
   )
 
+  val AllFilterTypes: List[Type with Named] = List(
+    BooleanFilterType,
+    BooleanFilterOptionType,
+    ByteFilterType,
+    ByteFilterOptionType,
+    ByteArrayFilterType,
+    ByteArrayFilterOptionType,
+    IntFilterType,
+    IntFilterOptionType,
+    LongFilterType,
+    LongFilterOptionType,
+    DoubleFilterType,
+    DoubleFilterOptionType,
+    BigDecimalFilterType,
+    BigDecimalFilterOptionType,
+    StringFilterType,
+    StringFilterOptionType,
+    InstantFilterType,
+    InstantFilterOptionType,
+    LocalDateFilterType,
+    LocalDateFilterOptionType,
+    LocalTimeFilterType,
+    LocalTimeFilterOptionType,
+    LocalDateTimeFilterType,
+    LocalDateTimeFilterOptionType,
+    OffsetTimeFilterType,
+    OffsetTimeFilterOptionType,
+    OffsetDateTimeFilterType,
+    OffsetDateTimeFilterOptionType,
+    ZonedDateTimeFilterType,
+    ZonedDateTimeFilterOptionType,
+    DateFilterType,
+    DateFilterOptionType,
+    TimeFilterType,
+    TimeFilterOptionType,
+    TimestampFilterType,
+    TimestampFilterOptionType
+  )
+
+  val AllModifierTypes: List[Type with Named] = List(
+    BooleanModifierType,
+    BooleanModifierOptionType,
+    ByteModifierType,
+    ByteModifierOptionType,
+    ByteArrayModifierType,
+    ByteArrayModifierOptionType,
+    IntModifierType,
+    IntModifierOptionType,
+    LongModifierType,
+    LongModifierOptionType,
+    DoubleModifierType,
+    DoubleModifierOptionType,
+    BigDecimalModifierType,
+    BigDecimalModifierOptionType,
+    StringModifierType,
+    StringModifierOptionType,
+    InstantModifierType,
+    InstantModifierOptionType,
+    LocalDateModifierType,
+    LocalDateModifierOptionType,
+    LocalTimeModifierType,
+    LocalTimeModifierOptionType,
+    LocalDateTimeModifierType,
+    LocalDateTimeModifierOptionType,
+    OffsetTimeModifierType,
+    OffsetTimeModifierOptionType,
+    OffsetDateTimeModifierType,
+    OffsetDateTimeModifierOptionType,
+    ZonedDateTimeModifierType,
+    ZonedDateTimeModifierOptionType,
+    DateModifierType,
+    DateModifierOptionType,
+    TimeModifierType,
+    TimeModifierOptionType,
+    TimestampModifierType,
+    TimestampModifierOptionType
+  )
+
+  val AllTestFilterTypes: List[Type with Named] = List(
+    TestFilterType,
+    TestLeftFilterType,
+    TestDirectFilterType,
+    TestRightFilterType,
+    TestJunctionFilterType
+  )
+
+  val AllTestModifierTypes: List[Type with Named] = List(
+    TestModifierType
+  )
+
   val schema: Schema[Unit, Unit] = Schema(
     query = Query,
     mutation = None,
     subscription = None,
-    additionalTypes = inputFilterType :: Nil
+    additionalTypes = AllFilterTypes ++ AllModifierTypes ++ AllTestFilterTypes ++ AllTestModifierTypes
   )
 
-//  final case class AllFilter(
-//      boolean: Option[Filter[Boolean]]
-//  )
-//
-//  object AllFilter {
-//    implicit val decoder: Decoder[AllFilter] = deriveDecoder[AllFilter]
-//  }
-
-  "InputDefinition macro" should "work with Filter and FilterOption" in {
-    println(schema.toAst.renderPretty)
-
-    val inp = gqlInpDoc"""
-    {
-      foo: "bar"
-      bar: "foo"
-      list: [
-        {baz: RED}
-        {baz: FOO_BAR}
-        {test: 1}
-        {}
-      ]
-    }
-  """
-    QueryValidator.default.validateInputDocument(schema, inp, "InputFilter")
-
-    val inp2 = gqlInpDoc"""
-    {
-      aBoolean: {
-        EQ: 3
-        CC : 2
+  "InputDefinition" should "work for filters" in {
+    val booleanInput      = gqlInpDoc"""
+      {
+        EQ: true
       }
-      anOptionBoolean: {
-        EQ: aaa
-        CC: 4444
-      }
-    }
-  """
-    QueryValidator.default.validateInputDocument(schema, inp2, inputFilterType).foreach(println)
+      """
+    val booleanViolations = validateInput(booleanInput, BooleanFilterType)
+
+    booleanViolations shouldBe empty
+  }
+
+  it should "work for modifiers" in {
+
+  }
+
+  private def validateInput(doc: ast.InputDocument, inputType: InputType[_]): Vector[Violation] = {
+    QueryValidator.default.validateInputDocument(schema, doc, inputType)
   }
 }
