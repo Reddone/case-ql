@@ -1,5 +1,6 @@
 package com.github.reddone.caseql.gql
 
+import com.github.reddone.caseql.gql.EnumDefinition._
 import com.github.reddone.caseql.gql.InputDefinition._
 import com.github.reddone.caseql.gql.TestInputDefinition._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -64,6 +65,8 @@ class InputDefinitionSpec extends AnyFlatSpec with Matchers {
   )
 
   val AllModifierTypes: List[Type with Named] = List(
+    ModifierActionType,
+    ModifierOptionActionType,
     BooleanModifierType,
     BooleanModifierOptionType,
     ByteModifierType,
@@ -122,18 +125,98 @@ class InputDefinitionSpec extends AnyFlatSpec with Matchers {
   )
 
   "InputDefinition" should "work for filters" in {
-    val booleanInput      = gqlInpDoc"""
+    val testFilterInput      = gqlInpDoc"""
       {
-        EQ: true
+        field1: {
+          EQ: 1
+          NOT_EQ: 1
+          IN: [1, 2, 3]
+          NOT_IN: [1, 2, 3]
+          LT: 1
+          LTE: 1
+          GT: 1
+          GTE: 1
+        }
+        field2: {
+          EQ: "a"
+          NOT_EQ: "a"
+          IN: ["a", "b", "c"]
+          NOT_IN: ["a", "b", "c"]
+          CONTAINS: "a"
+          CONTAINS_EVERY: ["a", "b", "c"]
+          CONTAINS_SOME: ["a", "b", "c"]
+          CONTAINS_NONE: ["a", "b", "c"]
+          IS_NULL: false
+        }
+        field3: {
+          EQ: 1
+          NOT_EQ: 1
+          IN: [1, 2, 3]
+          NOT_IN: [1, 2, 3]
+          LT: 1
+          LTE: 1
+          GT: 1
+          GTE: 1
+        }
+        field4: {
+          EQ: "2020-02-02 20:20:20"
+          NOT_EQ: "2020-02-02 20:20:20"
+          IN: ["2020-02-02 20:20:20", "2010-10-10 10:10:10"]
+          NOT_IN: ["2020-02-02 20:20:20", "2010-10-10 10:10:10"]
+          LT: "2020-02-02 20:20:20"
+          LTE: "2020-02-02 20:20:20"
+          GT: "2020-02-02 20:20:20"
+          GTE: "2020-02-02 20:20:20"
+          IS_NULL: false
+        }
+        AND: [
+          {
+            field1: {
+              EQ: 1
+            }
+          }
+        ]
+        OR: [
+          {
+            field1: {
+              EQ: 1
+            }
+          }
+        ]
+        NOT: {
+          field1: {
+            EQ: 1
+          }
+        }
       }
       """
-    val booleanViolations = validateInput(booleanInput, BooleanFilterType)
+    val testFilterViolations = validateInput(testFilterInput, TestFilterType)
 
-    booleanViolations shouldBe empty
+    testFilterViolations shouldBe empty
   }
 
   it should "work for modifiers" in {
+    val testModifierInput      = gqlInpDoc"""
+      {
+        field1: { 
+          action: SET
+          value: 1
+        }
+        field2: { 
+          action: DEFAULT
+        }
+        field3: { 
+          action: SET
+          value: 1
+        }
+        field4: { 
+          action: NULL
+        }
+      }
+      """
+    val testModifierViolations = validateInput(testModifierInput, TestModifierType)
 
+    testModifierViolations shouldBe empty
   }
 
   private def validateInput(doc: ast.InputDocument, inputType: InputType[_]): Vector[Violation] = {
