@@ -2,42 +2,10 @@ package com.github.reddone.caseql.gql
 
 import com.github.reddone.caseql.gql.InputDefinition._
 import com.github.reddone.caseql.sql.model.db._
-import sangria.macros.derive.{InputObjectTypeDescription, InputObjectTypeName, deriveInputObjectType}
+import sangria.macros.derive._
 import sangria.schema.InputObjectType
 
 object TestInputDefinition {
-
-  // KEY
-
-  implicit val TestKeyType: InputObjectType[TestKey] =
-    deriveInputObjectType[TestKey](
-      InputObjectTypeName("TestKey"),
-      InputObjectTypeDescription("Key for Test")
-    )
-
-  implicit val TestLeftKeyType: InputObjectType[TestLeftKey] =
-    deriveInputObjectType[TestLeftKey](
-      InputObjectTypeName("TestLeftKey"),
-      InputObjectTypeDescription("Key for TestLeft")
-    )
-
-  implicit val TestDirectKeyType: InputObjectType[TestDirectKey] =
-    deriveInputObjectType[TestDirectKey](
-      InputObjectTypeName("TestDirectKey"),
-      InputObjectTypeDescription("Key for TestDirect")
-    )
-
-  implicit val TestRightKeyType: InputObjectType[TestRightKey] =
-    deriveInputObjectType[TestRightKey](
-      InputObjectTypeName("TestRightKey"),
-      InputObjectTypeDescription("Key for TestRight")
-    )
-
-  implicit val TestJunctionKeyType: InputObjectType[TestJunctionKey] =
-    deriveInputObjectType[TestJunctionKey](
-      InputObjectTypeName("TestJunctionKey"),
-      InputObjectTypeDescription("Key for TestJunction")
-    )
 
   // FILTER
 

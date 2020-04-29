@@ -36,7 +36,7 @@ object InputDefinition {
   private val ActionName = "action"
   private val ValueName  = "value"
 
-  // FILTERS
+  // FILTER
 
   // Filter[T: Numeric]
   def makeAbstractNumericFilterType[T: Numeric, R <: AbstractNumericFilter[T]](
@@ -485,7 +485,7 @@ object InputDefinition {
       TimestampType
     )
 
-  // MODIFIERS
+  // MODIFIER
 
   def makeModifierType[T, R <: AbstractGenericModifier[T]](
       name: String,
@@ -802,6 +802,8 @@ object InputDefinition {
       "Modifier for an Option[Timestamp] value",
       TimestampType
     )
+
+  // RELATION FILTER
 
   implicit def relationFilterType[A, B, FB <: EntityFilter[FB]: TypeTag](
       implicit inputType: InputObjectType[FB]

@@ -3,7 +3,7 @@ package com.github.reddone.caseql.gql
 import com.github.reddone.caseql.circe.itmodel.decoders._
 import com.github.reddone.caseql.gql.ItTestInputDefinition._
 import com.github.reddone.caseql.sql.itmodel.db._
-import sangria.schema.Argument
+import sangria.schema._
 import sangria.marshalling.circe._
 
 object ItTestArgumentDefinition {
