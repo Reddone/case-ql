@@ -9,19 +9,21 @@ import javatime._
 
 object implicits {
 
+  val useAlias = false
+
   // TABLE
 
   implicit val developerTable: Table[Developer, DeveloperKey] =
-    Table.derive[Developer, DeveloperKey](useTableAlias = false)
+    Table.derive[Developer, DeveloperKey](useTableAlias = useAlias)
 
   implicit val projectTable: Table[Project, ProjectKey] =
-    Table.derive[Project, ProjectKey](useTableAlias = false)
+    Table.derive[Project, ProjectKey](useTableAlias = useAlias)
 
   implicit val dplTable: Table[DeveloperProjectLink, DeveloperProjectLinkKey] =
-    Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey](useTableAlias = false)
+    Table.derive[DeveloperProjectLink, DeveloperProjectLinkKey](useTableAlias = useAlias)
 
   implicit val taskTable: Table[Task, TaskKey] =
-    Table.derive[Task, TaskKey](useTableAlias = false)
+    Table.derive[Task, TaskKey](useTableAlias = useAlias)
 
   // LINK
 

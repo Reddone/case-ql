@@ -19,12 +19,12 @@ object primitives {
     def processPrimitiveFilter(column: String): Option[Fragment]
 
     final def toOptionFragment[A](
-        alias: Option[String],
+        alias: String,
         tableSyntax: TableSyntax[A],
         field: String
     ): Option[Fragment] = {
-      val querySyntax = alias.map(tableSyntax.withAlias).getOrElse(tableSyntax)
-      val column      = querySyntax.aliasedColumn(field)
+      val querySyntax = tableSyntax.withAlias(alias)
+      val column      = querySyntax.selectionColumn(field)
       processPrimitiveFilter(column)
     }
   }

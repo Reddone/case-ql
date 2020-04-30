@@ -93,7 +93,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     val alias1  = "a1"
     val result1 = tableFilter1.primitiveFilterFragments(filter1)
 
-    result1(Some(alias1)).map(_.map(_.toString)) shouldBe List(
+    result1(alias1).map(_.map(_.toString)) shouldBe List(
       Some("Fragment(\"(a1.field1 = ? ) AND (a1.field1 IN (?, ?) ) \")"),
       Some("Fragment(\"(a1.field2 LIKE ? ) \")"),
       None,
@@ -109,7 +109,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     val alias2  = "a2"
     val result2 = tableFilter2.primitiveFilterFragments(filter2)
 
-    result2(Some(alias2)).map(_.map(_.toString)) shouldBe List(
+    result2(alias2).map(_.map(_.toString)) shouldBe List(
       None,
       Some("Fragment(\"(a2.field2 LIKE ? ) \")"),
       None,
@@ -122,7 +122,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
 
     val filter1 = TestFilter.empty
     val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(filter1, Some(alias1))
+    val result1 = tableFilter.byFilterFragment(filter1, alias1)
 
     result1 shouldBe None
 
@@ -136,7 +136,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None
     )
     val alias2  = "a2"
-    val result2 = tableFilter.byFilterFragment(filter2, Some(alias2))
+    val result2 = tableFilter.byFilterFragment(filter2, alias2)
 
     result2 shouldBe None
   }
@@ -154,7 +154,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None
     )
     val alias  = "a1"
-    val result = tableFilter.byFilterFragment(filter, Some(alias))
+    val result = tableFilter.byFilterFragment(filter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -189,7 +189,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       NOT = Some(filter)
     )
     val alias  = "a1"
-    val result = tableFilter.byFilterFragment(nestedFilter, Some(alias))
+    val result = tableFilter.byFilterFragment(nestedFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -253,7 +253,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     )
     )
     val alias  = "a1"
-    val result = tableFilter.byFilterFragment(deepFilter, Some(alias))
+    val result = tableFilter.byFilterFragment(deepFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -306,7 +306,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias1  = "a1"
-    val result1 = leftTableFilter.byFilterFragment(leftFilter, Some(alias1))
+    val result1 = leftTableFilter.byFilterFragment(leftFilter, alias1)
 
     result1 shouldBe defined
     result1.get.toString shouldBe "Fragment(\"" +
@@ -331,7 +331,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") " +
       "\")"
 
-    val result2 = leftTableFilter.byFilterFragment(leftFilter, None)
+    val result2 = leftTableFilter.byFilterFragment(leftFilter, "")
 
     result2 shouldBe defined
     result2.get.toString shouldBe "Fragment(\"" +
@@ -378,7 +378,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias  = "a1"
-    val result = directTableFilter.byFilterFragment(directFilter, Some(alias))
+    val result = directTableFilter.byFilterFragment(directFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -424,7 +424,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     )
 
     val alias  = "a1"
-    val result = rightTableFilter.byFilterFragment(rightFilter, Some(alias))
+    val result = rightTableFilter.byFilterFragment(rightFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -517,7 +517,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias  = "a1"
-    val result = directTableFilter.byFilterFragment(directNestedFilter, Some(alias))
+    val result = directTableFilter.byFilterFragment(directNestedFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +

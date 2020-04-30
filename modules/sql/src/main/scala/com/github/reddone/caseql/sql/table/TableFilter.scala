@@ -9,10 +9,10 @@ import shapeless.tag.@@
 import shapeless.{::, HList, HNil, LabelledGeneric, Lazy, Witness, ops}
 
 trait TableFilter[A, FA <: EntityFilter[FA]] {
-  def primitiveFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
-  def relationFilterFragments(filter: FA): Option[String] => List[Option[Fragment]]
+  def primitiveFilterFragments(filter: FA): String => List[Option[Fragment]]
+  def relationFilterFragments(filter: FA): String => List[Option[Fragment]]
 
-  final def byFilterFragment(filter: FA, alias: Option[String]): Option[Fragment] = {
+  final def byFilterFragment(filter: FA, alias: String): Option[Fragment] = {
     // AND between all possible filters
     FragmentUtils.optionalAndOpt(
       // AND between all Option[Filter[_]]
@@ -56,13 +56,13 @@ object TableFilter {
       ): TableFilter[A, FA] = new TableFilter[A, FA] {
         override def primitiveFilterFragments(
             filter: FA
-        ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+        ): String => List[Option[Fragment]] = { alias =>
           tableFilter.value.primitiveFilterFragments(lgenFA.to(filter))(alias).reverse
         }
 
         override def relationFilterFragments(
             filter: FA
-        ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+        ): String => List[Option[Fragment]] = { alias =>
           tableFilter.value.relationFilterFragments(lgenFA.to(filter))(alias).reverse
         }
       }
@@ -71,13 +71,11 @@ object TableFilter {
 }
 
 trait ReprTableFilter[A, ReprA <: HList, ReprFA] {
-  def primitiveFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
-  def relationFilterFragments(filterRepr: ReprFA): Option[String] => List[Option[Fragment]]
+  def primitiveFilterFragments(filterRepr: ReprFA): String => List[Option[Fragment]]
+  def relationFilterFragments(filterRepr: ReprFA): String => List[Option[Fragment]]
 }
 
 object ReprTableFilter extends LowPriorityReprTableFilter {
-
-  def pass: Option[String] => List[Option[Fragment]] = (_: Option[String]) => Nil
 
   implicit def hconsTableFilter[A, ReprA <: HList, K <: Symbol, V, T <: HList](
       implicit
@@ -88,14 +86,14 @@ object ReprTableFilter extends LowPriorityReprTableFilter {
     new ReprTableFilter[A, ReprA, FieldType[K, V] :: T] {
       override def primitiveFilterFragments(
           filterRepr: FieldType[K, V] :: T
-      ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+      ): String => List[Option[Fragment]] = { alias =>
         tailFilter.primitiveFilterFragments(filterRepr.tail)(alias) ++
           headFilter.primitiveFilterFragments(filterRepr.head)(alias)
       }
 
       override def relationFilterFragments(
           filterRepr: FieldType[K, V] :: T
-      ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+      ): String => List[Option[Fragment]] = { alias =>
         tailFilter.relationFilterFragments(filterRepr.tail)(alias) ++
           headFilter.relationFilterFragments(filterRepr.head)(alias)
       }
@@ -115,13 +113,13 @@ trait LowPriorityReprTableFilter extends LowestPriorityReprTableFilter {
     new ReprTableFilter[A, ReprA, FieldType[K, V]] {
       override def primitiveFilterFragments(
           filterRepr: FieldType[K, V]
-      ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+      ): String => List[Option[Fragment]] = { alias =>
         List(filterRepr.flatMap(f => f.toOptionFragment(alias, tableSyntax, witness.value.name)))
       }
 
       override def relationFilterFragments(
           filterRepr: FieldType[K, V]
-      ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
+      ): String => List[Option[Fragment]] = _ => Nil
     }
 
   implicit def relationTableFilter[A, ReprA <: HList, K <: Symbol, V, B, FB <: EntityFilter[FB]](
@@ -134,11 +132,11 @@ trait LowPriorityReprTableFilter extends LowestPriorityReprTableFilter {
     new ReprTableFilter[A, ReprA, FieldType[K, V]] {
       override def primitiveFilterFragments(
           filterRepr: FieldType[K, V]
-      ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
+      ): String => List[Option[Fragment]] = _ => Nil
 
       override def relationFilterFragments(
           filterRepr: FieldType[K, V]
-      ): Option[String] => List[Option[Fragment]] = { alias: Option[String] =>
+      ): String => List[Option[Fragment]] = { alias =>
         List(filterRepr.flatMap(f => f.toOptionFragment(alias, tableLink, tableFilter.value)))
       }
     }
@@ -147,11 +145,11 @@ trait LowPriorityReprTableFilter extends LowestPriorityReprTableFilter {
     new ReprTableFilter[A, ReprA, HNil] {
       override def primitiveFilterFragments(
           filterRepr: HNil
-      ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
+      ): String => List[Option[Fragment]] = _ => Nil
 
       override def relationFilterFragments(
           filterRepr: HNil
-      ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
+      ): String => List[Option[Fragment]] = _ => Nil
     }
 }
 
@@ -188,10 +186,10 @@ trait LowestPriorityReprTableFilter {
       : ReprTableFilter[A, ReprA, FieldType[K, V]] = new ReprTableFilter[A, ReprA, FieldType[K, V]] {
     override def primitiveFilterFragments(
         filterRepr: FieldType[K, V]
-    ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
+    ): String => List[Option[Fragment]] = _ => Nil
 
     override def relationFilterFragments(
         filterRepr: FieldType[K, V]
-    ): Option[String] => List[Option[Fragment]] = ReprTableFilter.pass
+    ): String => List[Option[Fragment]] = _ => Nil
   }
 }

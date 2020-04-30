@@ -1,7 +1,7 @@
 package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.{Table, TableFilter}
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableSyntax}
 import com.github.reddone.caseql.sql.tokens.{Delete, From, Where}
 import doobie._
 import Fragment._
@@ -14,10 +14,12 @@ sealed trait DeleteHasKey    extends DeleteBuilderState
 
 sealed abstract class DeleteBuilder[S, A, K](
     table: Table[A, K]
-) extends QueryBuilder[A, K](table, None) { self =>
+) extends QueryBuilder[A, K](table) { self =>
+
+  final val querySyntax: TableSyntax[A] = table.syntax.withAlias("")
 
   private[this] var fragment: Fragment = const(
-    s"$Delete $From ${querySyntax.name}"
+    s"$Delete $From ${querySyntax.fullName}"
   )
 
   def withFilter[FA <: EntityFilter[FA]](filter: FA)(
@@ -26,7 +28,7 @@ sealed abstract class DeleteBuilder[S, A, K](
       tableFilter: TableFilter[A, FA]
   ): DeleteBuilder[S with DeleteHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, None)
+      .byFilterFragment(filter, querySyntax.alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
@@ -36,7 +38,7 @@ sealed abstract class DeleteBuilder[S, A, K](
   def withKey(key: K)(
       implicit ev: S =:= DeleteHasTable
   ): DeleteBuilder[S with DeleteHasKey, A, K] = {
-    val whereFragment = const(Where) ++ byKeyFragment(key)
+    val whereFragment = const(Where) ++ byKeyFragment(key, querySyntax.alias)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[DeleteBuilder[S with DeleteHasKey, A, K]]
   }
