@@ -8,7 +8,7 @@ import doobie.util.ExecutionContexts
 
 object TransactorResource {
 
-  def create[F[_]: Async: ContextShift](config: Config): Resource[F, HikariTransactor[F]] = {
+  def apply[F[_]: Async: ContextShift](config: Config): Resource[F, HikariTransactor[F]] = {
     val doobieConfig = DoobieTypesafeConfig.valueOf(config)
 
     for {

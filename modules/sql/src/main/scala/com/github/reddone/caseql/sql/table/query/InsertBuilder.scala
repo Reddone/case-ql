@@ -2,8 +2,8 @@ package com.github.reddone.caseql.sql.table.query
 
 import cats.implicits._
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
-import com.github.reddone.caseql.sql.table.{Table, TableModifier}
-import com.github.reddone.caseql.sql.tokens.{InsertInto, Values, Default}
+import com.github.reddone.caseql.sql.table.{Table, TableModifier, TableSyntax}
+import com.github.reddone.caseql.sql.tokens.{Default, InsertInto, Values}
 import doobie._
 import Fragment._
 
@@ -13,10 +13,12 @@ sealed trait InsertHasModifier extends InsertBuilderState
 
 sealed abstract class InsertBuilder[S <: InsertBuilderState, A, K](
     table: Table[A, K]
-) extends QueryBuilder[A, K](table, None) { self =>
+) extends QueryBuilder[A, K](table) { self =>
+
+  final val querySyntax: TableSyntax[A] = table.syntax.withAlias("")
 
   private[this] var fragment: Fragment = const(
-    s"$InsertInto ${querySyntax.name}"
+    s"$InsertInto ${querySyntax.fullName}"
   )
 
   def withModifier[MA <: EntityModifier[MA]](modifier: MA)(
@@ -38,16 +40,16 @@ sealed abstract class InsertBuilder[S <: InsertBuilderState, A, K](
 
   def buildInsertOne(
       implicit ev: S =:= InsertHasTable with InsertHasModifier
-  ): SQLAction[Int] =
-    new SQLAction[Int] {
+  ): SqlAction[Int] =
+    new SqlAction[Int] {
       override def toFragment: Fragment       = fragment
       override def execute: ConnectionIO[Int] = fragment.update.run
     }
 
   def buildInsertOneReturningKey(
       implicit ev: S =:= InsertHasTable with InsertHasModifier
-  ): SQLAction[K] =
-    new SQLAction[K] {
+  ): SqlAction[K] =
+    new SqlAction[K] {
       override def toFragment: Fragment = fragment
       override def execute: ConnectionIO[K] =
         fragment.update.withUniqueGeneratedKeys[K](querySyntax.keyColumns: _*)(table.keyRead)

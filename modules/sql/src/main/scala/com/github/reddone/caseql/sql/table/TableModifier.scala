@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.modifier.models.Modifier
+import com.github.reddone.caseql.sql.modifier.primitives.Modifier
 import com.github.reddone.caseql.sql.modifier.wrappers.EntityModifier
 import doobie._
 import shapeless.labelled.FieldType

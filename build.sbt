@@ -1,7 +1,7 @@
 import sbtrelease._
 
-val mainScala = "2.12.10"
-val allScala  = Seq("2.13.1", mainScala)
+val mainScala = "2.12.11"
+val allScala  = Seq("2.13.2", mainScala)
 
 name := "case-ql"
 
@@ -11,47 +11,66 @@ lazy val root = project
     noPublishSettings,
     releaseSettings
   )
-  .aggregate(sql, gql, example)
+  .aggregate(
+    `case-ql-sql`,
+    `case-ql-circe`,
+    `case-ql-gql`,
+    `case-ql-example`
+  )
 
-lazy val sql = project
+lazy val `case-ql-sql` = project
   .in(file("modules/sql"))
   .settings(settings)
   .settings(
     name := "case-ql-sql",
-    libraryDependencies ++= Dependencies.Jars.`sql`,
+    libraryDependencies ++= Dependencies.Jars.`case-ql-sql`,
     publishSettings,
     Defaults.itSettings
   )
   .configs(IntegrationTest)
 
-lazy val gql = project
+lazy val `case-ql-circe` = project
+  .in(file("modules/circe"))
+  .dependsOn(
+    `case-ql-sql` % "it->it;test->test;compile->compile"
+  )
+  .settings(settings)
+  .settings(
+    name := "case-ql-circe",
+    libraryDependencies ++= Dependencies.Jars.`case-ql-circe`,
+    publishSettings,
+    Defaults.itSettings
+  )
+  .configs(IntegrationTest)
+
+lazy val `case-ql-gql` = project
   .in(file("modules/gql"))
   .dependsOn(
-    sql % "test->test;compile->compile"
+    `case-ql-sql`   % "it->it;test->test;compile->compile",
+    `case-ql-circe` % "it->it;test->test;compile->compile"
   )
   .settings(settings)
   .settings(
     name := "case-ql-gql",
-    libraryDependencies ++= Dependencies.Jars.`gql`,
+    libraryDependencies ++= Dependencies.Jars.`case-ql-gql`,
     publishSettings,
     Defaults.itSettings
   )
   .configs(IntegrationTest)
 
-lazy val example = project
+lazy val `case-ql-example` = project
   .in(file("modules/example"))
   .dependsOn(
-    sql,
-    gql
+    `case-ql-sql`,
+    `case-ql-circe`,
+    `case-ql-gql`
   )
   .settings(settings)
   .settings(
     name := "case-ql-example",
-    libraryDependencies ++= Dependencies.Jars.`example`,
+    libraryDependencies ++= Dependencies.Jars.`case-ql-example`,
     noPublishSettings,
-    javaOptions in Compile += "-Dlog4j.configurationFile=src/main/resources/log4j2.yml",
-    javaOptions in Test += "-Dlog4j.configurationFile=src/test/resources/log4j2-test.yml",
-    javaOptions in IntegrationTest += "-Dlog4j.configurationFile=src/it/resources/log4j2-it.yml"
+    javaOptions in Compile += "-Dlog4j.configurationFile=src/main/resources/log4j2.yml"
   )
 
 lazy val settings = commonSettings ++ scalafmtSettings ++ updateSettings
@@ -65,7 +84,9 @@ lazy val commonSettings = scalacSettings ++ Seq(
   crossScalaVersions := allScala,
   fork := true,
   parallelExecution in Test := false,
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjectorVersion)
+  addCompilerPlugin(
+    "org.typelevel" %% "kind-projector" % Versions.kindProjectorVersion cross CrossVersion.full
+  )
 )
 
 lazy val scalacSettings = Seq(

@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import com.github.reddone.caseql.example.http.CorsSupport
 import com.github.reddone.caseql.example.http.GraphQLSupport._
-import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport._
+import de.heikoseeberger.akkahttpcirce.ErrorAccumulatingCirceSupport.{fromByteStringUnmarshaller => _, _}
 import io.circe.Json
 import io.circe.optics.JsonPath.root
 import io.circe.parser.parse
@@ -19,6 +19,7 @@ import sangria.marshalling.circe._
 import sangria.parser.DeliveryScheme.Try
 import sangria.parser.{QueryParser, SyntaxError}
 import sangria.schema.Schema
+import sangria.slowlog.SlowLog
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -32,7 +33,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
   def schema: Schema[Ctx, Unit]
   def deferredResolver: DeferredResolver[Ctx]
 
-  def executeGraphQL(
+  final def executeGraphQL(
       query: Document,
       userContext: Ctx,
       operationName: Option[String],
@@ -47,7 +48,8 @@ trait AkkaServer[Ctx] extends CorsSupport {
           userContext = userContext,
           operationName = operationName,
           variables = if (variables.isNull) Json.obj() else variables,
-          deferredResolver = deferredResolver
+          deferredResolver = deferredResolver,
+          middleware = if (tracing) SlowLog.apolloTracing :: Nil else Nil
         )
         .map(OK → _)
         .recover {
@@ -56,7 +58,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
         }
     )
 
-  def formatError(error: Throwable): Json = error match {
+  final def formatError(error: Throwable): Json = error match {
     case syntaxError: SyntaxError ⇒
       Json.obj(
         "errors" → Json.arr(
@@ -77,10 +79,10 @@ trait AkkaServer[Ctx] extends CorsSupport {
       throw e
   }
 
-  def formatError(message: String): Json =
+  final def formatError(message: String): Json =
     Json.obj("errors" → Json.arr(Json.obj("message" → Json.fromString(message))))
 
-  def startAkkaServer(serverRoot: String, userContext: Ctx): Future[Http.ServerBinding] = {
+  final def startAkkaServer(serverRoot: String, userContext: Ctx): Future[Http.ServerBinding] = {
     val route: Route =
       optionalHeaderValueByName("X-Apollo-Tracing") { tracing ⇒
         redirectToNoTrailingSlashIfPresent(Found) {
@@ -91,7 +93,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
               }
             } ~ path("graphql") {
               get {
-                parameters(("query", "operationName".?, "variables".?)) {
+                parameters(('query, 'operationName.?, 'variables.?)) {
                   (queryParam, operationNameParam, variablesParam) ⇒
                     QueryParser.parse(queryParam) match {
                       case Success(ast) ⇒
@@ -107,7 +109,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
                     }
                 }
               } ~ post {
-                parameters(("query".?, "operationName".?, "variables".?)) {
+                parameters(('query.?, 'operationName.?, 'variables.?)) {
                   (queryParam, operationNameParam, variablesParam) ⇒
                     entity(as[Json]) { body ⇒
                       val query         = queryParam orElse root.query.string.getOption(body)
@@ -153,12 +155,10 @@ trait AkkaServer[Ctx] extends CorsSupport {
           }
         }
 
-    val binding = Http().bindAndHandle(
+    Http().bindAndHandle(
       corsHandler(route),
       "0.0.0.0",
       sys.props.get("http.port").fold(4000)(_.toInt)
     )
-
-    binding
   }
 }

@@ -5,32 +5,32 @@ import com.github.reddone.caseql.sql.tokens.{And, Placeholder}
 import doobie._
 import fs2.Stream
 
-abstract class QueryBuilder[A, K](table: Table[A, K], alias: Option[String]) {
+abstract class QueryBuilder[A, K](table: Table[A, K]) {
 
-  final val querySyntax: TableSyntax[A] = alias.map(table.syntax.withAlias).getOrElse(table.syntax)
-
-  final def byKeyFragment(key: K): Fragment =
+  final def byKeyFragment(key: K, alias: String): Fragment =
     table.keyWrite
       .toFragment(
         key,
-        querySyntax.aliasedKeyColumns
+        table.syntax
+          .withAlias(alias)
+          .selectionKeyColumns
           .map(col => s"$col = $Placeholder")
           .mkString(s" $And ")
       )
 }
 
-trait SQLFragment {
+trait SqlFragment {
   def toFragment: Fragment
 }
 
-trait SQLAction[R] extends SQLFragment {
+trait SqlAction[R] extends SqlFragment {
   def execute: ConnectionIO[R]
 }
 
-trait SQLStreamingAction[R] extends SQLFragment { self =>
+trait SqlStreamingAction[R] extends SqlFragment { self =>
   def execute: Stream[ConnectionIO, R]
 
-  final def asSQLAction: SQLAction[List[R]] = new SQLAction[List[R]] {
+  final def asSqlAction: SqlAction[List[R]] = new SqlAction[List[R]] {
     def toFragment: Fragment           = self.toFragment
     def execute: ConnectionIO[List[R]] = self.execute.compile.toList
   }

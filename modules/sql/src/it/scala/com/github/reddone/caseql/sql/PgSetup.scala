@@ -10,7 +10,7 @@ import javasql._
 import javatime._
 import cats.implicits._
 import org.scalatest.Suite
-import ItTestData._
+import com.github.reddone.caseql.sql.itmodel.data._
 import com.github.reddone.caseql.sql.config.DoobieConfig
 
 import scala.concurrent.ExecutionContext

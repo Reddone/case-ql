@@ -1,7 +1,7 @@
 package com.github.reddone.caseql.sql.table.query
 
 import com.github.reddone.caseql.sql.filter.wrappers.EntityFilter
-import com.github.reddone.caseql.sql.table.{Table, TableFilter}
+import com.github.reddone.caseql.sql.table.{Table, TableFilter, TableSyntax}
 import com.github.reddone.caseql.sql.tokens.{From, Select, Where}
 import doobie._
 import Fragment._
@@ -15,10 +15,13 @@ sealed trait SelectHasKey    extends SelectBuilderState
 sealed abstract class SelectBuilder[S, A, K](
     table: Table[A, K],
     alias: Option[String]
-) extends QueryBuilder[A, K](table, alias) { self =>
+) extends QueryBuilder[A, K](table) { self =>
+
+  final val querySyntax: TableSyntax[A] = alias.fold(table.syntax)(table.syntax.withAlias)
 
   private[this] var fragment: Fragment = const(
-    s"$Select ${querySyntax.aliasedColumns.mkString(", ")} $From ${querySyntax.aliasedName}"
+    s"$Select ${querySyntax.selectionColumns.mkString(", ")} " +
+      s"$From ${querySyntax.fullName}"
   )
 
   def withFilter[FA <: EntityFilter[FA]](filter: FA)(
@@ -27,7 +30,7 @@ sealed abstract class SelectBuilder[S, A, K](
       tableFilter: TableFilter[A, FA]
   ): SelectBuilder[S with SelectHasFilter, A, K] = {
     val whereFragment = tableFilter
-      .byFilterFragment(filter, alias)
+      .byFilterFragment(filter, querySyntax.alias)
       .map(const(Where) ++ _)
       .getOrElse(empty)
     fragment = fragment ++ whereFragment
@@ -37,23 +40,23 @@ sealed abstract class SelectBuilder[S, A, K](
   def withKey(key: K)(
       implicit ev: S =:= SelectHasTable
   ): SelectBuilder[S with SelectHasKey, A, K] = {
-    val whereFragment = const(Where) ++ byKeyFragment(key)
+    val whereFragment = const(Where) ++ byKeyFragment(key, querySyntax.alias)
     fragment = fragment ++ whereFragment
     self.asInstanceOf[SelectBuilder[S with SelectHasKey, A, K]]
   }
 
   def buildSelect(
       implicit ev: S =:= SelectHasTable with SelectHasFilter
-  ): SQLStreamingAction[A] =
-    new SQLStreamingAction[A] {
+  ): SqlStreamingAction[A] =
+    new SqlStreamingAction[A] {
       override def toFragment: Fragment             = fragment
       override def execute: Stream[ConnectionIO, A] = fragment.query[A](table.read).stream
     }
 
   def buildSelectByKey(
       implicit ev: S =:= SelectHasTable with SelectHasKey
-  ): SQLAction[Option[A]] =
-    new SQLAction[Option[A]] {
+  ): SqlAction[Option[A]] =
+    new SqlAction[Option[A]] {
       override def toFragment: Fragment             = fragment
       override def execute: ConnectionIO[Option[A]] = fragment.query[A](table.read).option
     }

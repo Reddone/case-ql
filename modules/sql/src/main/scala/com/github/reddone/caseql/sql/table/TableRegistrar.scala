@@ -16,5 +16,5 @@ object TableRegistrar {
     map
   }
 
-  def aliasFor(tpeName: String): String = aliasMap.getOrElseUpdate(tpeName, s"${prefix}${counter.incrementAndGet()}")
+  def aliasFor(tpeName: String): String = aliasMap.getOrElseUpdate(tpeName, s"$prefix${counter.incrementAndGet()}")
 }

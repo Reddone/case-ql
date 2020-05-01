@@ -3,8 +3,8 @@ package com.github.reddone.caseql.sql.table
 import java.sql.Timestamp
 import java.time.Instant
 
-import com.github.reddone.caseql.sql.TestModel._
-import com.github.reddone.caseql.sql.filter.models._
+import com.github.reddone.caseql.sql.model.db._
+import com.github.reddone.caseql.sql.filter.primitives._
 import com.github.reddone.caseql.sql.filter.wrappers.RelationFilter
 import com.github.reddone.caseql.sql.table.TableLink.Aux
 import doobie._
@@ -93,9 +93,9 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     val alias1  = "a1"
     val result1 = tableFilter1.primitiveFilterFragments(filter1)
 
-    result1(Some(alias1)).map(_.map(_.toString)) shouldBe List(
+    result1(alias1).map(_.map(_.toString)) shouldBe List(
       Some("Fragment(\"(a1.field1 = ? ) AND (a1.field1 IN (?, ?) ) \")"),
-      Some("Fragment(\"(a1.field2 LIKE %?% ) \")"),
+      Some("Fragment(\"(a1.field2 LIKE ? ) \")"),
       None,
       None
     )
@@ -109,9 +109,9 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     val alias2  = "a2"
     val result2 = tableFilter2.primitiveFilterFragments(filter2)
 
-    result2(Some(alias2)).map(_.map(_.toString)) shouldBe List(
+    result2(alias2).map(_.map(_.toString)) shouldBe List(
       None,
-      Some("Fragment(\"(a2.field2 LIKE %?% ) \")"),
+      Some("Fragment(\"(a2.field2 LIKE ? ) \")"),
       None,
       Some("Fragment(\"(a2.field1 = ? ) AND (a2.field1 IN (?, ?) ) \")")
     )
@@ -122,7 +122,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
 
     val filter1 = TestFilter.empty
     val alias1  = "a1"
-    val result1 = tableFilter.byFilterFragment(filter1, Some(alias1))
+    val result1 = tableFilter.byFilterFragment(filter1, alias1)
 
     result1 shouldBe None
 
@@ -136,7 +136,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None
     )
     val alias2  = "a2"
-    val result2 = tableFilter.byFilterFragment(filter2, Some(alias2))
+    val result2 = tableFilter.byFilterFragment(filter2, alias2)
 
     result2 shouldBe None
   }
@@ -154,13 +154,13 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       None
     )
     val alias  = "a1"
-    val result = tableFilter.byFilterFragment(filter, Some(alias))
+    val result = tableFilter.byFilterFragment(filter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
       "(" +
       "((a1.field1 = ? ) AND (a1.field1 IN (?, ?, ?) ) ) AND " +
-      "((a1.field2 = ? ) AND (a1.field2 LIKE %?% ) ) AND " +
+      "((a1.field2 = ? ) AND (a1.field2 LIKE ? ) ) AND " +
       "((a1.field3 = ? ) AND (a1.field3 IN (?, ?, ?) ) ) AND " +
       "((a1.field4 = ? ) ) " +
       ") " +
@@ -189,7 +189,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       NOT = Some(filter)
     )
     val alias  = "a1"
-    val result = tableFilter.byFilterFragment(nestedFilter, Some(alias))
+    val result = tableFilter.byFilterFragment(nestedFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -253,7 +253,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     )
     )
     val alias  = "a1"
-    val result = tableFilter.byFilterFragment(deepFilter, Some(alias))
+    val result = tableFilter.byFilterFragment(deepFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -273,7 +273,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") AND (" +
       "(NOT (" + // SECOND FILTER INSIDE AND, NOT BEGIN
       "(" +
-      "((a1.field2 LIKE %?% ) ) " +
+      "((a1.field2 LIKE ? ) ) " +
       ") " +
       ") ) " + // NOT END
       ") AND (" +
@@ -306,7 +306,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias1  = "a1"
-    val result1 = leftTableFilter.byFilterFragment(leftFilter, Some(alias1))
+    val result1 = leftTableFilter.byFilterFragment(leftFilter, alias1)
 
     result1 shouldBe defined
     result1.get.toString shouldBe "Fragment(\"" +
@@ -315,23 +315,35 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field1 = test_left.field3 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3 ) " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field1 = test_left.field3 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      "NOT EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field1 = test_left.field3 " +
+      ") " +
       ") " + // END NONE
       ") " + // END SELF RELATION
       ") " +
       "\")"
 
-    val result2 = leftTableFilter.byFilterFragment(leftFilter, None)
+    val result2 = leftTableFilter.byFilterFragment(leftFilter, "")
 
     result2 shouldBe defined
     result2.get.toString shouldBe "Fragment(\"" +
@@ -340,17 +352,29 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
+      "WHERE test_left.field1 = test_left_rel.field3 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left test_left_rel WHERE test_left.field1 = test_left_rel.field3 ) " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
+      "WHERE test_left.field1 = test_left_rel.field3 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      "NOT EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
+      "WHERE test_left.field1 = test_left_rel.field3 " +
+      ") " +
       ") " + // END NONE
       ") " + // END SELF RELATION
       ") " +
@@ -378,7 +402,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias  = "a1"
-    val result = directTableFilter.byFilterFragment(directFilter, Some(alias))
+    val result = directTableFilter.byFilterFragment(directFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -387,17 +411,29 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN DIRECT RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field3 = test_left.field1 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 ) " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field3 = test_left.field1 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "NOT EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field3 = test_left.field1 " +
+      ") " +
       ") " + // END NONE
       ") " + // END DIRECT RELATION
       ") " +
@@ -424,7 +460,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
     )
 
     val alias  = "a1"
-    val result = rightTableFilter.byFilterFragment(rightFilter, Some(alias))
+    val result = rightTableFilter.byFilterFragment(rightFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -435,22 +471,28 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" + // BEGIN EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND IS NULL test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND test_left.field1 IS NULL " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 " +
+      ") " +
       ") " + // END NONE
       ") " + // END JUNCTION RELATION
       ") " +
@@ -517,7 +559,7 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       )
     )
     val alias  = "a1"
-    val result = directTableFilter.byFilterFragment(directNestedFilter, Some(alias))
+    val result = directTableFilter.byFilterFragment(directNestedFilter, alias)
 
     result shouldBe defined
     result.get.toString shouldBe "Fragment(\"" +
@@ -526,102 +568,119 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN DIRECT RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
       "(" + // BEGIN NESTED EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 " +
-      "AND IS NULL test_right.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_right WHERE (((test_right.field1 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND test_right.field1 IS NULL " +
+      ") " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field1 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED SOME
       "AND " +
       "(" + // BEGIN NESTED NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field1 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED NONE
+      ") ) ) " +
+      "AS test_left WHERE a1.field3 = test_left.field1 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 ) " +
       ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
-      ") " +
-      ") " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
       "EXISTS (" +
-      "SELECT 1 FROM test_left " +
-      "WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
       "(" + // BEGIN NESTED EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 " +
-      "AND IS NULL test_right.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_right WHERE (((test_right.field2 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND test_right.field1 IS NULL " +
+      ") " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field2 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED SOME
       "AND " +
       "(" + // BEGIN NESTED NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field2 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED NONE
-      ") " + // END JUNCTION RELATION INSIDE NESTED RELATION
-      ") " +
-      ") " +
+      ") ) ) " +
+      "AS test_left WHERE a1.field3 = test_left.field1 " +
+      ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
       "NOT EXISTS (" +
-      "SELECT 1 FROM test_left " +
-      "WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
       "(" + // BEGIN NESTED EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 " +
-      "AND IS NULL test_right.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_right WHERE (((test_right.field3 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND test_right.field1 IS NULL " +
+      ") " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field3 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED SOME
       "AND " +
       "(" + // BEGIN NESTED NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field3 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED NONE
+      ") ) ) " +
+      "AS test_left WHERE a1.field3 = test_left.field1 " +
       ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
-      ") " +
-      ") " +
       ") " + // END NONE
       ") " + // END DIRECT RELATION
       ") " +

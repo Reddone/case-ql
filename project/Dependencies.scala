@@ -40,6 +40,7 @@ object Dependencies {
     lazy val namespace = "org.sangria-graphql"
     lazy val core      = namespace %% "sangria" % sangriaVersion
     lazy val circe     = namespace %% "sangria-circe" % sangriaCirceVersion
+    lazy val slowLog   = namespace %% "sangria-slowlog" % sangriaSlowLogVersion
   }
 
   object scalatest {
@@ -106,11 +107,8 @@ object Dependencies {
       testcontainersScala.core % "it"
     )
 
-    lazy val `sql`: Seq[ModuleID] = Seq(
+    lazy val `case-ql-sql`: Seq[ModuleID] = Seq(
       shapeless.core   % "compile",
-      circe.core       % "compile",
-      circe.parser     % "compile",
-      circe.generic    % "compile",
       cats.core        % "compile",
       cats.free        % "compile",
       cats.effect      % "compile",
@@ -120,12 +118,18 @@ object Dependencies {
       doobie.postgres  % "it"
     ) ++ `shared`
 
-    lazy val `gql`: Seq[ModuleID] = Seq(
-      sangria.core  % "compile",
-      sangria.circe % "compile"
+    lazy val `case-ql-circe`: Seq[ModuleID] = Seq(
+      circe.core    % "compile",
+      circe.parser  % "compile",
+      circe.generic % "compile"
     ) ++ `shared`
 
-    lazy val `example`: Seq[ModuleID] = Seq(
+    lazy val `case-ql-gql`: Seq[ModuleID] = Seq(
+      sangria.core  % "compile",
+      sangria.circe % "it, test"
+    ) ++ `shared`
+
+    lazy val `case-ql-example`: Seq[ModuleID] = Seq(
       typesafe.config        % "compile",
       slf4j.api              % "compile",
       log4j.core             % "compile",
@@ -147,7 +151,8 @@ object Dependencies {
       akka.http              % "compile",
       akkaHttpCirce.core     % "compile",
       sangria.core           % "compile",
-      sangria.circe          % "compile"
+      sangria.circe          % "compile",
+      sangria.slowLog        % "compile"
     )
   }
 }

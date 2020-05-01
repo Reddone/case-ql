@@ -2,8 +2,8 @@ package com.github.reddone.caseql.sql.util
 
 import java.util.concurrent.atomic.AtomicLong
 
-import com.github.reddone.caseql.sql.ItTestData._
-import com.github.reddone.caseql.sql.ItTestModel._
+import com.github.reddone.caseql.sql.itmodel.data._
+import com.github.reddone.caseql.sql.itmodel.db._
 import com.github.reddone.caseql.sql.{PgAnyWordSpec, PgHelper}
 import com.github.reddone.caseql.sql.util.TestTransactors._
 import doobie.implicits._
@@ -19,6 +19,7 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
 
   val currentDeveloperId = new AtomicLong(developers.length.toLong)
   val currentProjectId   = new AtomicLong(projects.length.toLong)
+  val currentTaskId   = new AtomicLong(tasks.length.toLong)
 
   "GenericRepository" when {
 
@@ -199,10 +200,12 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
     "using insert DML" should {
 
       "succeed to execute an insert returning ConnectionIO of affected row" in {
+        val nextDeveloperId = currentDeveloperId.incrementAndGet()
+
         val insertDeveloper = testRepository.insert[Developer](
           developerTableName,
           developerCols,
-          Developer(currentDeveloperId.incrementAndGet(), "Young Donger", 1, None)
+          Developer(nextDeveloperId, "Young Donger", 1, None)
         )
 
         val affectedRows = insertDeveloper

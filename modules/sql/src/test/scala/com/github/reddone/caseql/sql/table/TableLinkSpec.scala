@@ -1,6 +1,6 @@
 package com.github.reddone.caseql.sql.table
 
-import com.github.reddone.caseql.sql.TestModel._
+import com.github.reddone.caseql.sql.model.db._
 import com.github.reddone.caseql.sql.table.TableLink.Aux
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
