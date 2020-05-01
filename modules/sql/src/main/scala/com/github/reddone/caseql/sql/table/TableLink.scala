@@ -52,18 +52,14 @@ object TableLink {
           implicit
           tableSyntaxA: TableSyntax[A],
           lgenA: LabelledGeneric.Aux[A, ReprA],
-          selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, ValuesK],
-          selectAllAJ: ops.record.SelectAll.Aux[ReprA, ReprJ, ValuesJ],
-          toListK: ops.hlist.ToList[ReprK, Symbol],
-          toListJ: ops.hlist.ToList[ReprJ, Symbol],
-          sameValuesKJ: EqualNoOption[ValuesK, ValuesJ]
+          tableJoinAKJ: Lazy[TableJoin[ReprA, ReprA, ReprK, ReprJ]]
       ): Aux[A, A, Unit] = new TableLink[A, A] {
         override type Junction = Unit
 
         override def leftSyntax: TableSyntax[A]              = tableSyntaxA
         override def rightSyntax: TableSyntax[A]             = tableSyntaxA
         override def junctionSyntax: TableSyntax[Junction]   = Table.unit.syntax
-        override def leftJoinFields: List[(String, String)]  = fsa.toList.map(_.name).zip(fsb.toList.map(_.name))
+        override def leftJoinFields: List[(String, String)]  = tableJoinAKJ.value.joinFields(fsa, fsb)
         override def rightJoinFields: List[(String, String)] = leftJoinFields.map(_.swap)
         override def isJunction: Boolean                     = false
       }
@@ -92,18 +88,14 @@ object TableLink {
           tableSyntaxB: TableSyntax[B],
           lgenA: LabelledGeneric.Aux[A, ReprA],
           lgenB: LabelledGeneric.Aux[B, ReprB],
-          selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, ValuesK],
-          selectAllBJ: ops.record.SelectAll.Aux[ReprB, ReprJ, ValuesJ],
-          toListK: ops.hlist.ToList[ReprK, Symbol],
-          toListJ: ops.hlist.ToList[ReprJ, Symbol],
-          sameValuesKJ: EqualNoOption[ValuesK, ValuesJ]
+          tableJoinABKJ: Lazy[TableJoin[ReprA, ReprB, ReprK, ReprJ]]
       ): Aux[A, B, Unit] = new TableLink[A, B] {
         override type Junction = Unit
 
         override def leftSyntax: TableSyntax[A]              = tableSyntaxA
         override def rightSyntax: TableSyntax[B]             = tableSyntaxB
         override def junctionSyntax: TableSyntax[Junction]   = Table.unit.syntax
-        override def leftJoinFields: List[(String, String)]  = fsa.toList.map(_.name).zip(fsb.toList.map(_.name))
+        override def leftJoinFields: List[(String, String)]  = tableJoinABKJ.value.joinFields(fsa, fsb)
         override def rightJoinFields: List[(String, String)] = leftJoinFields.map(_.swap)
         override def isJunction: Boolean                     = false
       }
@@ -139,27 +131,17 @@ object TableLink {
           lgenA: LabelledGeneric.Aux[A, ReprA],
           lgenB: LabelledGeneric.Aux[B, ReprB],
           lgenC: LabelledGeneric.Aux[C, ReprC],
-          selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, ValuesK],
-          selectAllCIL: ops.record.SelectAll.Aux[ReprC, ReprIL, ValuesIL],
-          selectAllBJ: ops.record.SelectAll.Aux[ReprB, ReprJ, ValuesJ],
-          selectAllCIR: ops.record.SelectAll.Aux[ReprC, ReprIR, ValuesIR],
-          toListK: ops.hlist.ToList[ReprK, Symbol],
-          toListIL: ops.hlist.ToList[ReprIL, Symbol],
-          toListJ: ops.hlist.ToList[ReprJ, Symbol],
-          toListIR: ops.hlist.ToList[ReprIR, Symbol],
-          sameValuesKIL: EqualNoOption[ValuesK, ValuesIL],
-          sameValuesJIR: EqualNoOption[ValuesJ, ValuesIR]
+          tableJoinACKIL: Lazy[TableJoin[ReprA, ReprC, ReprK, ReprIL]],
+          tableJoinBCJIR: Lazy[TableJoin[ReprB, ReprC, ReprJ, ReprIR]]
       ): Aux[A, B, C] = new TableLink[A, B] {
         override type Junction = C
 
-        override def leftSyntax: TableSyntax[A]            = tableSyntaxA
-        override def rightSyntax: TableSyntax[B]           = tableSyntaxB
-        override def junctionSyntax: TableSyntax[Junction] = tableSyntaxC
-        override def leftJoinFields: List[(String, String)] =
-          fsac._1.toList.map(_.name).zip(fsac._2.toList.map(_.name))
-        override def rightJoinFields: List[(String, String)] =
-          fsbc._1.toList.map(_.name).zip(fsbc._2.toList.map(_.name))
-        override def isJunction: Boolean = true
+        override def leftSyntax: TableSyntax[A]              = tableSyntaxA
+        override def rightSyntax: TableSyntax[B]             = tableSyntaxB
+        override def junctionSyntax: TableSyntax[Junction]   = tableSyntaxC
+        override def leftJoinFields: List[(String, String)]  = tableJoinACKIL.value.joinFields(fsac._1, fsac._2)
+        override def rightJoinFields: List[(String, String)] = tableJoinBCJIR.value.joinFields(fsbc._1, fsbc._2)
+        override def isJunction: Boolean                     = true
       }
     }
   }
@@ -176,5 +158,36 @@ object TableLink {
       override def rightJoinFields: List[(String, String)] = rightLink.leftJoinFields
       override def isJunction: Boolean                     = true
     }
+  }
+}
+
+trait TableJoin[ReprA <: HList, ReprB <: HList, ReprK <: HList, ReprJ <: HList] {
+  def leftFields(leftRepr: ReprK): List[String]
+  def rightFields(rightRepr: ReprJ): List[String]
+
+  final def joinFields(leftRepr: ReprK, rightRepr: ReprJ): List[(String, String)] =
+    leftFields(leftRepr).zip(rightFields(rightRepr))
+}
+
+object TableJoin {
+
+  implicit def derive[
+      ReprA <: HList,
+      ReprB <: HList,
+      ReprK <: HList,
+      ReprJ <: HList,
+      ValuesK <: HList,
+      ValuesJ <: HList
+  ](
+      implicit
+      selectAllAK: ops.record.SelectAll.Aux[ReprA, ReprK, ValuesK],
+      selectAllBJ: ops.record.SelectAll.Aux[ReprB, ReprJ, ValuesJ],
+      toListK: ops.hlist.ToList[ReprK, Symbol],
+      toListJ: ops.hlist.ToList[ReprJ, Symbol],
+      sameValuesKJ: EqualNoOption[ValuesK, ValuesJ]
+  ): TableJoin[ReprA, ReprB, ReprK, ReprJ] = new TableJoin[ReprA, ReprB, ReprK, ReprJ] {
+    override def leftFields(leftRepr: ReprK): List[String] = leftRepr.toList.map(_.name)
+
+    override def rightFields(rightRepr: ReprJ): List[String] = rightRepr.toList.map(_.name)
   }
 }
