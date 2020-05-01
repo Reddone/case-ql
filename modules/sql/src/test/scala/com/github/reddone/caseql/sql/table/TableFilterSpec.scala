@@ -315,7 +315,8 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "EXISTS (SELECT 1 FROM " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
       "WHERE a1.field1 = test_left.field3 " +
       "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
@@ -324,14 +325,16 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
       "WHERE a1.field1 = test_left.field3 " +
       ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM " +
+      "NOT EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
       "WHERE a1.field1 = test_left.field3 " +
       ") " +
@@ -349,7 +352,8 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "EXISTS (SELECT 1 FROM " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
       "WHERE test_left.field1 = test_left_rel.field3 " +
       "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
@@ -358,14 +362,16 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
       "WHERE test_left.field1 = test_left_rel.field3 " +
       ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM " +
+      "NOT EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
       "WHERE test_left.field1 = test_left_rel.field3 " +
       ") " +
@@ -405,7 +411,8 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN DIRECT RELATION
       "(" + // BEGIN EVERY
-      "EXISTS (SELECT 1 FROM " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
       "WHERE a1.field3 = test_left.field1 " +
       "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
@@ -414,14 +421,16 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
       "WHERE a1.field3 = test_left.field1 " +
       ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM " +
+      "NOT EXISTS (" +
+      "SELECT 1 FROM " +
       "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
       "WHERE a1.field3 = test_left.field1 " +
       ") " +
@@ -559,102 +568,119 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN DIRECT RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "EXISTS (" +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
       "(" + // BEGIN NESTED EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 " +
-      "AND test_right.field1 IS NULL AND (((test_right.field1 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_right WHERE (((test_right.field1 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND test_right.field1 IS NULL " +
+      ") " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field1 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED SOME
       "AND " +
       "(" + // BEGIN NESTED NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field1 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED NONE
+      ") ) ) " +
+      "AS test_left WHERE a1.field3 = test_left.field1 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 ) " +
       ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
-      ") " +
-      ") " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
       "EXISTS (" +
-      "SELECT 1 FROM test_left " +
-      "WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
       "(" + // BEGIN NESTED EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 " +
-      "AND test_right.field1 IS NULL AND (((test_right.field2 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_right WHERE (((test_right.field2 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND test_right.field1 IS NULL " +
+      ") " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field2 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED SOME
       "AND " +
       "(" + // BEGIN NESTED NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field2 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field2 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED NONE
-      ") " + // END JUNCTION RELATION INSIDE NESTED RELATION
-      ") " +
-      ") " +
+      ") ) ) " +
+      "AS test_left WHERE a1.field3 = test_left.field1 " +
+      ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
       "NOT EXISTS (" +
-      "SELECT 1 FROM test_left " +
-      "WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) " +
+      "SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) " +
       "AND " +
       "(" +
       "(" + // BEGIN JUNCTION RELATION INSIDE DIRECT RELATION
       "(" + // BEGIN NESTED EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 " +
-      "AND test_right.field1 IS NULL AND (((test_right.field3 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_right WHERE (((test_right.field3 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 AND test_right.field1 IS NULL " +
+      ") " +
       ") " + // END NESTED EVERY
       "AND " +
       "(" + // BEGIN NESTED SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field3 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED SOME
       "AND " +
       "(" + // BEGIN NESTED NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_right ON test_right.field1 = test_junction.field2 " +
-      "WHERE test_left.field1 = test_junction.field1 AND (((test_right.field3 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_right WHERE (((test_right.field3 = ? ) ) ) ) AS test_right " +
+      "ON test_right.field1 = test_junction.field2 " +
+      "WHERE test_left.field1 = test_junction.field1 " +
+      ") " +
       ") " + // END NESTED NONE
+      ") ) ) " +
+      "AS test_left WHERE a1.field3 = test_left.field1 " +
       ") " + // END JUNCTION RELATION INSIDE DIRECT RELATION
-      ") " +
-      ") " +
       ") " + // END NONE
       ") " + // END DIRECT RELATION
       ") " +
