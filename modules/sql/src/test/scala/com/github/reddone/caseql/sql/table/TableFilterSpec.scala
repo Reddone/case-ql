@@ -315,17 +315,26 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3) " +
+      "EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field1 = test_left.field3 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left WHERE a1.field1 = test_left.field3 ) " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      "EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field1 = test_left.field3 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field1 = test_left.field3 AND (((test_left.field2 = ? ) ) ) ) " +
+      "NOT EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field1 = test_left.field3 " +
+      ") " +
       ") " + // END NONE
       ") " + // END SELF RELATION
       ") " +
@@ -340,17 +349,26 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN SELF RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left self WHERE test_left.field1 = self.field3) " +
+      "EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
+      "WHERE test_left.field1 = test_left_rel.field3 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left test_left_rel WHERE test_left.field1 = test_left_rel.field3 ) " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      "EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
+      "WHERE test_left.field1 = test_left_rel.field3 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left self WHERE test_left.field1 = self.field3 AND (((self.field2 = ? ) ) ) ) " +
+      "NOT EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field2 = ? ) ) ) ) AS test_left_rel " +
+      "WHERE test_left.field1 = test_left_rel.field3 " +
+      ") " +
       ") " + // END NONE
       ") " + // END SELF RELATION
       ") " +
@@ -387,17 +405,26 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" +
       "(" + // BEGIN DIRECT RELATION
       "(" + // BEGIN EVERY
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
-      "= " +
-      "(SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1) " +
+      "EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field3 = test_left.field1 " +
+      "HAVING COUNT (*) > 0 AND COUNT (*) = (" +
+      "SELECT COUNT (*) FROM test_left WHERE a1.field3 = test_left.field1 ) " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
-      "EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field3 = test_left.field1 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
-      "NOT EXISTS (SELECT 1 FROM test_left WHERE a1.field3 = test_left.field1 AND (((test_left.field1 = ? ) ) ) ) " +
+      "NOT EXISTS (SELECT 1 FROM " +
+      "(SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "WHERE a1.field3 = test_left.field1 " +
+      ") " +
       ") " + // END NONE
       ") " + // END DIRECT RELATION
       ") " +
@@ -435,22 +462,28 @@ class TableFilterSpec extends AnyFlatSpec with Matchers {
       "(" + // BEGIN EVERY
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "LEFT OUTER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND test_left.field1 IS NULL AND (((test_left.field1 = ? ) ) ) ) " +
+      "LEFT OUTER JOIN (SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 AND test_left.field1 IS NULL " +
+      ") " +
       ") " + // END EVERY
       "AND " +
       "(" + // BEGIN SOME
       "EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 " +
+      ") " +
       ") " + // END SOME
       "AND " +
       "(" + // BEGIN NONE
       "NOT EXISTS (" +
       "SELECT 1 FROM test_junction " +
-      "INNER JOIN test_left ON test_left.field1 = test_junction.field1 " +
-      "WHERE a1.field1 = test_junction.field2 AND (((test_left.field1 = ? ) ) ) ) " +
+      "INNER JOIN (SELECT * FROM test_left WHERE (((test_left.field1 = ? ) ) ) ) AS test_left " +
+      "ON test_left.field1 = test_junction.field1 " +
+      "WHERE a1.field1 = test_junction.field2 " +
+      ") " +
       ") " + // END NONE
       ") " + // END JUNCTION RELATION
       ") " +
