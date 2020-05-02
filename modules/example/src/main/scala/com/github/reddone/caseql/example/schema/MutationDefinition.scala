@@ -175,7 +175,7 @@ object MutationDefinition {
           .unsafeToFuture()
     ),
     Field(
-      "TaskIdType",
+      "deleteTask",
       OptionType(TaskIdType),
       Some("Delete a task using id"),
       TaskKeyArg :: Nil,
