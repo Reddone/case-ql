@@ -4,6 +4,7 @@ import com.github.reddone.caseql.example.model.decoders._
 import com.github.reddone.caseql.example.model.db._
 import com.github.reddone.caseql.example.schema.InputDefinition._
 import sangria.schema._
+import sangria.schema.WithoutInputTypeTags._
 import sangria.marshalling.circe._
 
 object ArgumentDefinition {

@@ -27,14 +27,14 @@ import scala.util.{Failure, Success}
 
 trait AkkaServer[Ctx] extends CorsSupport {
 
-  implicit def system: ActorSystem
+  implicit def actorSystem: ActorSystem
   implicit def executionContext: ExecutionContext
 
   def schema: Schema[Ctx, Unit]
   def deferredResolver: DeferredResolver[Ctx]
 
   def executeGraphQL(
-      query: Document,
+      queryAst: Document,
       userContext: Ctx,
       operationName: Option[String],
       variables: Json,
@@ -44,7 +44,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
       Executor
         .execute(
           schema = schema,
-          queryAst = query,
+          queryAst = queryAst,
           userContext = userContext,
           operationName = operationName,
           variables = if (variables.isNull) Json.obj() else variables,
@@ -159,18 +159,15 @@ trait AkkaServer[Ctx] extends CorsSupport {
 
 object AkkaServer {
 
-  def apply[Ctx](
-      sc: Schema[Ctx, Unit],
-      resolver: DeferredResolver[Ctx]
-  )(
+  def apply[Ctx](sangriaSchema: Schema[Ctx, Unit], sangriaResolver: DeferredResolver[Ctx])(
       implicit
-      sys: ActorSystem,
+      system: ActorSystem,
       ec: ExecutionContext
   ): AkkaServer[Ctx] = new AkkaServer[Ctx] {
-    override implicit val system: ActorSystem                = sys
+    override implicit val actorSystem: ActorSystem           = system
     override implicit val executionContext: ExecutionContext = ec
 
-    override val schema: Schema[Ctx, Unit]               = sc
-    override val deferredResolver: DeferredResolver[Ctx] = resolver
+    override val schema: Schema[Ctx, Unit]               = sangriaSchema
+    override val deferredResolver: DeferredResolver[Ctx] = sangriaResolver
   }
 }

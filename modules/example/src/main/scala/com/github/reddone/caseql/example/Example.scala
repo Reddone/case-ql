@@ -16,8 +16,8 @@ import scala.util.{Failure, Success}
 
 object Example extends IOApp with Logging {
 
-  implicit val system: ActorSystem                = ActorSystem("example-system")
-  implicit val executionContext: ExecutionContext = system.dispatcher
+  implicit val actorSystem: ActorSystem           = ActorSystem("example-system")
+  implicit val executionContext: ExecutionContext = actorSystem.dispatcher
 
   override implicit val contextShift: ContextShift[IO] = IO.contextShift(executionContext)
   override implicit val timer: Timer[IO]               = IO.timer(executionContext)
@@ -28,8 +28,8 @@ object Example extends IOApp with Logging {
       userContext: SangriaContext[F]
   ): Resource[F, Http.ServerBinding] = {
     val akkaServer = AkkaServer[SangriaContext[F]](
-      SangriaSchema.schema[F],
-      SangriaSchema.deferredResolver[F]
+      SangriaSchema[F],
+      SangriaResolver[F]
     )
     val alloc = Async[F].async[Http.ServerBinding] { cb =>
       akkaServer.start(serverRoot, userContext).onComplete { r =>

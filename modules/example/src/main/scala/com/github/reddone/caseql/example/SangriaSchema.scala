@@ -1,40 +1,21 @@
 package com.github.reddone.caseql.example
 
 import cats.effect.Effect
-import com.github.reddone.caseql.example.schema.QueryDefinition
-import sangria.execution.deferred.{DeferredResolver, Fetcher}
-import sangria.schema.{Field, ObjectType, Schema, StringType, fields}
+import com.github.reddone.caseql.example.schema.{MutationDefinition, QueryDefinition}
+import sangria.schema.{ObjectType, Schema}
 
 object SangriaSchema {
 
-  def schema[F[_]: Effect]: Schema[SangriaContext[F], Unit] = Schema(
-    query = Query[F],
-    mutation = Some(SangriaSchema.Mutation[F]),
+  def apply[F[_]: Effect]: Schema[SangriaContext[F], Unit] = Schema(
+    query = QueryType[F],
+    mutation = Some(MutationType[F]),
     subscription = None,
     additionalTypes = Nil
   )
 
-  def deferredResolver[F[_]: Effect]: DeferredResolver[SangriaContext[F]] = {
-    val fetchers = Seq.empty[Fetcher[SangriaContext[F], _, _, _]]
-    DeferredResolver.fetchers(fetchers: _*)
-  }
+  def QueryType[F[_]: Effect]: ObjectType[SangriaContext[F], Unit] =
+    ObjectType[SangriaContext[F], Unit]("Query", QueryDefinition[F])
 
-  def Query[F[_]: Effect]: ObjectType[SangriaContext[F], Unit] =
-    ObjectType[SangriaContext[F], Unit](
-      "Query",
-      commonQueryFields[SangriaContext[F]] ++ QueryDefinition.ExampleQuery[F])
-
-  def Mutation[F[_]: Effect]: ObjectType[SangriaContext[F], Unit] =
-    ObjectType[SangriaContext[F], Unit]("Mutation", Nil)
-
-  private def commonQueryFields[Ctx]: List[Field[Ctx, Unit]] =
-    fields[Ctx, Unit](
-      Field(
-        "liveness",
-        StringType,
-        Some("Liveness probe"),
-        arguments = Nil,
-        resolve = _ => "Hey there!"
-      )
-    )
+  def MutationType[F[_]: Effect]: ObjectType[SangriaContext[F], Unit] =
+    ObjectType[SangriaContext[F], Unit]("Mutation", MutationDefinition[F])
 }

@@ -14,9 +14,9 @@ object SangriaContext {
 
   def production[F[_]: Effect](xa: Transactor[F]): SangriaContext[F] = {
     SangriaContext(
-      DeveloperService.fromTransactor(xa),
-      ProjectService.fromTransactor(xa),
-      TaskService.fromTransactor(xa)
+      DeveloperService.production(xa),
+      ProjectService.production(xa),
+      TaskService.production(xa)
     )
   }
 }

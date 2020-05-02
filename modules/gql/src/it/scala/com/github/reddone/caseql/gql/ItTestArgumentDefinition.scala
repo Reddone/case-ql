@@ -4,6 +4,7 @@ import com.github.reddone.caseql.circe.itmodel.decoders._
 import com.github.reddone.caseql.gql.ItTestInputDefinition._
 import com.github.reddone.caseql.sql.itmodel.db._
 import sangria.schema._
+import sangria.schema.WithoutInputTypeTags._
 import sangria.marshalling.circe._
 
 object ItTestArgumentDefinition {
