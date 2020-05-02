@@ -9,40 +9,30 @@ import cats.implicits._
 import com.github.reddone.caseql.example.resource.TransactorResource
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.logging.log4j.scala.Logging
-import sangria.execution.deferred.{DeferredResolver, Fetcher}
-import sangria.schema.Schema
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.{Failure, Success}
 
-object Example extends IOApp with AkkaServer[SangriaContext] with SangriaSchema with Logging {
+object Example extends IOApp with Logging {
 
-  override implicit val system: ActorSystem  = ActorSystem("example-system")
-  override implicit val ec: ExecutionContext = system.dispatcher
+  implicit val system: ActorSystem                = ActorSystem("example-system")
+  implicit val executionContext: ExecutionContext = system.dispatcher
 
-  override implicit val contextShift: ContextShift[IO] = IO.contextShift(ec)
-  override implicit val timer: Timer[IO]               = IO.timer(ec)
+  override implicit val contextShift: ContextShift[IO] = IO.contextShift(executionContext)
+  override implicit val timer: Timer[IO]               = IO.timer(executionContext)
 
-  override val schema: Schema[SangriaContext, Unit] = Schema(
-    query = Query,
-    mutation = Some(Mutation),
-    subscription = None,
-    additionalTypes = Nil
-  )
-
-  override val deferredResolver: DeferredResolver[SangriaContext] = {
-    val fetchers = Seq.empty[Fetcher[SangriaContext, _, _, _]]
-    DeferredResolver.fetchers(fetchers: _*)
-  }
-
-  def serverResource[F[_]: Async](
+  def serverResource[F[_]: Effect](
       serverRoot: String,
-      userContext: SangriaContext,
-      deadline: FiniteDuration
+      serverDeadline: FiniteDuration,
+      userContext: SangriaContext[F]
   ): Resource[F, Http.ServerBinding] = {
+    val akkaServer = AkkaServer[SangriaContext[F]](
+      SangriaSchema.schema[F],
+      SangriaSchema.deferredResolver[F]
+    )
     val alloc = Async[F].async[Http.ServerBinding] { cb =>
-      startAkkaServer(serverRoot, userContext).onComplete { r =>
+      akkaServer.start(serverRoot, userContext).onComplete { r =>
         cb(r match {
           case Success(binding) => Right(binding)
           case Failure(ex)      => Left(ex)
@@ -51,29 +41,30 @@ object Example extends IOApp with AkkaServer[SangriaContext] with SangriaSchema 
     }
     val free = (binding: Http.ServerBinding) =>
       Async[F].async[Http.HttpTerminated] { cb =>
-        binding.terminate(deadline).onComplete { r =>
+        binding.terminate(serverDeadline).onComplete { r =>
           cb(r match {
             case Success(terminated) => Right(terminated)
             case Failure(ex)         => Left(ex)
           })
         }
       }
+
     Resource.make(alloc)(free(_).void)
   }
 
-  def createServer[F[_]: Async: ContextShift: Timer](config: Config): Resource[F, Http.ServerBinding] = {
-    val serverRoot = config.getString("server.root")
-    val deadline   = Duration(config.getDuration("server.hardDeadline").getSeconds, TimeUnit.SECONDS)
+  def createServer[F[_]: Effect: ContextShift: Timer](config: Config): Resource[F, Http.ServerBinding] = {
+    val serverRoot     = config.getString("server.root")
+    val serverDeadline = Duration(config.getDuration("server.deadline").getSeconds, TimeUnit.SECONDS)
 
     for {
-      xa          <- TransactorResource[F](config)
-      userContext <- Resource.pure[F, SangriaContext](SangriaContext.production[F](xa))
-      server      <- serverResource[F](serverRoot, userContext, deadline)
+      xa <- TransactorResource[F](config)
+      userContext = SangriaContext.production[F](xa)
+      server <- serverResource[F](serverRoot, serverDeadline, userContext)
     } yield server
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
-    val config: Config = ConfigFactory.load()
+    val config = ConfigFactory.load()
 
     createServer[IO](config).use { binding =>
       logger.info(s"Server bound to ${binding.localAddress}")

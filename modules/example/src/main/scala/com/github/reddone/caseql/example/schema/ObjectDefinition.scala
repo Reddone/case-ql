@@ -1,5 +1,7 @@
 package com.github.reddone.caseql.example.schema
 
+import cats.effect.Effect
+import com.github.reddone.caseql.example.SangriaContext
 import com.github.reddone.caseql.example.model.db._
 import com.github.reddone.caseql.example.model.gql._
 import com.github.reddone.caseql.gql.ByteTypeDefinition._
@@ -21,8 +23,8 @@ object ObjectDefinition {
       ObjectTypeDescription("Developer entity id")
     )
 
-  implicit val DeveloperType: ObjectType[Unit, Developer] =
-    deriveObjectType[Unit, Developer](
+  implicit def DeveloperType[F[_]: Effect]: ObjectType[SangriaContext[F], Developer] =
+    deriveObjectType[SangriaContext[F], Developer](
       ObjectTypeName("Developer"),
       ObjectTypeDescription("Developer entity")
     )
@@ -35,8 +37,8 @@ object ObjectDefinition {
       ObjectTypeDescription("Project entity id")
     )
 
-  implicit val ProjectType: ObjectType[Unit, Project] =
-    deriveObjectType[Unit, Project](
+  implicit def ProjectType[F[_]: Effect]: ObjectType[SangriaContext[F], Project] =
+    deriveObjectType[SangriaContext[F], Project](
       ObjectTypeName("Project"),
       ObjectTypeDescription("Project entity")
     )
@@ -49,8 +51,8 @@ object ObjectDefinition {
       ObjectTypeDescription("DeveloperProjectLink entity id")
     )
 
-  implicit val DeveloperProjectLinkType: ObjectType[Unit, DeveloperProjectLink] =
-    deriveObjectType[Unit, DeveloperProjectLink](
+  implicit def DeveloperProjectLinkType[F[_]: Effect]: ObjectType[SangriaContext[F], DeveloperProjectLink] =
+    deriveObjectType[SangriaContext[F], DeveloperProjectLink](
       ObjectTypeName("DeveloperProjectLink"),
       ObjectTypeDescription("DeveloperProjectLink entity")
     )
@@ -63,22 +65,22 @@ object ObjectDefinition {
       ObjectTypeDescription("Task entity id")
     )
 
-  implicit val TaskType: ObjectType[Unit, Task] =
-    deriveObjectType[Unit, Task](
+  implicit def TaskType[F[_]: Effect]: ObjectType[SangriaContext[F], Task] =
+    deriveObjectType[SangriaContext[F], Task](
       ObjectTypeName("Task"),
       ObjectTypeDescription("Task entity")
     )
 
   // COMMON
 
-  implicit def listContainerType[A: TypeTag](
+  implicit def listContainerType[Ctx, A: TypeTag](
       implicit outputType: OutputType[A]
-  ): ObjectType[Unit, ListContainer[A]] =
-    ObjectType[Unit, ListContainer[A]](
+  ): ObjectType[Ctx, ListContainer[A]] =
+    ObjectType[Ctx, ListContainer[A]](
       s"${typeOf[A].typeSymbol.name.toString}ListContainer",
       s"ListContainer for ${typeOf[A].typeSymbol.name.toString}",
       () =>
-        fields[Unit, ListContainer[A]](
+        fields[Ctx, ListContainer[A]](
           Field("content", ListType(outputType), resolve = _.value.content),
           Field("pageInfo", PageInfoType, resolve = _.value.pageInfo)
         )

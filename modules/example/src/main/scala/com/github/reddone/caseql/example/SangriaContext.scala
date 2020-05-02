@@ -1,15 +1,22 @@
 package com.github.reddone.caseql.example
 
-import cats.effect.Async
+import cats.effect.Effect
+import com.github.reddone.caseql.example.service._
 import doobie.util.transactor.Transactor
 
-import scala.concurrent.ExecutionContext
-
-final case class SangriaContext()(implicit val ec: ExecutionContext)
+final case class SangriaContext[F[_]: Effect](
+    developerService: DeveloperService[F],
+    projectService: ProjectService[F],
+    taskService: TaskService[F]
+)
 
 object SangriaContext {
 
-  def production[F[_]: Async](xa: Transactor[F])(implicit ec: ExecutionContext): SangriaContext = {
-    SangriaContext()
+  def production[F[_]: Effect](xa: Transactor[F]): SangriaContext[F] = {
+    SangriaContext(
+      DeveloperService.fromTransactor(xa),
+      ProjectService.fromTransactor(xa),
+      TaskService.fromTransactor(xa)
+    )
   }
 }
