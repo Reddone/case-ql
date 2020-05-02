@@ -27,7 +27,7 @@ object Example extends IOApp with Logging {
       serverDeadline: FiniteDuration,
       userContext: SangriaContext[F]
   ): Resource[F, Http.ServerBinding] = {
-    val akkaServer = AkkaServer[SangriaContext[F]](
+    val akkaServer = AkkaGraphQLServer[SangriaContext[F]](
       SangriaSchema[F],
       SangriaResolver[F]
     )

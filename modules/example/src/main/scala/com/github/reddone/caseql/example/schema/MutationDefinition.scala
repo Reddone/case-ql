@@ -30,28 +30,44 @@ object MutationDefinition {
       ListType(DeveloperIdType),
       Some("Update developers using modifier and filter"),
       DeveloperModifierArg :: DeveloperFilterArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.developerService
+          .updateDevelopers(ctx.arg(DeveloperModifierArg), ctx.arg(DeveloperFilterArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "updateDeveloper",
       OptionType(DeveloperIdType),
       Some("Update a developer using modifier and id"),
       DeveloperModifierArg :: DeveloperKeyArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.developerService
+          .updateDeveloperById(ctx.arg(DeveloperModifierArg), ctx.arg(DeveloperKeyArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "deleteDevelopers",
       ListType(DeveloperIdType),
       Some("Delete developers using filter"),
       DeveloperFilterArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.developerService
+          .deleteDevelopers(ctx.arg(DeveloperFilterArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "deleteDeveloper",
       OptionType(DeveloperIdType),
       Some("Delete a developer using id"),
       DeveloperKeyArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.developerService
+          .deleteDeveloperById(ctx.arg(DeveloperKeyArg))
+          .toIO
+          .unsafeToFuture()
     )
   )
 
@@ -61,35 +77,55 @@ object MutationDefinition {
       ProjectIdType,
       Some("Create a project using modifier"),
       ProjectModifierArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.projectService
+          .insertProject(ctx.arg(ProjectModifierArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "updateProjects",
       ListType(ProjectIdType),
       Some("Update projects using modifier and filter"),
       ProjectModifierArg :: ProjectFilterArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.projectService
+          .updateProjects(ctx.arg(ProjectModifierArg), ctx.arg(ProjectFilterArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "updateProject",
       OptionType(ProjectIdType),
       Some("Update a project using modifier and id"),
       ProjectModifierArg :: ProjectKeyArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.projectService
+          .updateProjectById(ctx.arg(ProjectModifierArg), ctx.arg(ProjectKeyArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "deleteProjects",
       ListType(ProjectIdType),
       Some("Delete projects using filter"),
       ProjectFilterArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.projectService
+          .deleteProjects(ctx.arg(ProjectFilterArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "deleteProject",
       OptionType(ProjectIdType),
       Some("Delete a project using id"),
       ProjectKeyArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.projectService
+          .deleteProjectById(ctx.arg(ProjectKeyArg))
+          .toIO
+          .unsafeToFuture()
     )
   )
 
@@ -99,35 +135,55 @@ object MutationDefinition {
       TaskIdType,
       Some("Create a task using modifier"),
       TaskModifierArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.taskService
+          .insertTask(ctx.arg(TaskModifierArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "updateTasks",
       ListType(TaskIdType),
       Some("Update tasks using modifier and filter"),
       TaskModifierArg :: TaskFilterArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.taskService
+          .updateTasks(ctx.arg(TaskModifierArg), ctx.arg(TaskFilterArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "updateTask",
       OptionType(TaskIdType),
       Some("Update a task using modifier and id"),
       TaskModifierArg :: TaskKeyArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.taskService
+          .updateTaskById(ctx.arg(TaskModifierArg), ctx.arg(TaskKeyArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "deleteTasks",
       ListType(TaskIdType),
       Some("Delete tasks using filter"),
       TaskFilterArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.taskService
+          .deleteTasks(ctx.arg(TaskFilterArg))
+          .toIO
+          .unsafeToFuture()
     ),
     Field(
       "TaskIdType",
       OptionType(TaskIdType),
       Some("Delete a task using id"),
       TaskKeyArg :: Nil,
-      ctx => null
+      ctx =>
+        ctx.ctx.taskService
+          .deleteTaskById(ctx.arg(TaskKeyArg))
+          .toIO
+          .unsafeToFuture()
     )
   )
 }
