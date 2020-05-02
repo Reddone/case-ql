@@ -1,6 +1,7 @@
 package com.github.reddone.caseql.example
 
-import cats.effect.Effect
+import cats._
+import cats.effect._
 import com.github.reddone.caseql.example.service._
 import doobie.util.transactor.Transactor
 
@@ -12,7 +13,7 @@ final case class SangriaContext[F[_]: Effect](
 
 object SangriaContext {
 
-  def production[F[_]: Effect](xa: Transactor[F]): SangriaContext[F] = {
+  def production[F[_]: Effect: Monad](xa: Transactor[F]): SangriaContext[F] = {
     SangriaContext(
       DeveloperService.production(xa),
       ProjectService.production(xa),

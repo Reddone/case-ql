@@ -10,12 +10,16 @@ import scala.util.Success
 
 object SangriaResolver {
 
-  def apply[F[_]: Effect]: DeferredResolver[SangriaContext[F]] = {
-    val fetchers = Seq.empty[Fetcher[SangriaContext[F], _, _, _]]
-    DeferredResolver.fetchers(fetchers: _*)
-  }
+  def apply[F[_]: Effect]: DeferredResolver[SangriaContext[F]] =
+    DeferredResolver.fetchersWithFallback(
+      fallback = Resolvers[F],
+      fetchers = Fetchers[F]: _*
+    )
 
-  def deferredResolver[F[_]: Effect]: DeferredResolver[SangriaContext[F]] =
+  def Fetchers[F[_]: Effect]: List[Fetcher[SangriaContext[F], _, _, _]] =
+    List.empty[Fetcher[SangriaContext[F], _, _, _]]
+
+  def Resolvers[F[_]: Effect]: DeferredResolver[SangriaContext[F]] =
     new DeferredResolver[SangriaContext[F]] {
       override def resolve(
           deferred: Vector[Deferred[Any]],
@@ -33,31 +37,6 @@ object SangriaResolver {
 
         def fail[A](d: Deferred[A], t: Throwable): F[Unit] =
           Effect[F].delay(promises(d).failure(t)).void
-
-        def failAll[A](ds: List[Deferred[A]]): PartialFunction[Throwable, Future[Unit]] = {
-          case t: Throwable =>
-            ds.map(fail(_, t))
-            Future.unit
-        }
-
-        /*
-        // Complete a bunch of countries by doing a batch database query
-        def completeCountries(codes: List[CountryType.Deferred.ByCode]): F[Unit] =
-          for {
-            cs <- ctx.country.fetchByCodes(codes.map(_.code))
-            _  <- cs.traverse(c => complete(CountryType.Deferred.ByCode(c.code), c))
-          } yield ()
-
-        // Complete a bunch of languages by doing a batch database query
-        def completeLanguages(codes: List[LanguageType.Deferred.ByCountryCode]): F[Unit] =
-          for {
-            m <- ctx.language.fetchByCountryCodes(codes.map(_.code))
-            _ <- m.toList.traverse { case (c, ls) => complete(LanguageType.Deferred.ByCountryCode(c), ls) }
-          } yield ()
-         */
-
-        //completeCountries(select[CountryType.Deferred.ByCode]).toIO.unsafeToFuture
-        //completeLanguages(select[LanguageType.Deferred.ByCountryCode]).toIO.unsafeToFuture
 
         deferred.map(promises(_).future)
       }

@@ -25,7 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
-trait AkkaGraphQLServer[Ctx] extends CorsSupport {
+trait AkkaSangriaServer[Ctx] extends CorsSupport {
 
   implicit def actorSystem: ActorSystem
   implicit def executionContext: ExecutionContext
@@ -157,13 +157,16 @@ trait AkkaGraphQLServer[Ctx] extends CorsSupport {
   }
 }
 
-object AkkaGraphQLServer {
+object AkkaSangriaServer {
 
-  def apply[Ctx](sangriaSchema: Schema[Ctx, Unit], sangriaResolver: DeferredResolver[Ctx])(
+  def apply[Ctx](
+      sangriaSchema: Schema[Ctx, Unit],
+      sangriaResolver: DeferredResolver[Ctx]
+  )(
       implicit
       system: ActorSystem,
       ec: ExecutionContext
-  ): AkkaGraphQLServer[Ctx] = new AkkaGraphQLServer[Ctx] {
+  ): AkkaSangriaServer[Ctx] = new AkkaSangriaServer[Ctx] {
     override implicit val actorSystem: ActorSystem           = system
     override implicit val executionContext: ExecutionContext = ec
 

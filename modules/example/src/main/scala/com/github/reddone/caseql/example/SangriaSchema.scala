@@ -6,12 +6,13 @@ import sangria.schema.{ObjectType, Schema}
 
 object SangriaSchema {
 
-  def apply[F[_]: Effect]: Schema[SangriaContext[F], Unit] = Schema(
-    query = QueryType[F],
-    mutation = Some(MutationType[F]),
-    subscription = None,
-    additionalTypes = Nil
-  )
+  def apply[F[_]: Effect]: Schema[SangriaContext[F], Unit] =
+    Schema(
+      query = QueryType[F],
+      mutation = Some(MutationType[F]),
+      subscription = None,
+      additionalTypes = Nil
+    )
 
   def QueryType[F[_]: Effect]: ObjectType[SangriaContext[F], Unit] =
     ObjectType[SangriaContext[F], Unit]("Query", QueryDefinition[F])

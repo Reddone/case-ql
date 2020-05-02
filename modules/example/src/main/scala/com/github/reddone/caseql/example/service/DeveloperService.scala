@@ -1,8 +1,12 @@
 package com.github.reddone.caseql.example.service
 
-import cats.effect.Effect
-import com.github.reddone.caseql.example.model.db.{Developer, DeveloperFilter, DeveloperKey, DeveloperModifier}
-import doobie.util.transactor.Transactor
+import cats._
+import cats.effect._
+import com.github.reddone.caseql.example.model.db._
+import com.github.reddone.caseql.example.model.implicits._
+import com.github.reddone.caseql.sql.table.Table
+import doobie._
+import doobie.implicits._
 
 trait DeveloperService[F[_]] {
   def getDevelopers(filter: DeveloperFilter): F[List[Developer]]
@@ -16,19 +20,57 @@ trait DeveloperService[F[_]] {
 
 object DeveloperService {
 
-  def production[F[_]: Effect](xa: Transactor[F]): DeveloperService[F] = new DeveloperService[F] {
-    override def getDevelopers(filter: DeveloperFilter): F[List[Developer]] = ???
+  def production[F[_]: Effect: Monad](xa: Transactor[F]): DeveloperService[F] = new DeveloperService[F] {
+    override def getDevelopers(filter: DeveloperFilter): F[List[Developer]] =
+      Table[Developer, DeveloperKey]
+        .select(filter)
+        .execute
+        .transact(xa)
+        .compile
+        .toList
 
-    override def getDeveloperById(key: DeveloperKey): F[Option[Developer]] = ???
+    override def getDeveloperById(key: DeveloperKey): F[Option[Developer]] =
+      Table[Developer, DeveloperKey]
+        .selectByKey(key)
+        .execute
+        .transact(xa)
 
-    override def insertDeveloper(modifier: DeveloperModifier): F[DeveloperKey] = ???
+    override def insertDeveloper(modifier: DeveloperModifier): F[DeveloperKey] =
+      Table[Developer, DeveloperKey]
+        .insertReturningKey(modifier)
+        .execute
+        .transact(xa)
 
-    override def updateDevelopers(modifier: DeveloperModifier, filter: DeveloperFilter): F[List[DeveloperKey]] = ???
+    override def updateDevelopers(modifier: DeveloperModifier, filter: DeveloperFilter): F[List[DeveloperKey]] =
+      Table[Developer, DeveloperKey]
+        .updateReturningKeys(modifier, filter)
+        .execute
+        .transact(xa)
+        .compile
+        .toList
 
-    override def updateDeveloperById(modifier: DeveloperModifier, key: DeveloperKey): F[Option[DeveloperKey]] = ???
+    override def updateDeveloperById(modifier: DeveloperModifier, key: DeveloperKey): F[Option[DeveloperKey]] =
+      Table[Developer, DeveloperKey]
+        .updateByKeyReturningKeys(modifier, key)
+        .execute
+        .transact(xa)
+        .compile
+        .last
 
-    override def deleteDevelopers(filter: DeveloperFilter): F[List[DeveloperKey]] = ???
+    override def deleteDevelopers(filter: DeveloperFilter): F[List[DeveloperKey]] =
+      Table[Developer, DeveloperKey]
+        .deleteReturningKeys(filter)
+        .execute
+        .transact(xa)
+        .compile
+        .toList
 
-    override def deleteDeveloperById(key: DeveloperKey): F[Option[DeveloperKey]] = ???
+    override def deleteDeveloperById(key: DeveloperKey): F[Option[DeveloperKey]] =
+      Table[Developer, DeveloperKey]
+        .deleteByKeyReturningKeys(key)
+        .execute
+        .transact(xa)
+        .compile
+        .last
   }
 }

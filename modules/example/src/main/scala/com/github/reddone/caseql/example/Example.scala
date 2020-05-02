@@ -6,13 +6,12 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import cats.effect._
 import cats.implicits._
-import com.github.reddone.caseql.example.resource.TransactorResource
+import com.github.reddone.caseql.example.resource.{ServerResource, TransactorResource}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.logging.log4j.scala.Logging
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.{Duration, FiniteDuration}
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.Duration
 
 object Example extends IOApp with Logging {
 
@@ -22,36 +21,6 @@ object Example extends IOApp with Logging {
   override implicit val contextShift: ContextShift[IO] = IO.contextShift(executionContext)
   override implicit val timer: Timer[IO]               = IO.timer(executionContext)
 
-  def serverResource[F[_]: Effect](
-      serverRoot: String,
-      serverDeadline: FiniteDuration,
-      userContext: SangriaContext[F]
-  ): Resource[F, Http.ServerBinding] = {
-    val akkaServer = AkkaGraphQLServer[SangriaContext[F]](
-      SangriaSchema[F],
-      SangriaResolver[F]
-    )
-    val alloc = Async[F].async[Http.ServerBinding] { cb =>
-      akkaServer.start(serverRoot, userContext).onComplete { r =>
-        cb(r match {
-          case Success(binding) => Right(binding)
-          case Failure(ex)      => Left(ex)
-        })
-      }
-    }
-    val free = (binding: Http.ServerBinding) =>
-      Async[F].async[Http.HttpTerminated] { cb =>
-        binding.terminate(serverDeadline).onComplete { r =>
-          cb(r match {
-            case Success(terminated) => Right(terminated)
-            case Failure(ex)         => Left(ex)
-          })
-        }
-      }
-
-    Resource.make(alloc)(free(_).void)
-  }
-
   def createServer[F[_]: Effect: ContextShift: Timer](config: Config): Resource[F, Http.ServerBinding] = {
     val serverRoot     = config.getString("server.root")
     val serverDeadline = Duration(config.getDuration("server.deadline").getSeconds, TimeUnit.SECONDS)
@@ -59,7 +28,7 @@ object Example extends IOApp with Logging {
     for {
       xa <- TransactorResource[F](config)
       userContext = SangriaContext.production[F](xa)
-      server <- serverResource[F](serverRoot, serverDeadline, userContext)
+      server <- ServerResource[F](serverRoot, serverDeadline, userContext)
     } yield server
   }
 
