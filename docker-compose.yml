@@ -12,6 +12,8 @@ services:
       - adminer
     ports:
       - "4000:4000"
+    environment:
+      DOOBIE_URL: "jdbc:postgresql://db:5432/pgdb"
 
   db:
     image: postgres:9.6.8
