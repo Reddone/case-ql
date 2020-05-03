@@ -60,6 +60,7 @@ lazy val `case-ql-gql` = project
 
 lazy val `case-ql-example` = project
   .in(file("modules/example"))
+  .enablePlugins(JavaAppPackaging)
   .dependsOn(
     `case-ql-sql`,
     `case-ql-circe`,
@@ -70,6 +71,7 @@ lazy val `case-ql-example` = project
     name := "case-ql-example",
     libraryDependencies ++= Dependencies.Jars.`case-ql-example`,
     noPublishSettings,
+    mainClass in Compile := Some("com.github.reddone.caseql.example.MainApp"),
     javaOptions in Compile += "-Dlog4j.configurationFile=src/main/resources/log4j2.yml"
   )
 
@@ -79,6 +81,7 @@ lazy val settings = commonSettings ++ scalafmtSettings ++ updateSettings
 
 lazy val commonSettings = scalacSettings ++ Seq(
   organization := "com.github.reddone",
+  maintainer := "simone88.rm2@gmail.com",
   licenses ++= Seq(("MIT", url("http://opensource.org/licenses/MIT"))),
   scalaVersion := mainScala,
   crossScalaVersions := allScala,
@@ -190,3 +193,7 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings = Seq(
   skip in publish := true
 )
+
+// aliases
+
+addCommandAlias("dist", "clean compile universal:packageBin")

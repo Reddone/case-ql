@@ -25,16 +25,16 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 import scala.util.{Failure, Success}
 
-trait AkkaServer[Ctx] extends CorsSupport {
+trait AkkaSangriaServer[Ctx] extends CorsSupport {
 
-  implicit def system: ActorSystem
-  implicit def ec: ExecutionContext
+  implicit def actorSystem: ActorSystem
+  implicit def executionContext: ExecutionContext
 
   def schema: Schema[Ctx, Unit]
   def deferredResolver: DeferredResolver[Ctx]
 
-  final def executeGraphQL(
-      query: Document,
+  def executeGraphQL(
+      queryAst: Document,
       userContext: Ctx,
       operationName: Option[String],
       variables: Json,
@@ -44,7 +44,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
       Executor
         .execute(
           schema = schema,
-          queryAst = query,
+          queryAst = queryAst,
           userContext = userContext,
           operationName = operationName,
           variables = if (variables.isNull) Json.obj() else variables,
@@ -58,7 +58,7 @@ trait AkkaServer[Ctx] extends CorsSupport {
         }
     )
 
-  final def formatError(error: Throwable): Json = error match {
+  def formatError(error: Throwable): Json = error match {
     case syntaxError: SyntaxError ⇒
       Json.obj(
         "errors" → Json.arr(
@@ -79,10 +79,10 @@ trait AkkaServer[Ctx] extends CorsSupport {
       throw e
   }
 
-  final def formatError(message: String): Json =
+  def formatError(message: String): Json =
     Json.obj("errors" → Json.arr(Json.obj("message" → Json.fromString(message))))
 
-  final def startAkkaServer(serverRoot: String, userContext: Ctx): Future[Http.ServerBinding] = {
+  def start(serverRoot: String, userContext: Ctx): Future[Http.ServerBinding] = {
     val route: Route =
       optionalHeaderValueByName("X-Apollo-Tracing") { tracing ⇒
         redirectToNoTrailingSlashIfPresent(Found) {
@@ -145,20 +145,32 @@ trait AkkaServer[Ctx] extends CorsSupport {
             }
           }
         }
-      } ~
-        (get & pathEndOrSingleSlash) {
-          redirect(s"/$serverRoot", PermanentRedirect)
-        } ~
-        (get & path("health")) {
-          complete {
-            "Hey there!"
-          }
-        }
+      } ~ (get & pathEndOrSingleSlash) {
+        redirect(s"/$serverRoot", PermanentRedirect)
+      }
 
     Http().bindAndHandle(
       corsHandler(route),
       "0.0.0.0",
       sys.props.get("http.port").fold(4000)(_.toInt)
     )
+  }
+}
+
+object AkkaSangriaServer {
+
+  def apply[Ctx](
+      sangriaSchema: Schema[Ctx, Unit],
+      sangriaResolver: DeferredResolver[Ctx]
+  )(
+      implicit
+      system: ActorSystem,
+      ec: ExecutionContext
+  ): AkkaSangriaServer[Ctx] = new AkkaSangriaServer[Ctx] {
+    override implicit val actorSystem: ActorSystem           = system
+    override implicit val executionContext: ExecutionContext = ec
+
+    override val schema: Schema[Ctx, Unit]               = sangriaSchema
+    override val deferredResolver: DeferredResolver[Ctx] = sangriaResolver
   }
 }
