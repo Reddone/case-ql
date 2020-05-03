@@ -2,9 +2,9 @@
     <img src="./logo.png" alt="logo" width="480" height="320" />
 </p> -->
 
-# CaseQL
+# Case-QL
 
-CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
+Case-QL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
 It provides basic CRUD operations for entities, and it offers a powerful filter mechanism to enable querying an
 entity and its relations.
 
@@ -20,7 +20,7 @@ produce the desired effect when used to query or modify the entity.
 
 To run the example using Docker, use:
 ```bash
-docker-compose up
+docker-compose up -d
 ```
 This will launch the build process in a separate container, so you don't need sbt or scala installed on your machine.
 
@@ -31,12 +31,12 @@ docker rmi case-ql_example:latest
 ```
 If you already have sbt on your machine, you can just run the main class in the example sub-project using:
 ```bash
-./external-services -u
+docker-compose up -d db adminer
 sbt "project case-ql-example" "runMain com.github.reddone.caseql.example.MainApp"
 ```
 To clear everything, terminate the sbt process with Ctrl+C and run:
 ```bash
-./external-services -d
+docker-compose down
 ```
 **I still have to publish this to Sonatype. For the moment, take the 'develop' branch as a reference for a future 
 stable release version.**
@@ -80,7 +80,7 @@ certain operations, with the promise that everything will be serializable"**
 
 You are responsible for writing case classes for entities, filters, modifiers and links; in exchange, you get a compile 
 time checking on your case classes and you get a runtime query generation mechanism which let you traduce a JSON like
-this one into a SQL query:
+this one into a SQL query like this:
 
 ```
 Get all people having age between 15 and 65,
@@ -107,7 +107,7 @@ and who have at least one pet which is older than three years
 
 knowing they will work 100% with target entities. And there's much more! You can also query entities using deep 
 nested filters and write practically any kind of condition. You can perform insert, update and delete operations.
-There are also some interesting utilities for working with doobie, for example you can work with raw data in the form 
+There are also some interesting utilities for working with Doobie, for example you can work with raw data in the form 
 *Map[String, Any]*.
 
 Considering that everything is serializable, this library is a good fit if you work with GraphQL. There is a module
@@ -117,22 +117,27 @@ to deal with SQL queries but since it relies only on the possibility to combine 
 support for any SQL library which support interpolation and concatenation of such strings. For example, it will be 
 possible to support [Scalikejdbc](https://github.com/scalikejdbc/scalikejdbc) with little modifications. I am not 
 planning to add [Slick](https://github.com/slick/slick) and [Quill](https://github.com/getquill/quill) support because 
-they are not based on the fragment approach: I strongly believe that we should write SQL and not try to port SQL 
+they are not based on the fragment approach: I strongly believe that we should write plain SQL and not try to port SQL 
 inside Scala.
 
 For a full explanation read the [documentation](./docs/intro.md).
 
 ## TODO
 
-- [ ] add aggregations inside select queries (help appreciated)
+This is my first open source project, and it started as a project based learning to learn Shapeless. It helped me a lot
+to remove boilerplate in GraphQL projects, but it was far away from being a library. I worked a lot on transforming it
+into a library, and I tried my best to write tests. 
+Here are some features that can be added:
 
-- [ ] add joins after select queries (help appreciated)
+- [ ] add aggregations inside select queries and filters
 
-- [ ] provide support for caliban (I have to study the project and ZIO)
+- [ ] add joins
 
-- [ ] abstract over Fragment in order to include scalalikejdbc support (proposals accepted)
+- [ ] provide support for caliban
 
-- [ ] fix spacing inside queries (nice to have for readability)
+- [ ] abstract over Fragment in order to include scalalikejdbc support
+
+- [ ] fix spacing inside queries
 
 ## Inspiration
 
