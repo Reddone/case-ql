@@ -7,18 +7,18 @@ import com.github.reddone.caseql.sql.itmodel.db._
 
 object data {
 
-  val testSchema: String = "test"
+  val testSchema: String = "public"
 
   // developer
 
   val developerTableName: String = "developer"
 
   val developerTableDefinition: String =
-    """|id             BIGSERIAL PRIMARY KEY,
-       |name           VARCHAR(255) NOT NULL,
-       |age            INTEGER NOT NULL,
-       |team_leader_id BIGINT NULL REFERENCES test.developer (id) ON UPDATE CASCADE ON DELETE SET NULL
-       |""".stripMargin
+    s"""|id             BIGSERIAL PRIMARY KEY,
+        |name           VARCHAR(255) NOT NULL,
+        |age            INTEGER NOT NULL,
+        |team_leader_id BIGINT NULL REFERENCES $testSchema.developer (id) ON UPDATE CASCADE ON DELETE SET NULL
+        |""".stripMargin
 
   val developerCols: List[String] = List("id", "name", "age", "team_leader_id")
 
@@ -64,9 +64,9 @@ object data {
   val developerProjectLinkTableName: String = "developer_project_link"
 
   val developerProjectLinkTableDefinition: String =
-    """|developer_id BIGINT NOT NULL REFERENCES test.developer (id) ON UPDATE CASCADE ON DELETE CASCADE,
-       |project_id   BIGINT NOT NULL REFERENCES test.project (id) ON UPDATE CASCADE ON DELETE CASCADE
-       |""".stripMargin
+    s"""|developer_id BIGINT NOT NULL REFERENCES $testSchema.developer (id) ON UPDATE CASCADE ON DELETE CASCADE,
+        |project_id   BIGINT NOT NULL REFERENCES $testSchema.project (id) ON UPDATE CASCADE ON DELETE CASCADE
+        |""".stripMargin
 
   val developerProjectLinkCols: List[String] = List("developer_id", "project_id")
 
@@ -86,12 +86,12 @@ object data {
   val taskTableName = "task"
 
   val taskTableDefinition: String =
-    """|id          BIGSERIAL PRIMARY KEY,
-       |label       VARCHAR(255) NOT NULL,
-       |description TEXT NULL DEFAULT 'EAZY PEAZY',
-       |deadline    TIMESTAMP NOT NULL,
-       |project_id  BIGINT NOT NULL REFERENCES test.project (id) ON UPDATE CASCADE ON DELETE CASCADE
-       |""".stripMargin
+    s"""|id          BIGSERIAL PRIMARY KEY,
+        |label       VARCHAR(255) NOT NULL,
+        |description TEXT NULL DEFAULT 'EAZY PEAZY',
+        |deadline    TIMESTAMP NOT NULL,
+        |project_id  BIGINT NOT NULL REFERENCES $testSchema.project (id) ON UPDATE CASCADE ON DELETE CASCADE
+        |""".stripMargin
 
   val taskCols: List[String] = List("id", "label", "description", "deadline", "project_id")
 

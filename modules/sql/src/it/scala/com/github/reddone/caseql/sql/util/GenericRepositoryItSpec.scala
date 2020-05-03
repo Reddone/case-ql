@@ -10,16 +10,16 @@ import doobie.implicits._
 
 class GenericRepositoryItSpec extends PgAnyWordSpec {
 
-  val anotherTestSchema = "another_schema"
-  val anotherTable      = "another_table"
-  val anotherSequence   = "another_sequence"
+  val anotherSchema   = "another_schema"
+  val anotherTable    = "another_table"
+  val anotherSequence = "another_sequence"
 
   val testRepository: GenericRepository        = GenericRepository.forSchema(testSchema)
-  val anotherTestRepository: GenericRepository = GenericRepository.forSchema(anotherTestSchema)
+  val anotherTestRepository: GenericRepository = GenericRepository.forSchema(anotherSchema)
 
   val currentDeveloperId = new AtomicLong(developers.length.toLong)
   val currentProjectId   = new AtomicLong(projects.length.toLong)
-  val currentTaskId   = new AtomicLong(tasks.length.toLong)
+  val currentTaskId      = new AtomicLong(tasks.length.toLong)
 
   "GenericRepository" when {
 
@@ -27,7 +27,7 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
 
       "succeed to create a schema" in {
         val createSchema = anotherTestRepository.createSchema()
-        val checkSchema  = PgHelper.checkSchema(anotherTestSchema).option
+        val checkSchema  = PgHelper.checkSchema(anotherSchema).option
 
         val action = for {
           _                 <- createSchema
@@ -39,13 +39,13 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
           .unsafeRunSync()
 
         maybeSchemaAfterCreate shouldBe defined
-        maybeSchemaAfterCreate.get shouldBe anotherTestSchema
+        maybeSchemaAfterCreate.get shouldBe anotherSchema
       }
 
       "succeed to delete a schema" in {
-        val createSchema = PgHelper.createSchema(anotherTestSchema).run
+        val createSchema = PgHelper.createSchema(anotherSchema).run
         val deleteSchema = anotherTestRepository.dropSchema()
-        val checkSchema  = PgHelper.checkSchema(anotherTestSchema).option
+        val checkSchema  = PgHelper.checkSchema(anotherSchema).option
 
         val action = for {
           _                 <- createSchema
@@ -59,7 +59,7 @@ class GenericRepositoryItSpec extends PgAnyWordSpec {
           .unsafeRunSync()
 
         maybeSchemaAfterCreate shouldBe defined
-        maybeSchemaAfterCreate.get shouldBe anotherTestSchema
+        maybeSchemaAfterCreate.get shouldBe anotherSchema
         maybeSchemaAfterDelete shouldBe empty
       }
     }

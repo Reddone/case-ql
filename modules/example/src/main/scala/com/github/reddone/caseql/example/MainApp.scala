@@ -13,7 +13,7 @@ import org.apache.logging.log4j.scala.Logging
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
 
-object Example extends IOApp with Logging {
+object MainApp extends IOApp with Logging {
 
   implicit val actorSystem: ActorSystem           = ActorSystem("example-system")
   implicit val executionContext: ExecutionContext = actorSystem.dispatcher
