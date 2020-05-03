@@ -5,22 +5,41 @@
 # CaseQL
 
 CaseQL is a small library for creating type-safe and JSON-serializable SQL queries using Scala case classes.
-It provides basic CRUD operations for entities and it offers a powerful filter mechanism to enable querying an
+It provides basic CRUD operations for entities, and it offers a powerful filter mechanism to enable querying an
 entity and its relations.
 
 The basic idea is that case classes used to represent filters and modifications are checked at compile time
-against case classes representing the data model. This library provides powerful combinators to express almost any
-kind of condition, taking into account also relations between entities.
+against case classes representing the data model. Basically, if your data model augmented with case-ql compiles, you  
+can use this library's powerful combinators to express almost any kind of condition, taking into account also 
+relations between entities.
 
 Queries are built using implicit instances of special objects which can be derived only if the type checking succeeds.
 These objects act as a glue between the serializable world and the type-safe world, i.e. if you can derive the right
 implicit instance you can be sure that your serializable case class representing a filter or a modification will 
 produce the desired effect when used to query or modify the entity.
 
-See the "example" sub project to see it in action! It is still an experiment but it helped me a lot!!!
-**I have almost finished writing tests and the example. If you want to understand the potential of the library, see the
-tests and integration tests inside the sql module** For the moment, take the develop branch as
-a reference for the future stable release version.
+To run the example using Docker, use:
+```bash
+docker-compose up
+```
+This will launch the build process in a separate container, so you don't need sbt or scala installed on your machine.
+
+To clear everything, run:
+```bash
+docker-compose down
+docker rmi case-ql_example:latest
+```
+If you already have sbt on your machine, you can just run the main class in the example sub-project using:
+```bash
+./external-services -u
+sbt "project case-ql-example" "runMain com.github.reddone.caseql.example.MainApp"
+```
+To clear everything, terminate the sbt process with Ctrl+C and run:
+```bash
+./external-services -d
+```
+**I still have to publish this to Sonatype. For the moment, take the 'develop' branch as a reference for a future 
+stable release version.**
 
 [Full documentation](./docs/intro.md)
 
@@ -86,7 +105,7 @@ and who have at least one pet which is older than three years
 }
 ```
 
-knowing that they will work 100% with target entities. And there's much more! You can also query entities using deep 
+knowing they will work 100% with target entities. And there's much more! You can also query entities using deep 
 nested filters and write practically any kind of condition. You can perform insert, update and delete operations.
 There are also some interesting utilities for working with doobie, for example you can work with raw data in the form 
 *Map[String, Any]*.
@@ -98,18 +117,18 @@ to deal with SQL queries but since it relies only on the possibility to combine 
 support for any SQL library which support interpolation and concatenation of such strings. For example, it will be 
 possible to support [Scalikejdbc](https://github.com/scalikejdbc/scalikejdbc) with little modifications. I am not 
 planning to add [Slick](https://github.com/slick/slick) and [Quill](https://github.com/getquill/quill) support because 
-they are not based or they not provide good support for the fragment approach (I strongly believe that we should write 
-SQL and not try to port SQL inside Scala).
+they are not based on the fragment approach: I strongly believe that we should write SQL and not try to port SQL 
+inside Scala.
 
 For a full explanation read the [documentation](./docs/intro.md).
 
 ## TODO
 
-- [ ] provide support for caliban (I have to study the project and ZIO)
-
-- [ ] add joins inside select queries (help appreciated)
-
 - [ ] add aggregations inside select queries (help appreciated)
+
+- [ ] add joins after select queries (help appreciated)
+
+- [ ] provide support for caliban (I have to study the project and ZIO)
 
 - [ ] abstract over Fragment in order to include scalalikejdbc support (proposals accepted)
 
@@ -127,4 +146,4 @@ Scala.
 ## License
 
 All code is available to you under the MIT license, available at http://opensource.org/licenses/mit-license.php 
-and also in the LICENSE file.
+and in the LICENSE file.
