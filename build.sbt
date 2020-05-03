@@ -193,3 +193,7 @@ lazy val publishSettings = Seq(
 lazy val noPublishSettings = Seq(
   skip in publish := true
 )
+
+// aliases
+
+addCommandAlias("dist", "clean compile universal:packageBin")
