@@ -134,8 +134,7 @@ For a full explanation read the [documentation](./docs/intro.md).
 
 This is my first open source project, and it started as a project-based-learning approach to learn Shapeless. It helped 
 to remove boilerplate in GraphQL projects, but it was far away from being a library. I worked a lot on transforming it
-into a library, and I tried my best to write decent tests. 
-Here are some features that can be added:
+into a library, and I tried my best to write decent tests. Here are some features that can be added:
 
 - [ ] add aggregations inside select queries and filters
 
@@ -143,9 +142,7 @@ Here are some features that can be added:
 
 - [ ] provide support for caliban
 
-- [ ] abstract over Fragment in order to include scalalikejdbc support
-
-- [ ] fix spacing inside queries
+- [ ] abstract over Fragment in order to include Scalikejdbc support
 
 ## Inspiration
 
