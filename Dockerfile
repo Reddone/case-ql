@@ -1,9 +1,10 @@
-ARG VERSION
 ARG JAVA_VERSION
 ARG SBT_VERSION
 ARG SCALA_VERSION
 
 FROM hseeberger/scala-sbt:${JAVA_VERSION}_${SBT_VERSION}_${SCALA_VERSION}
+
+ARG VERSION
 
 RUN mkdir -p /opt/case-ql-build
 RUN mkdir -p /opt/case-ql-example
