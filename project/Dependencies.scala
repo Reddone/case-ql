@@ -3,6 +3,11 @@ import sbt._
 
 object Dependencies {
 
+  object scala {
+    lazy val namespace        = "org.scala-lang.modules"
+    lazy val collectionCompat = namespace %% "scala-collection-compat" % collectionCompatVersion
+  }
+
   object shapeless {
     lazy val namespace = "com.chuusai"
     lazy val core      = namespace %% "shapeless" % shapelessVersion
