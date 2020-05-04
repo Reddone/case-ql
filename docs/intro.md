@@ -1,13 +1,13 @@
 ## Introduction
 
-Here we report the basic concepts behind CaseQL. For an in depth explanation, please follow the documentation links
+Here we report the basic concepts behind Case-QL. For an in depth explanation, please follow the documentation links
 at the end of each section. If you have any question for which you can't find an answer in the documentation, feel free
 to open an issue or to write an e-mail.
 
 Before reading the documentation, I suggest you to become familiar with Doobie, by reading the "book of doobie" at
-https://tpolecat.github.io/doobie/. Since at the moment this library is heavily based on it, it's better for you
-to become familiar with concepts such as *Read*, *Write*, *Query*, *Update* and *Transactor*. There are also nice 
-examples at https://github.com/tpolecat/doobie/tree/master/modules/example/src/main/scala/example.
+https://tpolecat.github.io/doobie/. Since this library is heavily based on it, it's better for you to become familiar 
+with concepts such as *Read*, *Write*, *Query*, *Update* and *Transactor*. There are also nice examples at 
+https://github.com/tpolecat/doobie/tree/master/modules/example/src/main/scala/example.
 
 ## SQL Doobie Module
 
@@ -103,17 +103,15 @@ joins in the future. If you need joins, you can use the generated fragment and e
 There are some interesting utilities, which can be useful depending on the scenario:
 
 - possibility to work with raw values in the form of a *Map[String, Any]*. Maybe you don't want to provide a *Read* or 
-*Write* instance but you want to read data as it is. You can do this using the *Read[Row]* and *Write[Row]* implicit
-instances inside the *Raw* object. For example, if you have a huge table and you want to use Sangria projections, now
+*Write* instance, but you want to read data as it is. You can do this using the *Read[Row]* and *Write[Row]* implicit
+instances inside the *Raw* object. For example, if you have a huge table, and you want to use Sangria projections, now
 you can. Use it at your own risk because they remove the type safe layer introduced by Doobie.
 
 - test utilities which can save you some time. There is a *GenericRepository* which exposes common operations in an
 unsafe manner, but it removes many of the test boilerplate, and there is a *TestTransactors* factory to create a
-Doobie transactor backed by different pools.
+Doobie transactor backed by different thread pools.
 
 - some fragment utils, like the *optionalAndOpt* and *optionalOrOpt* which are super handy when building dynamic SQL.
-
-- various helpers in the form of *StringUtils*, *JsonUtils*, *CirceDecoders*, *ExecutorServices*.
 
 - a *FromMap* typeclass which can be used in conjunction with *Row* to convert raw results back to case classes.
 For example, you can transform the raw result according to a *Projector* and then you can map your intermediate
@@ -122,6 +120,10 @@ result to a case class before the final mapping step with the GraphQL object.
 - SQL tokens and functions used internally in the project to avoid repetitions. Maybe you can use them too.
 
 [Util documentation](./util.md)
+
+## JSON Circe Module 
+
+This module contains circe decoders for *Filter*, *Modifier* and other types not covered by Circe.
 
 ## GraphQL Sangria Module
 
@@ -133,22 +135,5 @@ You can find these instances inside *ByteTypeDefinition*, *JavaSqlTypeDefinition
 ### Input
 
 For every *Filter* and *Modifier* provided by this library, there is a corresponding implicit *InputObjectType*.
-You can find these instances inside *InputTypeDefinition*. There is also an utility method *makeRelationFilterInputType*
+You can find these instances inside *InputTypeDefinition*. There is also a utility method *makeRelationFilterInputType*
 which you can use to create an *InputObjectType* for a *RelationFilter*.
-
-### Util
-
-There are also some utilities for common GraphQL queries, in particular:
-
-- *PageInfo*, an object including *hasPrevious*, *hasNext* and *total*, useful when dealing with pagination. 
-The corresponding *ObjectType* can be found under *ObjectDefinition*.
-
-- *ListContainer[A]*, a container for a type *A* which includes a *Seq[A]* and a *PageInfo* object. It can be created 
-from a *QueryResultSet[A]*, which is the equivalent of *ListContainer* on the SQL side. Two different classes are
-used because it's better to keep container and wrappers separate between the two worlds since entities can
-be mapped in different ways.
-
-- *Identifiable*, an utility trait containing an *id* method typed by Identity. Mixins for *Int*, *Long* and *String*
-are provided, and corresponding *InterfaceType* can be found under *ObjectDefinition*.
-
-- various *Argument* related to utilities described above.

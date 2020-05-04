@@ -57,19 +57,19 @@ val testTable: Table[Test, TestKey] = Table.derive[Test, TestKey](Some("test"), 
 val syntax: TableSyntax[T]          = testTable.syntax
 val aliasedSyntax: TableSyntax[T]   = testTable.syntax.withAlias(Some("t"))
 
-syntax.name                    // "public.test"
-syntax.aliasedName             // "public.test"
-syntax.columns                 // List("field1", "field2", "field3", "field4")
-syntax.aliasedColumns          // List("test.field1", "test.field2", "test.field3", "test.field4")
-syntax.column("field1")        // "field1"
-syntax.aliasedColumn("field1") // "test.field1"
+syntax.name                      // "test"
+syntax.fullName                  // "public.test"
+syntax.columns                   // List("field1", "field2", "field3", "field4")
+syntax.selectionColumns          // List("test.field1", "test.field2", "test.field3", "test.field4")
+syntax.column("field1")          // "field1"
+syntax.selectionColumn("field1") // "test.field1"
 
-aliasedSyntax.name                    // "public.test"
-aliasedSyntax.aliasedName             // "public.test t"
-aliasedSyntax.columns                 // List("field1", "field2", "field3", "field4")
-aliasedSyntax.aliasedColumns          // List("t.field1", "t.field2", "t.field3", "t.field4")
-aliasedSyntax.column("field1")        // "field1"
-aliasedSyntax.aliasedColumn("field1") // "t.field1"
+aliasedSyntax.name                      // "t"
+aliasedSyntax.fullName                  // "public.test t"
+aliasedSyntax.columns                   // List("field1", "field2", "field3", "field4")
+aliasedSyntax.selectionColumns          // List("t.field1", "t.field2", "t.field3", "t.field4")
+aliasedSyntax.column("field1")          // "field1"
+aliasedSyntax.selectionColumn("field1") // "t.field1"
 ```
 
 You never interact directly with this class, because it is used only during the derivation process of other typeclasses:

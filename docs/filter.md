@@ -225,11 +225,11 @@ or its serialized form:
 will produce the where condition :
 
 ```sql
-WHERE (test_direct.field1 = 1) 
+WHERE (test_direct.field1 = '1') 
     AND (EXISTS (
-        SELECT 1 FROM test_direct 
-        WHERE test_left.field1 = test_direct.field3 
-        AND test_left.field1 IN (11, 12, 13)
+         SELECT 1 
+         FROM (SELECT * FROM test_left WHERE test_left.field1 IN (11, 12, 13)) AS test_left
+         WHERE test_left.field1 = test_direct.field3 
     ))".
 ```
 

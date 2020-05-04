@@ -19,25 +19,33 @@ implicit instance you can be sure that your serializable case class representing
 produce the desired effect when used to query or modify the entity.
 
 To run the example using Docker, use:
+
 ```bash
 docker-compose up -d
 ```
+
 This will launch the build process in a separate container, so you don't need sbt or scala installed on your machine.
 
 To clear everything, run:
+
 ```bash
 docker-compose down
 docker rmi case-ql_example:latest
 ```
+
 If you already have sbt on your machine, you can just run the main class in the example sub-project using:
+
 ```bash
 docker-compose up -d db adminer
 sbt "project case-ql-example" "runMain com.github.reddone.caseql.example.MainApp"
 ```
+
 To clear everything, terminate the sbt process with Ctrl+C and run:
+
 ```bash
 docker-compose down
 ```
+
 **I still have to publish this to Sonatype. For the moment, take the 'develop' branch as a reference for a future 
 stable release version.**
 
@@ -45,8 +53,8 @@ stable release version.**
 
 ## Motivation
 
-When I first saw GraphQL and the ecosystem around it ([Prisma](https://www.prisma.io/docs) in particular) I was
-immediately caught up by the possibility of using filters like this:
+When I first saw GraphQL and its ecosystem ([Prisma](https://www.prisma.io/docs) in particular) I was immediately 
+caught up by the possibility of using filters like this:
 
 ```
 Query all Post nodes that are either published and whose title is in a list of given strings, 
@@ -79,7 +87,7 @@ So the entire project can be summarized with:
 certain operations, with the promise that everything will be serializable"**
 
 You are responsible for writing case classes for entities, filters, modifiers and links; in exchange, you get a compile 
-time checking on your case classes and you get a runtime query generation mechanism which let you traduce a JSON like
+time checking on your case classes, and you get a runtime query generation mechanism which let you traduce a JSON like
 this one into a SQL query like this:
 
 ```
@@ -124,10 +132,9 @@ For a full explanation read the [documentation](./docs/intro.md).
 
 ## TODO
 
-This is my first open source project, and it started as a project based learning to learn Shapeless. It helped me a lot
+This is my first open source project, and it started as a project-based-learning approach to learn Shapeless. It helped 
 to remove boilerplate in GraphQL projects, but it was far away from being a library. I worked a lot on transforming it
-into a library, and I tried my best to write tests. 
-Here are some features that can be added:
+into a library, and I tried my best to write decent tests. Here are some features that can be added:
 
 - [ ] add aggregations inside select queries and filters
 
@@ -135,9 +142,7 @@ Here are some features that can be added:
 
 - [ ] provide support for caliban
 
-- [ ] abstract over Fragment in order to include scalalikejdbc support
-
-- [ ] fix spacing inside queries
+- [ ] abstract over Fragment in order to include Scalikejdbc support
 
 ## Inspiration
 

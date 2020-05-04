@@ -1,17 +1,17 @@
 INSERT INTO public.developer (name, age, team_leader_id) VALUES
-('name1', 32, NULL),
-('name2', 1, 1),
-('name3', 1, 1),
-('name4', 23, NULL),
-('name5', 2, 4),
-('name6', 2, 4),
-('name7', 42, NULL),
-('name8', 3, 7);
+('Shabaz Delarosa', 32, NULL),
+('Mathilda Luna', 19, 1),
+('Mikolaj Carney', 19, 1),
+('Zakir Dennis', 23, NULL),
+('Russell Whitaker', 27, 4),
+('Shakira Mcdonnell', 27, 4),
+('Catrin Mcgowan', 42, NULL),
+('Zeenat Mitchell', 35, 7);
 
 INSERT INTO public.project (title, description) VALUES
-('title1', 'description1'),
-('title2', NULL),
-('title3', 'description3');
+('Move to Kubernetes', 'Do as everyone does'),
+('Rewrite everything from scratch', NULL),
+('Burn the Mainframe', 'Find a way to create a better world');
 
 INSERT INTO public.developer_project_link (developer_id, project_id) VALUES
 (1, 1),
@@ -26,9 +26,9 @@ INSERT INTO public.developer_project_link (developer_id, project_id) VALUES
 (8, 3);
 
 INSERT INTO public.task (label, description, deadline, project_id) VALUES
-('label1', 'description1', '2020-01-01 01:01:01', 1),
-('label2', 'description2', '2020-02-02 02:02:02', 1),
-('label3', NULL, '2020-01-01 01:01:01', 2),
-('label4', NULL, '2020-02-02 02:02:02', 2),
-('label5', 'description5', '2020-03-03 03:03:03', 3),
-('label6', NULL, '2020-03-03 03:03:03', 3);
+('Install the cluster', 'Follow the tutorial', '2020-01-01 01:01:01', 1),
+('Test the cluster', 'Follow another tutorial', '2020-02-02 02:02:02', 1),
+('Delete old code', NULL, '2020-01-01 01:01:01', 2),
+('Reinvent the wheel', NULL, '2020-02-02 02:02:02', 2),
+('Mine some bitcoins', 'We need to have something to spend at the black market', '2020-03-03 03:03:03', 3),
+('Buy a nuclear warhead', NULL, '2020-03-03 03:03:03', 3);
