@@ -75,11 +75,11 @@ lazy val `case-ql-example` = project
     javaOptions in Compile += "-Dlog4j.configurationFile=src/main/resources/log4j2.yml"
   )
 
-lazy val settings = commonSettings ++ scalafmtSettings ++ updateSettings
+lazy val settings = commonSettings ++ scalacSettings ++ scalafmtSettings ++ updateSettings
 
 // common settings
 
-lazy val commonSettings = scalacSettings ++ Seq(
+lazy val commonSettings = Seq(
   organization := "com.github.reddone",
   maintainer := "simone88.rm2@gmail.com",
   licenses ++= Seq(("MIT", url("http://opensource.org/licenses/MIT"))),

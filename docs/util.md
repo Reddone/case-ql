@@ -35,12 +35,12 @@ val data: ConnectionIO[List[Row]] = Fragment.const(selectString).query[Row](read
 
 In the insert example, we used the *toFragment* method of *Write*, but there are other ways to construct a sql statement
 with given parameters; one approach will be discussed later when explaining *FragmentUtils*.
-In the select example, we get back a *List[mutable.Map[String, Any]]* and we can manipulate the map object as we like;
+In the select example, we get back a *List[mutable.Map[String, Any]]*, and we can manipulate the map object as we like;
 this feature can be used with Sangria
 [Projector](https://github.com/sangria-graphql/sangria/blob/master/src/test/scala/sangria/execution/ProjectorSpec.scala)
 to build dynamically loaded entities.
 
-If you want to use select data using an fs2 *Stream* you can still use the *Read[Row]* provided here, but a more 
+If you want to use select data using a fs2 *Stream* you can still use the *Read[Row]* provided here, but a more 
 optimized version taken from Doobie examples is available:
 
 ```scala
@@ -74,7 +74,7 @@ val repository = GenericRepository.forSchema("public")
 
 repository.createSchema()
 
-val tableDefinition = """|id         BIGSERIAL PRIMARY KEY,
+val tableDefinition = """|id         BIGSERIAL    PRIMARY KEY,
                          |label      VARCHAR(255) NOT NULL,
                          |created_at TIMESTAMP    NOT NULL,
                          |updated_at TIMESTAMP    NOT NULL,
@@ -98,28 +98,14 @@ repository.update[(String, Timestamp, Long)](
 )
 ``` 
 
-Please do not use this for implementing real repositories. Its purpose is only to remove many of the test boilerplate 
-and the interface it offers it's far from being user friendly.
+Please do not use this for implementing real repositories. Its purpose is only to remove many of the test boilerplate, 
+and the interface it offers is far from being user-friendly.
 
 ## TestTransactors
 
-Since tests are important, this library offers a shorthand for creating a *Transactor* to use inside your tests. If you
-use typesafe config library, which is quite the standard is many projects, then you can use *DoobieConfig* to read
-database configuration from application.conf or from your favourite source:
-
-```scala
-val config = ConfigFactory.parseString(s"""|doobie {
-                                           |  numThreads = 10
-                                           |  driverClassName = "org.postgresql.Driver"
-                                           |  url = "url"
-                                           |  user = "user"
-                                           |  password = "password"
-                                           |}""".stripMargin)
-val doobieConfig = DoobieConfig.valueOf(config)
-```
-
-This will read and validate the configuration. Now, you can pass this configuration to *TestTransactors* in order to
-create a Doobie *Transactor*:
+Since tests are important, this library offers a shorthand for creating a *Transactor* to use inside your tests. It
+accepts a *DoobieConfig* which validates standard doobie configuration parameters. You must create an implementation 
+for providing it to *TestTransactors*. If you do so, you can create a Doobie *Transactor* using:
 
 ```scala
 TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Cached)
@@ -128,16 +114,15 @@ TestTransactors.valueOf[IO](doobieConfig, TestTransactors.BlockerMode.Sync)
 ```
 
 The three are transactors backed by a cached thread pool, a fixed thread pool and no thread pool (sync) respectively.
-Note that the cached thread pool is the doobie default.
 
 ## Others
 
-I have included other utilities which don't need a deep explanation: *CirceDecoders*, *ExecutorServices*, *JsonUtils*, 
-*StringUtils*, *FragmentUtils*. The only one which is worth an example is the last one: it contains methods to interact 
-with Doobie fragments. The first two methods are used to produce a *Query[W, R]* and an *Update[W]*, which are quite 
-uncommon in Doobie because you usually work with *Query0[R]* and *Update0*, because it's a lot more common to set 
-parameters on the fly using fr"" and sql"". If you decide to use these methods, you will need to provide a *W* in order 
-to go back to the more common *Query0[R]* and *Update0* types:
+I have included other utilities which don't need a deep explanation: *ExecutorServices*, *StringUtils*, *FragmentUtils*. 
+The only one which is worth an example is the last one: it contains methods to interact with Doobie fragments. 
+The first two methods are used to produce a *Query[W, R]* and an *Update[W]*, which are quite uncommon in Doobie 
+because you usually work with *Query0[R]* and *Update0*, because it's a lot more common to set parameters on the fly 
+using fr"" and sql"". If you decide to use these methods, you will need to provide a *W* in order to go back to the 
+more common *Query0[R]* and *Update0* types:
 
 ```scala
 def wrapInQuery[W: Write, R: Read](fragment: Fragment): Query[W, R]
