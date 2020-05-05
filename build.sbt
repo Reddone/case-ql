@@ -3,6 +3,7 @@ import sbtrelease._
 inThisBuild(
   Seq(
     organization := "com.github.reddone",
+    maintainer := "simone88.rm2@gmail.com",
     scmInfo := Some(
       ScmInfo(url("https://github.com/reddone/case-ql"), "git@github.com:reddone/case-ql.git")
     ),

@@ -96,7 +96,7 @@ returning *Stream[ConnectionIO, K]*.
 At the moment joins are not supported, but since we have links I think that it will be possible to express type-safe
 joins in the future. If you need joins, you can use the generated fragment and enrich it as you like.
 
-[Query documentation](./modifier.md)
+[Query documentation](./query.md)
 
 ### Util
 

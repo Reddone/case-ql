@@ -25,9 +25,9 @@ The project is available on Sonatype release:
 ```scala
 object caseQL {
   lazy val namespace = "com.github.reddone"
-  lazy val sql = namespace %% "case-ql-sql" % caseQLVersion
-  lazy val circe = namespace %% "case-ql-circe" % caseQLVersion
-  lazy val gql = namespace %% "case-ql-gql" % caseQLVersion
+  lazy val sql = namespace %% "case-ql-sql" % "0.1.0"
+  lazy val circe = namespace %% "case-ql-circe" % "0.1.0"
+  lazy val gql = namespace %% "case-ql-gql" % "0.1.0"
 }
 ```
 
