@@ -1,0 +1,44 @@
+version: "3.1"
+
+services:
+  example:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+      args:
+        VERSION: 0.1.0
+        JAVA_VERSION: 8u252
+        SBT_VERSION: 1.3.10
+        SCALA_VERSION: 2.12.11
+    container_name: example
+    restart: unless-stopped
+    depends_on:
+      - db
+      - adminer
+    ports:
+      - "4000:4000"
+    environment:
+      DOOBIE_NUM_THREADS: 10
+      DOOBIE_URL: jdbc:postgresql://db:5432/pgdb
+      DOOBIE_USER: pguser
+      DOOBIE_PASSWORD: pguser
+
+  db:
+    image: postgres:9.6.8
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pguser
+      POSTGRES_DB: pgdb
+    volumes:
+      - ./modules/example/src/main/resources/sql:/docker-entrypoint-initdb.d
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"

@@ -1,6 +1,7 @@
 package com.github.reddone.caseql.sql.util
 
 import cats.implicits._
+import com.github.reddone.caseql.sql.tokens.Not
 import doobie._
 import Fragment._
 
@@ -26,7 +27,7 @@ object FragmentUtils {
     if (united.isEmpty) None else Some(Fragments.or(united: _*))
   }
 
-  def optionalNot(f: Option[Fragment]): Option[Fragment] = {
-    f.map(const("NOT") ++ Fragments.parentheses(_))
+  def optionalNotOpt(f: Option[Fragment]): Option[Fragment] = {
+    f.map(const(Not) ++ Fragments.parentheses(_))
   }
 }

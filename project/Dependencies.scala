@@ -3,9 +3,9 @@ import sbt._
 
 object Dependencies {
 
-  object typesafe {
-    lazy val namespace = "com.typesafe"
-    lazy val config    = namespace % "config" % configVersion
+  object scala {
+    lazy val namespace        = "org.scala-lang.modules"
+    lazy val collectionCompat = namespace %% "scala-collection-compat" % collectionCompatVersion
   }
 
   object shapeless {
@@ -18,6 +18,7 @@ object Dependencies {
     lazy val core      = namespace %% "circe-core" % circeVersion
     lazy val parser    = namespace %% "circe-parser" % circeVersion
     lazy val generic   = namespace %% "circe-generic" % circeVersion
+    lazy val optics    = namespace %% "circe-optics" % circeOpticsVersion
   }
 
   object cats {
@@ -44,6 +45,7 @@ object Dependencies {
     lazy val namespace = "org.sangria-graphql"
     lazy val core      = namespace %% "sangria" % sangriaVersion
     lazy val circe     = namespace %% "sangria-circe" % sangriaCirceVersion
+    lazy val slowLog   = namespace %% "sangria-slowlog" % sangriaSlowLogVersion
   }
 
   object scalatest {
@@ -61,9 +63,9 @@ object Dependencies {
     lazy val core      = namespace %% "testcontainers-scala" % testcontainersScalaVersion
   }
 
-  object slf4j {
-    lazy val namespace = "org.slf4j"
-    lazy val api       = namespace % "slf4j-api" % slf4jVersion
+  object typesafe {
+    lazy val namespace = "com.typesafe"
+    lazy val config    = namespace % "config" % configVersion
   }
 
   object akka {
@@ -77,6 +79,11 @@ object Dependencies {
   object akkaHttpCirce {
     lazy val namespace = "de.heikoseeberger"
     lazy val core      = namespace %% "akka-http-circe" % akkaHttpCirceVersion
+  }
+
+  object slf4j {
+    lazy val namespace = "org.slf4j"
+    lazy val api       = namespace % "slf4j-api" % slf4jVersion
   }
 
   object log4j {
@@ -98,33 +105,36 @@ object Dependencies {
   }
 
   object Jars {
+
     lazy val `shared`: Seq[ModuleID] = Seq(
-      slf4j.api                % "compile",
       scalatest.core           % "it, test",
       testcontainers.postgres  % "it",
       testcontainersScala.core % "it"
     )
 
-    lazy val `sql`: Seq[ModuleID] = Seq(
-      typesafe.config  % "compile",
+    lazy val `case-ql-sql`: Seq[ModuleID] = Seq(
       shapeless.core   % "compile",
-      circe.core       % "compile",
-      circe.parser     % "compile",
-      circe.generic    % "compile",
       cats.core        % "compile",
       cats.free        % "compile",
       cats.effect      % "compile",
       fs2.core         % "compile",
       doobie.core      % "compile",
-      doobie.scalatest % "it, test"
+      doobie.scalatest % "it",
+      doobie.postgres  % "it"
     ) ++ `shared`
 
-    lazy val `gql`: Seq[ModuleID] = Seq(
+    lazy val `case-ql-circe`: Seq[ModuleID] = Seq(
+      circe.core    % "compile",
+      circe.parser  % "compile",
+      circe.generic % "compile"
+    ) ++ `shared`
+
+    lazy val `case-ql-gql`: Seq[ModuleID] = Seq(
       sangria.core  % "compile",
-      sangria.circe % "compile"
+      sangria.circe % "it, test"
     ) ++ `shared`
 
-    lazy val `example`: Seq[ModuleID] = Seq(
+    lazy val `case-ql-example`: Seq[ModuleID] = Seq(
       typesafe.config        % "compile",
       slf4j.api              % "compile",
       log4j.core             % "compile",
@@ -136,6 +146,7 @@ object Dependencies {
       circe.core             % "compile",
       circe.parser           % "compile",
       circe.generic          % "compile",
+      circe.optics           % "compile",
       doobie.core            % "compile",
       doobie.hikari          % "compile",
       doobie.postgres        % "compile",
@@ -145,7 +156,8 @@ object Dependencies {
       akka.http              % "compile",
       akkaHttpCirce.core     % "compile",
       sangria.core           % "compile",
-      sangria.circe          % "compile"
+      sangria.circe          % "compile",
+      sangria.slowLog        % "compile"
     )
   }
 }

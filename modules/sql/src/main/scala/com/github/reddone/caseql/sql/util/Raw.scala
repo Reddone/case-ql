@@ -1,30 +1,88 @@
 package com.github.reddone.caseql.sql.util
 
-import java.sql.{PreparedStatement, ResultSet}
+import java.sql.{ParameterMetaData, PreparedStatement, ResultSet, ResultSetMetaData}
 
+import cats.implicits._
+import com.github.reddone.caseql.sql.hi.connection
 import doobie._
+import doobie.implicits._
+import fs2.Stream
 
 import scala.collection.mutable
 
 object Raw {
 
-  type Row = mutable.LinkedHashMap[String, Any]
+  type Row = mutable.LinkedHashMap[String, Any] // order matters when doing writes
+
+  private final case class ColumnMetadata(
+      className: String,
+      label: String,
+      name: String,
+      tpe: Int,
+      tpeName: String,
+      precision: Int,
+      scale: Int,
+      nullability: Int
+  )
+
+  private object ColumnMetadata {
+
+    def of(rsm: ResultSetMetaData, index: Int): ColumnMetadata = {
+      ColumnMetadata(
+        rsm.getColumnClassName(index),
+        rsm.getColumnLabel(index),
+        rsm.getColumnName(index),
+        rsm.getColumnType(index),
+        rsm.getColumnTypeName(index),
+        rsm.getPrecision(index),
+        rsm.getScale(index),
+        rsm.isNullable(index)
+      )
+    }
+  }
+
+  private final case class ParameterMetadata(
+      className: String,
+      mode: Int,
+      tpe: Int,
+      tpeName: String,
+      precision: Int,
+      scale: Int,
+      nullability: Int
+  )
+
+  private object ParameterMetadata {
+
+    def of(pm: ParameterMetaData, index: Int): ParameterMetadata = {
+      ParameterMetadata(
+        pm.getParameterClassName(index),
+        pm.getParameterMode(index),
+        pm.getParameterType(index),
+        pm.getParameterTypeName(index),
+        pm.getPrecision(index),
+        pm.getScale(index),
+        pm.isNullable(index)
+      )
+    }
+  }
+
+  def processRaw(sql: String, chunkSize: Int = 100): Stream[ConnectionIO, Row] =
+    connection.streamRaw(sql, ().pure[PreparedStatementIO], chunkSize)
 
   implicit val rowRead: Read[Row] = new Read[Row](Nil, unsafeGet)
 
   implicit val rowWrite: Write[Row] = new Write[Row](Nil, _.values.toList, unsafeSet, unsafeUpdate)
 
   private def unsafeGet(rs: ResultSet, n: Int): Row = {
-    assert(n > 0, "UnsafeGet column index must be greater than 0")
-    val metadata = rs.getMetaData
-    val columnLabelsAndNullabilities = (n to metadata.getColumnCount)
-      .map(i => (metadata.getColumnLabel(i), metadata.isNullable(i)))
-      .toList
-    val builder = mutable.LinkedHashMap.newBuilder[String, Any]
-    columnLabelsAndNullabilities.foreach({
-      case (label, nullability) =>
+    assert(n > 0, "Row unsafeGet column index must be greater than 0")
+    val rsMeta         = rs.getMetaData
+    val colCount       = rsMeta.getColumnCount
+    val colMetaSeq     = (n to colCount).map(ColumnMetadata.of(rsMeta, _))
+    val mutableBuilder = mutable.LinkedHashMap.newBuilder[String, Any]
+    colMetaSeq.foreach({
+      case ColumnMetadata(_, label, _, _, _, _, _, nullability) =>
         val rsObject = rs.getObject(label)
-        val anyValue = if (nullability == 0) { // columnNoNulls
+        val value = if (nullability == 0) { // columnNoNulls
           rsObject
         } else if (nullability == 1) { // columnNullable
           if (rs.wasNull) {
@@ -33,48 +91,53 @@ object Raw {
             Some(rsObject)
           }
         } else { // columnNullableUnknown
-          throw new IllegalArgumentException(s"Cannot infer nullability for column with label $label")
+          throw new IllegalArgumentException(s"Cannot infer nullability for column $label")
         }
-        builder += (label -> anyValue)
+        mutableBuilder += (label -> value)
     })
-    builder.result()
+    mutableBuilder.result()
   }
 
   private def unsafeSet(ps: PreparedStatement, n: Int, a: Row): Unit = {
-    assert(n > 0, "UnsafeSet column index must be greater than 0")
-    val metadata       = ps.getParameterMetaData
-    val parameterCount = metadata.getParameterCount
-    if (parameterCount - n + 1 < a.size) {
+    assert(n > 0, "Row unsafeSet column index must be greater than 0")
+    val psMeta     = ps.getParameterMetaData
+    val paramCount = psMeta.getParameterCount
+    if (paramCount - n + 1 != a.size) {
       throw new IllegalArgumentException(
-        s"You are trying to set ${parameterCount - n + 1} parameters using ${a.size} values"
+        s"You are trying to set ${paramCount - n + 1} parameters using ${a.size} values"
       )
     }
-    val parameterIndicesAndTypes = (n to parameterCount).map(n => (n, metadata.getParameterType(n))).toList
-    a.valuesIterator.toList
-      .zip(parameterIndicesAndTypes)
+    val paramMetaWithIndexSeq = (n to paramCount).map(i => (i, ParameterMetadata.of(psMeta, i)))
+    a.valuesIterator.toList // respect insertion order
+      .zip(paramMetaWithIndexSeq)
       .foreach({
-        case (anyValue, (index, sqlType)) =>
-          anyValue match {
-            case _: None.type => ps.setNull(index, sqlType)
-            case v: Some[_]   => ps.setObject(index, v.get)
-            case v            => ps.setObject(index, v)
+        case (value, (index, ParameterMetadata(_, _, tpe, _, _, _, _))) =>
+          value match {
+            case _: None.type => ps.setNull(index, tpe)
+            case v: Some[_]   => ps.setObject(index, v.get, tpe)
+            case v            => ps.setObject(index, v, tpe)
           }
       })
   }
 
   private def unsafeUpdate(rs: ResultSet, n: Int, a: Row): Unit = {
-    assert(n > 0, "UnsafeUpdate column index must be greater than 0")
-    val metadata = rs.getMetaData
-    val columnLabels = (n to metadata.getColumnCount)
-      .map(i => metadata.getColumnLabel(i))
-      .toList
-    columnLabels.foreach({ label =>
-      val anyValue = a.getOrElse(label, throw new IllegalArgumentException(s"Cannot get map value at key $label"))
-      anyValue match {
-        case _: None.type => rs.updateNull(label)
-        case v: Some[_]   => rs.updateObject(label, v.get)
-        case v            => rs.updateObject(label, v)
-      }
+    assert(n > 0, "Row unsafeUpdate column index must be greater than 0")
+    val rsMeta   = rs.getMetaData
+    val colCount = rsMeta.getColumnCount
+    if (colCount - n + 1 != a.size) {
+      throw new IllegalArgumentException(
+        s"You are trying to update ${colCount - n + 1} columns using ${a.size} values"
+      )
+    }
+    val colMetaSeq = (n to colCount).map(ColumnMetadata.of(rsMeta, _))
+    colMetaSeq.foreach({
+      case ColumnMetadata(_, label, _, _, _, _, _, _) =>
+        val value = a.getOrElse(label, throw new IllegalArgumentException(s"Cannot get Row value for column $label"))
+        value match {
+          case _: None.type => rs.updateNull(label)
+          case v: Some[_]   => rs.updateObject(label, v.get)
+          case v            => rs.updateObject(label, v)
+        }
     })
   }
 }
