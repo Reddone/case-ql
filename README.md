@@ -18,7 +18,22 @@ These objects act as a glue between the serializable world and the type-safe wor
 implicit instance you can be sure that your serializable case class representing a filter or a modification will 
 produce the desired effect when used to query or modify the entity.
 
-To run the example using Docker, use:
+For more info, read the [full documentation](./docs/intro.md).
+
+The project is available on Sonatype release:
+
+```scala
+object caseQL {
+  lazy val namespace = "com.github.reddone"
+  lazy val sql = namespace %% "case-ql-sql" % caseQLVersion
+  lazy val circe = namespace %% "case-ql-circe" % caseQLVersion
+  lazy val gql = namespace %% "case-ql-gql" % caseQLVersion
+}
+```
+
+Before installing it, give it a try! The example is a GraphQL playground with all the type checking already setup in 
+the underlying Scala code. You can only see the final result, but keep in mind that all you see is the result of a 
+compile time validation. To run the example using Docker, execute:
 
 ```bash
 docker-compose up -d
@@ -45,11 +60,6 @@ To clear everything, terminate the sbt process with Ctrl+C and run:
 ```bash
 docker-compose down
 ```
-
-**I still have to publish this to Sonatype. For the moment, take the 'develop' branch as a reference for a future 
-stable release version.**
-
-[Full documentation](./docs/intro.md)
 
 ## Motivation
 

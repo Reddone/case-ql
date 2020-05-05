@@ -1,15 +1,26 @@
 import sbtrelease._
 
-val mainScala = "2.12.11"
-val allScala  = Seq("2.13.2", mainScala)
+inThisBuild(
+  Seq(
+    organization := "com.github.reddone",
+    scmInfo := Some(
+      ScmInfo(url("https://github.com/reddone/case-ql"), "git@github.com:reddone/case-ql.git")
+    ),
+    developers := List(
+      Developer("Reddone", "Simone Marzoli", "simone88.rm2@gmail.com", url("https://github.com/reddone"))
+    ),
+    description := "Type-Safe and Serializable SQL Queries using Scala Case Classes",
+    licenses ++= Seq(("MIT", url("http://opensource.org/licenses/MIT"))),
+    homepage := Some(url("https://github.com/reddone/case-ql"))
+  )
+)
 
 addCommandAlias("dist", "clean compile universal:packageBin")
-
-name := "case-ql"
 
 lazy val root = project
   .in(file("."))
   .settings(
+    name := "case-ql",
     noPublishSettings,
     releaseSettings
   )
@@ -82,17 +93,16 @@ lazy val settings = commonSettings ++ scalacSettings ++ scalafmtSettings ++ upda
 // common settings
 
 lazy val commonSettings = Seq(
-  organization := "com.github.reddone",
-  maintainer := "simone88.rm2@gmail.com",
-  licenses ++= Seq(("MIT", url("http://opensource.org/licenses/MIT"))),
-  scalaVersion := mainScala,
-  crossScalaVersions := allScala,
+  scalaVersion := "2.12.11",
+  crossScalaVersions := Seq("2.13.2", "2.12.11"),
   fork := true,
   parallelExecution in Test := false,
   addCompilerPlugin(
     "org.typelevel" %% "kind-projector" % Versions.kindProjectorVersion cross CrossVersion.full
   )
 )
+
+// compiler settings
 
 lazy val scalacSettings = Seq(
   scalacOptions ++= Seq(
@@ -156,6 +166,28 @@ lazy val updateSettings = Seq(
   dependencyUpdatesFilter -= moduleFilter(organization = "org.scala-lang")
 )
 
+// publish settings
+
+lazy val publishSettings = Seq(
+  publishConfiguration := publishConfiguration.value.withOverwrite(true),
+  publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true),
+  publishMavenStyle := true,
+  pomIncludeRepository := { _ =>
+    false
+  },
+  publishTo := Some(
+    if (isSnapshot.value)
+      Opts.resolver.sonatypeSnapshots
+    else
+      Opts.resolver.sonatypeStaging
+  ),
+  credentials += Credentials(Path.userHome / ".sbt" / "sonatype_credentials")
+)
+
+lazy val noPublishSettings = Seq(
+  skip in publish := true
+)
+
 // release settings
 
 lazy val releaseSettings = Seq(
@@ -173,14 +205,4 @@ lazy val releaseSettings = Seq(
   },
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value
-)
-
-// publish settings
-
-lazy val publishSettings = Seq(
-  publishTo in ThisBuild := sonatypePublishToBundle.value
-)
-
-lazy val noPublishSettings = Seq(
-  skip in publish := true
 )
